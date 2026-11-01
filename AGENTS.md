@@ -37,15 +37,16 @@ This is a carrerr assistan systemt that helps user to define his ideal job, sele
 ## Limitations
 The business requiremens implementation will be incremental. We will start with a MVP that will only match with the first step, Job definition. But the initial design will take into account that the system will grouth with the rest of provided requirements
 
+The MVP is for one private user with one current editable job definition, explicit save/review actions, and no revision history. Use an English interface accepting English and Spanish content. Support text-based PDF, legacy .doc, .docx, and Markdown, up to five files of 10 MB each; scanned-document OCR is deferred. Retrieve public URLs with an upload/paste fallback. Retain sources until deleted, with daily backups retained for seven days. These Part 2 defaults were approved on 2026-11-01.
+
 ## Technical decisions
-- It will be deployed to AWS cloud
-- A NextJS frontend
-- A Python backend
-- You must decide if it is better to use AWS lambda and AWS services in general, or a Docker container instead. You can ask me any additional info you'll neeed.
-- The solution should be tested locally, prior to the real Cloud deployment
-- Use Amazon Bedrock as AI endpoint. The needed enpoints and credentials are provided in an .env file.
-- For each AI requierement, select the most suitable OpenAI model, prefering low cost if the model if good enough for the task at hand.
-- Use a relational database for persistence
+- Start on Railway Free, with Neon Free for managed PostgreSQL and private document storage. Measure usage against the ongoing free allowances, including backup jobs/storage; do not rely on introductory trial credits to prove the app fits. Any paid hosting upgrade requires the user's explicit choice. This replaces the earlier AWS deployment requirement.
+- Use Next.js with TypeScript. Build a static export served by the Python service in production; keep frontend/ and backend/ separate for local development.
+- Use Python with FastAPI, SQLAlchemy, Psycopg, and Alembic migrations. Use local PostgreSQL through Docker Compose for development and integration tests.
+- Test the complete solution locally before the real cloud deployment.
+- Call the OpenAI API directly using the backend-only OPENAI_API_KEY in .env. This replaces Amazon Bedrock; AWS authentication is no longer an MVP prerequisite.
+- Select the lowest-cost OpenAI model that meets each task's quality and latency requirements. Evaluate gpt-6-luna initially; confirm inference behavior and model suitability in Part 6.
+- Retain daily database/document backups for seven days and verify restoration. Use independent private backup storage; do not assume the free database tier provides the agreed backup retention.
 
 ## Coding standards
 1. For external libraries, use the most recent versions. Keep them updated.
@@ -55,4 +56,4 @@ The business requiremens implementation will be incremental. We will start with 
 5. When hitting issues, always identify root cause before trying a fix. Do not guess. Prove with evidence, then fix the root cause.
 
 ## Working documentation
-All documents for planning and executing this project will be in the doc/ directory. Please review the doc/PLAN.md document before proceeding. Example source documents remain in doc/: doc/ajimenez/MY_IDEAL_JOB.md, doc/ajimenez/CV.pdf, and doc/Profile.pdf (LinkedIn export).
+All documents for planning and executing this project will be in the doc/ directory. Please review the doc/PLAN.md document before proceeding. Agreed Part 2 requirements, architecture, API baseline, and validation status are recorded in doc/MVP_SPEC.md. Example source documents remain in doc/: doc/ajimenez/MY_IDEAL_JOB.md, doc/ajimenez/CV.pdf, and doc/Profile.pdf (LinkedIn export).

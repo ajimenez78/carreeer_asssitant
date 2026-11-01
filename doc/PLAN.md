@@ -1,6 +1,6 @@
 # Career assistant MVP plan
 
-Status: draft awaiting user approval. Only Part 1 has started.
+Status: Parts 1–2 complete on 2026-11-01. The user selected Railway Free + Neon Free + direct OpenAI API calls and approved the product/source defaults. Agreed requirements, architecture, and the API baseline are in [MVP_SPEC.md](MVP_SPEC.md). Part 3 is next; Parts 3–11 have not started.
 
 ## Scope and working rules
 
@@ -8,19 +8,19 @@ The MVP helps a user define, save, revisit, and refine an ideal job using their 
 
 Job discovery, offer scoring, notifications, skill development plans, application tracking, interview preparation, and support after starting a job belong to later phases. Consider their relationships in the design without implementing their workflows or unused infrastructure.
 
-- Keep the required Next.js frontend, Python backend, AWS target, Amazon Bedrock endpoint, and relational persistence.
-- Resolve hosting, model selection, and other open decisions in Part 2; proposals below are not approved technical decisions.
+- Keep the required Next.js frontend, Python backend, Railway hosting, Neon PostgreSQL/document storage, direct OpenAI API, and relational persistence.
+- Follow the agreed Part 2 decisions in `MVP_SPEC.md`. Evaluate model suitability and live inference in Part 6; provision hosted services in Part 11.
 - Follow the eleven parts in order. Complete each part's checks before marking its tasks done, and record relevant decisions or remaining blockers here.
-- Obtain user approval of this plan before Part 2. Resolve requirement and architecture choices with the user before scaffolding.
+- Part 1 approval and Part 2 requirement/architecture clarification are complete. Keep future changes consistent with the approved MVP scope.
 - Keep planning documents and source examples together in `doc/`: [ideal job](ajimenez/MY_IDEAL_JOB.md), [CV](ajimenez/CV.pdf), and [LinkedIn export](Profile.pdf).
 - Verify current stable library versions when adding dependencies, commit lockfiles, and keep the README's setup and test commands current and free of emojis.
 - Prefer simple modules and meaningful tests. Aim for approximately 80% code coverage, prioritizing business logic and user workflows without tests written only to raise coverage.
 - Use synthetic or redacted test fixtures. Keep credentials and personal document contents out of logs, committed fixtures, and test reports.
-- Validate the complete MVP locally before deploying it to AWS in Part 11.
+- Validate the complete MVP locally before deploying it to Railway and Neon in Part 11.
 
-## Proposed user interaction flow
+## Agreed user interaction flow
 
-Confirm and refine this flow during Part 2:
+Part 2 defaults approved on 2026-11-01; detailed saving, source, and review behavior is recorded in `MVP_SPEC.md`:
 
 1. Start an ideal-job draft with a free-text description, even if it is incomplete.
 2. Optionally upload a CV or other background documents and add profile or personal-site links.
@@ -30,7 +30,7 @@ Confirm and refine this flow during Part 2:
 6. Save the draft or completed definition, reopen it later, and refine it without losing previously accepted information.
 7. In Part 10, use open chat to discuss preferences and review proposed changes through the same editing and saving flow.
 
-The supplied ideal-job example is the reference acceptance scenario: preserve Staff scope, architecture and system design, collaboration across teams, learning, international scope, and an AI-engineering preference. Remote is preferred; hybrid is acceptable near Madrid with a two-day on-site limit whose period must be confirmed in Part 2. Clarify “good compensation” rather than inventing a salary, and preserve the constraint against a role focused only on frontend work.
+The supplied ideal-job example is the reference acceptance scenario: preserve Staff scope, architecture and system design, collaboration across teams, learning, international scope, and an AI-engineering preference. Remote is preferred; hybrid is acceptable near Madrid with a two-day on-site limit whose period the application must clarify. Clarify “good compensation” rather than inventing a salary, and preserve the constraint against a role focused only on frontend work.
 
 ## Part 1: Define and approve the plan
 
@@ -39,46 +39,48 @@ Deliverable: this execution plan, with explicit scope, dependencies, validation,
 - [x] Read `AGENTS.md`, the original plan, and the supplied ideal-job, CV, and LinkedIn examples.
 - [x] Expand all eleven parts into actionable checklists with tests and success criteria.
 - [x] Record the proposed interaction flow, open decisions, and boundaries for later features and deployment.
-- [ ] Obtain user review and approval of this plan; incorporate requested changes before Part 2.
+- [x] Obtain user review and approval of this plan; incorporate requested changes before Part 2. Approved on 2026-11-01, including Part 11 and the `doc/` location.
 
 Validation:
 
 - [x] Check that every original part is represented, document links resolve locally, and only planning documentation has changed.
 - [x] Check that pending decisions are clearly distinguished from approved requirements.
 
-Success: the user has approved the plan. Approval is pending; no clarification or implementation work is marked complete.
+Success: achieved. The user approved Part 1 and explicitly requested Part 2 on 2026-11-01.
 
 ## Part 2: Clarify requirements and choose the architecture
 
 Dependency: Part 1 approved.
 
-- [ ] Present concise proposals for the open decisions below, using the supplied examples; ask only questions that materially affect the MVP.
-- [ ] Confirm the interaction flow, required definition fields, draft/completion rules, and treatment of unknown or conflicting answers.
-- [ ] Define functional and nonfunctional acceptance criteria, including upload limits, expected response times, AI spending limits, and supported languages.
-- [ ] Compare AWS Lambda and container hosting for the frontend, API, AI calls, and document processing. Include request duration, relational connections, operational effort, expected usage, and cost. Distinguish a Docker-based local setup from the cloud compute decision.
-- [ ] Select the Python web framework, relational database, migration tool, local development setup, and AWS compute/storage approach; document a short rationale and local-to-cloud differences.
-- [ ] Verify how the OpenAI-model requirement can be met through the configured Bedrock endpoint, region, and account. Resolve any incompatibility with the user before selecting models or changing providers. Do not disclose credentials.
-- [ ] Agree the initial API contract and error conventions for drafts, sources, clarification, and saving; refine details in Parts 5 and 7.
-- [ ] Update `AGENTS.md` and this plan with approved requirements and decisions, keeping both concise.
+- [x] Present concise proposals for the open decisions below, using the supplied examples; ask only questions that materially affect the MVP. See [MVP_SPEC.md](MVP_SPEC.md).
+- [x] Confirm the interaction flow, required definition fields, draft/completion rules, and treatment of unknown or conflicting answers. The user approved the proposed product/source defaults on 2026-11-01.
+- [x] Define functional and nonfunctional acceptance criteria, including upload limits, response-time targets, bounded AI usage, supported languages, and the approved backup retention.
+- [x] Compare AWS Lambda and container hosting for the frontend, API, AI calls, and document processing. Include request duration, relational connections, operational effort, expected usage, and cost. Distinguish a Docker-based local setup from the cloud compute decision.
+- [x] Select the Python framework, relational database, migration tool, local setup, and deployment/storage approach: FastAPI, SQLAlchemy/Psycopg, Alembic, local PostgreSQL via Compose, Railway, and Neon.
+- [x] Resolve the AI provider requirement: the user explicitly selected the direct OpenAI API. A read-only authenticated model-catalog request returned HTTP 200 and listed `gpt-6-luna`; live inference, billing/quota behavior, and quality checks remain for Part 6.
+- [x] Establish the initial API contract and error conventions for drafts, sources, clarification, and saving, consistent with the approved flow; refine payload and schema details in Parts 5 and 7.
+- [x] Update `AGENTS.md` and this plan with approved requirements and decisions, keeping both concise.
 
-| Decision | Points to resolve |
+| Decision | Agreed baseline |
 | --- | --- |
-| Users and access | Personal single-user tool or accounts; authentication, ownership, and access required for deployment. |
-| Definition lifecycle | One or several definitions per user; required fields; save incomplete drafts; update the current definition or retain history. |
-| Preferences | Mandatory versus preferred criteria; salary currency, range, gross/net basis and period; working hours, travel, location, and hybrid limits. |
-| Documents | Exact support for PDF, legacy `.doc`, `.docx`, and Markdown; text-only versus scanned PDFs; file size/count limits and failure messages. Do not silently replace `.doc` with `.docx`. |
-| Links | Store references only or retrieve public content; fallback for inaccessible LinkedIn pages; no assumption of authenticated scraping or LinkedIn account integration. |
-| Data handling | Storage of originals and extracted text, retention/deletion expectations, and what background information is sent to Bedrock. |
-| Usability | Interface and input languages, question cadence, skipped questions, and review of AI suggestions. |
-| Operations | AWS region, expected usage and budget, AI response-time targets, credentials, and the eventual deployment environment. |
+| Users and access | One private user, one configured owner login, no public registration. |
+| Definition lifecycle | One current definition; explicit saving/review; incomplete drafts allowed; no revision history. |
+| Preferences | Mandatory/preferred/excluded criteria; structured compensation and work arrangement; unknown values stay unknown. The application clarifies sample-specific salary and office-day periods. |
+| Documents | Text-based PDF, legacy `.doc`, `.docx`, and Markdown; five files at 10 MB each; no scanned-PDF OCR initially. |
+| Links | Read public pages; provide upload/paste fallback; no authenticated scraping or LinkedIn account connection. |
+| Data handling | Retain sources until removed; review extracted background before AI use; direct OpenAI calls receive the necessary reviewed text; daily backups retained for seven days. |
+| Usability | English UI, English/Spanish content, small clarification rounds with skips and explicit unknowns. |
+| Operations | Start on Railway Free and Neon Free; target $0 hosting within ongoing allowances, with metered OpenAI calls billed separately. Measure the web service, backups, storage, and transfer together. Paid upgrades require an explicit user decision. |
 
 Validation:
 
-- [ ] Walk through the reference scenario and one incomplete-input scenario with the proposed flow.
-- [ ] Check that agreed requirements map to testable outcomes and that no unresolved decision blocks scaffolding.
-- [ ] Review the architecture rationale and model-access constraints with the user.
+- [x] Walk through the reference scenario and one incomplete-input scenario with the proposed flow. Expected outcomes are recorded in [MVP_SPEC.md](MVP_SPEC.md); these are design walkthroughs, not executed application tests.
+- [x] Check that agreed requirements map to testable outcomes and that no unresolved design decision blocks scaffolding. Provider account setup and production credentials are deployment prerequisites, not local scaffold requirements.
+- [x] Review hosting/model alternatives with the user and record their Railway + Neon + OpenAI selection.
 
-Success: the MVP requirements, user flow, architecture, and acceptance criteria are agreed and recorded; later-phase features remain outside implementation scope.
+Success: achieved. Requirements, user flow, architecture, acceptance criteria, and the initial API baseline are recorded; later-phase features remain outside implementation scope.
+
+Validation recorded on 2026-11-01: `.env` contains the correctly named `OPENAI_API_KEY`, has no Bedrock base-URL override, and is ignored by Git. Direct OpenAI model discovery returned HTTP 200 and listed `gpt-6-luna`. This proves read-only authentication/catalog access, not inference access, available credit, or model quality. No inference calls or cloud provisioning have been performed. The previous AWS authentication issue is superseded by the approved provider change.
 
 ## Part 3: Scaffold the backend and local infrastructure
 
@@ -88,13 +90,14 @@ Dependency: Part 2 decisions recorded.
 - [ ] Separate configuration, HTTP handlers, and application logic without introducing unused abstractions.
 - [ ] Add a health API route and a small static “hello world” HTML page that calls the API and displays its result.
 - [ ] Provide documented backend start/stop commands and a credential-free configuration template. Read secrets from local configuration or the environment.
-- [ ] Set up the agreed local infrastructure and document the AWS resource mapping. Keep actual cloud provisioning outside this scaffold step.
+- [ ] Set up the agreed local infrastructure and document how local PostgreSQL, file storage, and application processes map to Railway and Neon. Keep cloud provisioning outside this scaffold step.
+- [ ] Record a local runtime memory baseline and distinguish production runtime limits from build requirements; target Railway Free's 0.5 GB RAM and 1 vCPU per service.
 - [ ] Create a simple README with prerequisites, configuration, and reproducible start/stop/test instructions.
 
 Validation:
 
 - [ ] Run the backend from the documented setup; verify the HTML page, successful API call, health response, and shutdown.
-- [ ] Run basic API tests without AWS credentials or network access.
+- [ ] Run basic API tests without provider credentials or network access.
 
 Success: another developer can start and stop the local backend and demonstrate the HTML-to-API call using the README.
 
@@ -104,7 +107,7 @@ Dependency: Parts 2–3 complete.
 
 - [ ] Create `frontend/` with current stable Next.js, TypeScript, dependency lockfile, linting, and the agreed test tooling.
 - [ ] Add the application shell and a minimal entry page for the ideal-job workflow.
-- [ ] Set up environment-based API configuration without exposing backend or AWS secrets to the browser.
+- [ ] Set up environment-based API configuration without exposing backend, OpenAI, or Neon secrets to the browser.
 - [ ] Document frontend start/stop commands and how to run it alongside the backend.
 
 Validation:
@@ -119,29 +122,30 @@ Success: the frontend runs locally and builds successfully; the job-definition U
 Dependency: approved requirements and working scaffolds.
 
 - [ ] Propose a relational schema for the agreed user/ownership model, background sources, ideal-job drafts, preferences, and clarification questions/answers. Add conversation persistence when required by Part 10.
-- [ ] Define keys, relationships, constraints, timestamps, and how accepted changes are saved. Implement revision history only if agreed in Part 2.
+- [ ] Define keys, relationships, constraints, timestamps, and how accepted changes update the current definition. Follow the approved scope without revision history.
 - [ ] Sketch how future offers, matches, development plans, application processes, interviews, and career progress relate to the MVP entities; do not create unused later-phase tables.
 - [ ] Review the schema against the interaction flow before adding migrations and the necessary persistence operations.
 - [ ] Provide reproducible local database initialization and an isolated test database. Create the local database when absent and apply migrations; document managed-database provisioning separately.
 - [ ] Document where original files and extracted content are stored, consistent with the approved retention requirements.
+- [ ] Define the document-storage adapter for local files and Neon private object storage; cover the approved deletion behavior and backup/restore format.
 
 Validation:
 
 - [ ] Initialize an empty local environment, apply migrations, and repeat initialization without losing data.
 - [ ] Test create, save, reload, and update operations against the selected relational engine; verify relevant constraints and transaction rollback.
-- [ ] Verify ownership boundaries if multiple users are supported and verify schema upgrades preserve existing data.
+- [ ] Verify that schema upgrades preserve existing data and that persistence supports the approved single-owner access model.
 
 Success: the MVP schema supports saved and revisable definitions and their context, with repeatable migrations and persistence tests.
 
-## Part 6: Verify Bedrock connectivity and select models
+## Part 6: Verify OpenAI API connectivity and select models
 
-Dependency: Part 2 resolves provider, endpoint, and account compatibility; backend scaffold available.
+Dependency: the direct OpenAI API is selected in Part 2; backend scaffold available. Catalog authentication is verified; inference and billing/quota checks remain here.
 
-- [ ] Add backend-only Bedrock configuration using the provided environment settings without printing credentials or committing secrets.
+- [ ] Add backend-only OpenAI configuration using `OPENAI_API_KEY` and the standard OpenAI endpoint; do not print credentials or commit secrets.
 - [ ] Implement a small AI client boundary that supports a fake client for routine tests.
 - [ ] Run an explicit live smoke test asking “2+2” and verify that the response represents 4.
-- [ ] Evaluate accessible candidate OpenAI models on representative background extraction, ambiguous-preference clarification, and structured definition updates. Prefer the lowest-cost model that meets the agreed quality and latency criteria for each task.
-- [ ] Record selected model identifiers, region/endpoint requirements, evaluation results, token limits, and a usage/cost estimate based on verified pricing. Reuse a model across tasks when sufficient.
+- [ ] Evaluate `gpt-6-luna` initially on representative extraction, ambiguous-preference clarification, and structured definition updates. Prefer the lowest-cost accessible OpenAI model that meets quality and latency criteria for each task.
+- [ ] Record selected model identifiers, endpoint/account requirements, evaluation results, token limits, and a usage/cost estimate based on verified pricing. Reuse a model across tasks when sufficient.
 - [ ] Define structured-output validation and useful behavior for access errors, unavailable models, timeouts, throttling, and invalid responses.
 
 Validation:
@@ -150,7 +154,7 @@ Validation:
 - [ ] Run the live arithmetic test separately from routine tests; record a sanitized result.
 - [ ] Use synthetic examples to check that the selected models preserve constraints, ask about missing salary information, and avoid inventing background facts.
 
-Success: the configured Bedrock endpoint works, task-level model choices have evidence, and routine tests need neither credentials nor paid AI calls. Arithmetic alone does not establish model suitability.
+Success: direct OpenAI inference works, task-level model choices have evidence, and routine tests need neither credentials nor paid AI calls. Arithmetic alone does not establish model suitability.
 
 ## Part 7: Implement the job-definition backend
 
@@ -162,15 +166,16 @@ Dependency: persistence and AI connectivity verified in Parts 5–6.
 - [ ] Generate focused clarification questions and structured job-definition suggestions from user input and reviewed background information.
 - [ ] Keep unknown values explicit, separate background facts from preferences, and distinguish mandatory constraints from preferences. Treat source documents as data, not instructions.
 - [ ] Persist user-reviewed updates and allow later refinement; failed AI requests must preserve the existing draft and accepted information.
-- [ ] Implement source deletion or cleanup if required by the Part 2 retention decisions, covering stored originals, extracted content, and associated records consistently.
+- [ ] Implement the approved source/definition deletion behavior, covering stored originals, extracted facts, derived clarification/chat context, and associated records consistently while preserving independently accepted preferences when removing a source.
 - [ ] Validate inputs and uploads and return actionable errors. Apply the agreed access controls and local database initialization behavior.
 
 Validation:
 
 - [ ] Unit-test extraction, clarification, preference updates, validation, and AI failure paths with deterministic fixtures and a fake AI client.
 - [ ] Test supported documents, malformed/oversized files, unsupported formats, PDFs without extractable text, and inaccessible links according to the agreed behavior.
+- [ ] Measure extraction peak memory and CPU within Railway Free's runtime limits, including legacy Word files; preserve the approved formats and report any measured incompatibility.
 - [ ] Run API/database integration tests covering create → add context → clarify → save → reload → revise, including failed writes and invalid AI output.
-- [ ] Verify deletion/cleanup behavior if included in the approved requirements.
+- [ ] Verify source and complete-definition deletion, including removal of deleted source content from future AI context.
 - [ ] Check that the reference scenario preserves location/hybrid constraints and Staff scope, asks about compensation, and never converts every historical skill into a desired job requirement.
 - [ ] Review meaningful coverage and address untested business behavior rather than adding tests solely for a percentage.
 
@@ -209,7 +214,7 @@ Validation:
 
 - [ ] Run browser end-to-end tests with the real frontend, backend, and database, using a fake AI client for deterministic automated runs.
 - [ ] Cover initial description → upload/link → clarification → review → save → reload → refine, plus unavailable-AI and invalid-upload recovery.
-- [ ] Perform an explicit live-Bedrock workflow check using synthetic data, separate from routine tests.
+- [ ] Perform an explicit live-OpenAI workflow check using synthetic data, separate from routine tests.
 - [ ] Run the established backend/frontend checks and verify the documented setup from an empty local database.
 
 Success: the structured job-definition flow works locally across all layers and survives restarts; local validation evidence and deployment instructions are recorded.
@@ -233,35 +238,37 @@ Validation:
 
 Success: users can refine the same persistent definition through both structured interaction and open chat without losing accepted information.
 
-## Part 11: Deploy the tested MVP to AWS
+## Part 11: Deploy the tested MVP to Railway and Neon
 
 Dependency: Parts 1–10 complete, local acceptance checks passing, and the deployment procedure from Part 9 reviewed. Use the architecture selected in Part 2.
 
-- [ ] Confirm the target AWS account, region, environment, planned resource changes, and estimated recurring cost against the agreed budget.
-- [ ] Add version-controlled infrastructure definitions and repeatable deployment commands for the selected frontend hosting, Python backend, relational database, document storage, networking, and access controls.
-- [ ] Configure HTTPS, the agreed application access model, runtime IAM roles, and backend-only secrets; keep credentials out of browser assets and deployment output.
-- [ ] Verify Bedrock model access in the deployment region and configure the selected model identifiers and usage limits.
-- [ ] Build versioned release artifacts from the locally tested revision and validate the infrastructure changes before applying them.
-- [ ] Provision the required resources, initialize the cloud database, apply migrations, and deploy the backend and frontend with the correct API configuration. Back up existing data before schema changes.
-- [ ] Configure useful logs, health/error monitoring, cost alerts, and the agreed backup and retention settings.
+- [ ] Confirm Railway/Neon accounts, EU deployment locations, environment, resource changes, and estimated recurring usage. Start with Railway Free and Neon Free; verify available features and the ongoing $1/month Railway resource allowance separately from temporary trial credits.
+- [ ] Add version-controlled Railway build/start/health configuration and repeatable deployment commands. Provision Neon PostgreSQL and private document storage with backend-only credentials.
+- [ ] Configure HTTPS and the single-owner access model; keep OpenAI, database, storage, and session secrets out of browser assets, release images, and deployment output.
+- [ ] Verify direct OpenAI inference from Railway and configure the Part 6 model identifiers and usage limits.
+- [ ] Build versioned release artifacts from the locally tested revision, serving the static Next.js export and Python API through one Railway web service.
+- [ ] Initialize the cloud database, apply migrations using the appropriate direct Neon connection, configure runtime connections and document storage, and deploy the application. Back up existing data before schema changes.
+- [ ] Configure useful logs, health/error monitoring, usage alerts, and the daily database/document backup job with seven-day retention in independent private storage. Do not rely on Neon's free restore window to satisfy this policy.
+- [ ] Enable and verify Railway's sleeping/serverless behavior to reduce idle usage. Avoid background traffic and unnecessary open connections that prevent sleep; verify first-request recovery without duplicate writes.
 - [ ] Document redeployment, application rollback, database recovery, and resource cleanup, distinguishing disposable resources from persistent user data.
 - [ ] Update the README with the deployed URL, release identifier, operational commands, and known limitations.
 
 Validation:
 
-- [ ] Run deployed frontend/API health checks and a live Bedrock smoke test.
+- [ ] Run deployed frontend/API health checks and a live OpenAI smoke test.
 - [ ] Run the deployed browser workflow using synthetic data: description → upload/link → clarification → review → save → reload → structured refinement → chat refinement.
 - [ ] Verify HTTPS, authentication/access boundaries, production API/CORS configuration, and restricted database/document-storage access according to the approved design.
 - [ ] Verify that saved definitions, background sources, and conversation context survive an application restart or redeployment.
+- [ ] Measure web-service, backup-job, storage, and egress usage against ongoing free limits, including the 0.5 GB RAM/1 vCPU runtime cap. Record projected monthly usage; if the complete MVP cannot fit, report the limitation and options before any paid upgrade.
 - [ ] Check useful error reporting and exercise application rollback and database backup/recovery against disposable test data without affecting user data.
 - [ ] Record the deployed revision, URLs, validation results, and any remaining operational limitations.
 
-Success: the MVP is accessible to its intended users on AWS, its deployed workflow passes acceptance checks, data persists across releases, and deployment and recovery are reproducible.
+Success: the private MVP is accessible through Railway, persists data and documents in Neon, passes deployed acceptance checks, and has reproducible deployment and recovery.
 
 ## MVP completion
 
 - [ ] All eleven parts have satisfied their checks; approvals and unresolved limitations are recorded accurately.
-- [ ] The supplied scenario and agreed incomplete-input/error scenarios pass locally and on AWS with synthetic or redacted fixtures.
-- [ ] Local setup, migrations, configuration, start/stop commands, tests, and AWS deployment/recovery commands are reproducible from the README.
+- [ ] The supplied scenario and agreed incomplete-input/error scenarios pass locally and on Railway/Neon with synthetic or redacted fixtures.
+- [ ] Local setup, migrations, configuration, start/stop commands, tests, and Railway/Neon deployment/recovery commands are reproducible from the README.
 - [ ] No later-phase workflow has been implemented merely to anticipate future requirements.
 - [ ] Present the deployed MVP, validation results, operating instructions, and known limitations for review.
