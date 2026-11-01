@@ -1,0 +1,17 @@
+{
+  "date": "2026-11-01",
+  "synthetic_only": true,
+  "memory_max_bytes": 536870912,
+  "cpu_max": "100000 100000",
+  "scope": "Fresh runtime container per case, actual application loaded, parser process; no database or AI calls. Large fixtures include padding and are not exhaustive worst-case documents.",
+  "results": [
+    {"format":"pdf","large":false,"bytes":705,"extracted_characters":44,"seconds":0.1178,"worker_cpu_seconds":0.1175,"application_peak_mib":125.41,"container_peak_mib":145.32,"oom_kill":0},
+    {"format":"docx","large":false,"bytes":445,"extracted_characters":44,"seconds":0.0543,"worker_cpu_seconds":0.0529,"application_peak_mib":125.45,"container_peak_mib":123.49,"oom_kill":0},
+    {"format":"doc","large":false,"bytes":9216,"extracted_characters":133,"seconds":0.0513,"worker_cpu_seconds":0.0511,"application_peak_mib":125.54,"container_peak_mib":124.26,"oom_kill":0},
+    {"format":"md","large":false,"bytes":45,"extracted_characters":44,"seconds":0.0538,"worker_cpu_seconds":0.0535,"application_peak_mib":125.55,"container_peak_mib":124.28,"oom_kill":0},
+    {"format":"pdf","large":true,"bytes":10484392,"extracted_characters":44999,"seconds":0.167,"worker_cpu_seconds":0.1414,"application_peak_mib":237.21,"container_peak_mib":222.64,"oom_kill":0},
+    {"format":"docx","large":true,"bytes":10485256,"extracted_characters":44999,"seconds":0.0788,"worker_cpu_seconds":0.0642,"application_peak_mib":145.59,"container_peak_mib":144.5,"oom_kill":0},
+    {"format":"doc","large":true,"bytes":10485760,"extracted_characters":133,"seconds":0.0945,"worker_cpu_seconds":0.0659,"application_peak_mib":135.47,"container_peak_mib":155.31,"oom_kill":0},
+    {"format":"md","large":true,"bytes":10485760,"extracted_characters":44999,"seconds":0.0833,"worker_cpu_seconds":0.0705,"application_peak_mib":135.86,"container_peak_mib":154.25,"oom_kill":0}
+  ]
+}

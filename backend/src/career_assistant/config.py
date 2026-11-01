@@ -11,6 +11,14 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "Career assistant"
+    session_secret: SecretStr | None = None
+    session_secure: bool = False
+    allowed_origins: list[str] = [
+        "http://127.0.0.1:8000",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://localhost:3000",
+    ]
     database_url: SecretStr | None = Field(
         default=None, validation_alias="DATABASE_URL"
     )

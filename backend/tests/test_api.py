@@ -29,3 +29,16 @@ def test_application_uses_configured_name():
 
     assert schema["info"]["title"] == "Local test application"
     assert "/api/health" in schema["paths"]
+
+
+def test_missing_login_secret_gives_setup_guidance_without_opening_database():
+    with TestClient(
+        create_app(Settings(_env_file=None, session_secret=None))
+    ) as client:
+        response = client.post(
+            "/api/session",
+            headers={"Origin": "http://127.0.0.1:8000"},
+            json={"username": "owner", "password": "synthetic-password"},
+        )
+    assert response.status_code == 503
+    assert response.json()["error"]["code"] == "login_not_configured"

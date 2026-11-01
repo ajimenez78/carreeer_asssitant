@@ -111,4 +111,6 @@ throttling errors, malformed and incomplete output, refusals, cost accounting,
 the synthetic quality gates, and existing persistence behavior.
 
 The backend image builds with the locked SDK/native dependencies. Hosted
-inference remains a Part 11 check. Part 7 is unstarted.
+inference remains a Part 11 check. Part 7 subsequently implemented the API and
+application schemas; its two synthetic schema/quality calls and broader backend
+tests are recorded separately in [PART7_VALIDATION.md](PART7_VALIDATION.md).

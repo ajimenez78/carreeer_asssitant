@@ -7,9 +7,13 @@ dependencies = [
     "alembic>=1.20.1",
     "boto3>=1.43.123",
     "fastapi>=0.162.0",
+    "itsdangerous>=2.2.0",
     "openai>=3.42.0",
     "psycopg[binary]>=3.3.6",
     "pydantic-settings>=2.16.2",
+    "pypdf>=6.21.4",
+    "pwdlib[argon2]>=0.3.1",
+    "python-multipart>=0.0.33",
     "sqlalchemy>=2.1.6",
     "uvicorn>=0.54.0",
 ]

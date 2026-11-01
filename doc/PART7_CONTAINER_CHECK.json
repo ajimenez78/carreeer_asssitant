@@ -1,0 +1,10 @@
+{
+  "passed": true,
+  "synthetic_only": true,
+  "max_get_plus_save_seconds": 0.0403,
+  "legacy_doc_bytes": 10485760,
+  "legacy_upload_seconds": 0.2814,
+  "container_peak_mib": 176.11,
+  "memory_max_bytes": 536870912,
+  "cpus": 1
+}

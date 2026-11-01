@@ -1,8 +1,9 @@
 # Career assistant
 
 The MVP helps one private user define and refine an ideal job. The backend and
-Next.js scaffolds, PostgreSQL persistence, migrations, and private document-store
-adapters and the backend OpenAI client are implemented. Requirements and progress live in
+Next.js shell and private job-definition backend are implemented, including owner
+login, document/link extraction, reviewed background, AI proposals, saving and
+deletion. Requirements and progress live in
 [doc/PLAN.md](doc/PLAN.md) and [doc/MVP_SPEC.md](doc/MVP_SPEC.md).
 
 ## Prerequisites
@@ -11,6 +12,8 @@ adapters and the backend OpenAI client are implemented. Requirements and progres
 - Docker with Docker Compose v2 for the container stack or local PostgreSQL.
 - GNU Make for the convenience commands below.
 - Node.js 24 or newer and npm for frontend development/builds.
+- `catdoc` for legacy Word extraction when running Python locally
+  (`sudo apt-get install catdoc` on Debian/Ubuntu). The Docker image includes it.
 
 ## Start and stop locally
 
@@ -76,8 +79,8 @@ make db-init
 This starts PostgreSQL, creates the local database if missing, applies Alembic
 migrations, and reserves the single owner. Repeating it preserves definitions,
 sources, and any configured credentials. The initial owner is named `owner`
-with no password hash; login is disabled until the authentication implementation
-in Part 7. The schema and storage/deletion contract are in
+with no password hash. Configure login as described below. The schema and storage
+contract are in
 [doc/PERSISTENCE.md](doc/PERSISTENCE.md).
 
 `DATABASE_URL` optionally overrides the runtime connection. `DATABASE_DIRECT_URL`
@@ -114,7 +117,39 @@ For Docker-managed originals, use
 so cleanup uses the same document volume. To apply migrations from the packaged
 backend, replace `cleanup` with `migrate`. Host `.data/documents` and the Docker
 document volume are separate local stores; keep the same store when reopening a
-definition. A failed cleanup leaves its queue entries for retry.
+definition. A failed cleanup leaves its queue entries for retry. API deletions
+attempt cleanup after committing and report pending original deletion.
+
+## Private backend workflow
+
+After `make db-init`, configure the owner password interactively:
+
+```bash
+make owner
+```
+
+Use at least 12 characters. Repeating this command changes the password and
+revokes existing sessions. For a different username, run
+`uv run --project backend --locked python -m career_assistant.db_cli owner --username your-name`.
+For Docker, use `docker compose run --rm --no-deps backend python -m career_assistant.db_cli owner`.
+
+Add `CAREER_SESSION_SECRET` (at least 32 random characters) to the existing ignored
+root `.env`, preserving its OpenAI key. Generate the secret locally with
+`uv run --project backend --locked python -c 'import secrets; print(secrets.token_urlsafe(48))'`.
+Set `CAREER_ALLOWED_ORIGINS` to a JSON array if using other ports/origins. Every
+API write, including login, requires a matching `Origin` header. Hosted cookies
+must use `CAREER_SESSION_SECURE=true` and an HTTPS origin. Login is disabled
+until both the owner password and session secret are configured.
+
+Start `make dev` and use <http://127.0.0.1:8000/docs> to sign in with
+`POST /api/session`, save the first draft with `PUT /api/job-definition`, then
+add sources, review facts, request clarification, and explicitly save accepted
+proposals. The API uses an HttpOnly cookie with twelve-hour sessions; logout
+revokes the session on the server. Health remains public.
+
+See [doc/BACKEND_API.md](doc/BACKEND_API.md) for payloads, supported formats,
+processing limits, failure/retry behavior, and deletion effects. Editing screens
+arrive in Part 8 and real frontend integration in Part 9.
 
 ## Frontend development
 
@@ -167,7 +202,8 @@ production Next.js server or `next start` command.
 
 The backend client uses the official SDK and direct Responses API. Keep
 `OPENAI_API_KEY` in the existing ignored root `.env`; it is never a frontend
-setting. The client is not connected to job-definition HTTP routes yet.
+setting. Only explicit facts/clarification requests and the commands below call AI;
+uploads, source retrieval, startup, and ordinary saves make no AI calls.
 
 These commands make paid live calls using synthetic data only:
 
@@ -240,9 +276,8 @@ libraries. Browser downloads and uv's local cache stay under ignored `.cache/`.
 | Explicit synthetic AI commands; routine tests use fakes | Backend-only OpenAI API |
 
 The health route checks application liveness, not database or AI readiness.
-The database schema, migrations, storage adapters, and AI client are available.
-The job-definition API starts in Part 7. The Next.js
-shell is available separately.
+The private job-definition API, migrations, document storage and AI proposals are
+available. The Next.js shell is available separately.
 The production image will include its static export when frontend/backend
 integration is implemented.
 Hosted provisioning and seven-day backup verification belong to Part 11.

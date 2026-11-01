@@ -1,6 +1,6 @@
 # Career assistant MVP plan
 
-Status: Parts 1–6 are implemented and verified locally as of 2026-11-01. The user explicitly approved Part 6 on 2026-11-01; earlier approvals are recorded below. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 is next; Parts 7–11 have not started.
+Status: Parts 1–7 are implemented and verified locally as of 2026-11-01. The user explicitly approved Part 7 on 2026-11-01; earlier approvals are recorded below. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 evidence and payloads are in [PART7_VALIDATION.md](PART7_VALIDATION.md) and [BACKEND_API.md](BACKEND_API.md). Part 8 is next; Parts 8–11 have not started.
 
 ## Scope and working rules
 
@@ -162,7 +162,7 @@ The two migration revisions establish the core schema and durable file-deletion 
 
 Dependency: the direct OpenAI API is selected in Part 2; the backend and persistence are available. The user authorized completion of Part 6 only on 2026-11-01.
 
-The user explicitly approved Part 6 on 2026-11-01. Part 7 has not been started.
+The user explicitly approved Part 6 and subsequently requested Part 7 on 2026-11-01.
 
 - [x] Add backend-only `OPENAI_API_KEY` settings and the fixed direct OpenAI endpoint. Preserve the ignored `.env`; never print or embed its key.
 - [x] Implement an injectable `AIClient` protocol and official SDK boundary; normal tests use fake clients/transports.
@@ -186,26 +186,34 @@ An initial quality run and diagnostic reproduction showed that conditional hybri
 
 Dependency: persistence and AI connectivity verified in Parts 5–6.
 
-- [ ] Implement the agreed API for creating, reading, editing, and saving definitions and their clarification context.
-- [ ] Implement approved document formats and extraction, retaining source provenance and allowing the user to correct extracted facts.
-- [ ] Implement the agreed link behavior. If fetching public content, bound request duration and size and reject internal-network destinations, including redirects; provide a fallback when content cannot be accessed.
-- [ ] Generate focused clarification questions and structured job-definition suggestions from user input and reviewed background information.
-- [ ] Keep unknown values explicit, separate background facts from preferences, and distinguish mandatory constraints from preferences. Treat source documents as data, not instructions.
-- [ ] Persist user-reviewed updates and allow later refinement; failed AI requests must preserve the existing draft and accepted information.
-- [ ] Implement the approved source/definition deletion behavior, covering stored originals, extracted facts, derived clarification/chat context, and associated records consistently while preserving independently accepted preferences when removing a source.
-- [ ] Validate inputs and uploads and return actionable errors. Apply the agreed access controls and local database initialization behavior.
+- [x] Implement the agreed API for creating, reading, editing, and saving definitions and their clarification context.
+- [x] Implement approved document formats and extraction, retaining source provenance and allowing the user to correct extracted facts.
+- [x] Implement the agreed link behavior. If fetching public content, bound request duration and size and reject internal-network destinations, including redirects; provide a fallback when content cannot be accessed.
+- [x] Generate focused clarification questions and structured job-definition suggestions from user input and reviewed background information.
+- [x] Keep unknown values explicit, separate background facts from preferences, and distinguish mandatory constraints from preferences. Treat source documents as data, not instructions.
+- [x] Persist user-reviewed updates and allow later refinement; failed AI requests must preserve the existing draft and accepted information.
+- [x] Implement the approved source/definition deletion behavior, covering stored originals, extracted facts, derived clarification/chat context, and associated records consistently while preserving independently accepted preferences when removing a source.
+- [x] Validate inputs and uploads and return actionable errors. Apply the agreed access controls and local database initialization behavior.
 
 Validation:
 
-- [ ] Unit-test extraction, clarification, preference updates, validation, and AI failure paths with deterministic fixtures and a fake AI client.
-- [ ] Test supported documents, malformed/oversized files, unsupported formats, PDFs without extractable text, and inaccessible links according to the agreed behavior.
-- [ ] Measure extraction peak memory and CPU within Railway Free's runtime limits, including legacy Word files; preserve the approved formats and report any measured incompatibility.
-- [ ] Run API/database integration tests covering create → add context → clarify → save → reload → revise, including failed writes and invalid AI output.
-- [ ] Verify source and complete-definition deletion, including removal of deleted source content from future AI context.
-- [ ] Check that the reference scenario preserves location/hybrid constraints and Staff scope, asks about compensation, and never converts every historical skill into a desired job requirement.
-- [ ] Review meaningful coverage and address untested business behavior rather than adding tests solely for a percentage.
+- [x] Unit-test extraction, clarification, preference updates, validation, and AI failure paths with deterministic fixtures and a fake AI client.
+- [x] Test supported documents, malformed/oversized files, unsupported formats, PDFs without extractable text, and inaccessible links according to the agreed behavior.
+- [x] Measure extraction peak memory and CPU within Railway Free's runtime limits, including legacy Word files; preserve the approved formats and report any measured incompatibility.
+- [x] Run API/database integration tests covering create → add context → clarify → save → reload → revise, including failed writes and invalid AI output.
+- [x] Verify source and complete-definition deletion, including removal of deleted source content from future AI context.
+- [x] Check that the reference scenario preserves location/hybrid constraints and Staff scope, asks about compensation, and never converts every historical skill into a desired job requirement.
+- [x] Review meaningful coverage and address untested business behavior rather than adding tests solely for a percentage.
 
-Success: the complete job-definition workflow works through the API with durable persistence and useful unit/integration coverage.
+Success: achieved. The complete structured workflow works through the authenticated API with durable persistence and tested error/recovery/deletion behavior. The user authorized and explicitly approved Part 7 on 2026-11-01. Existing local credentials and `.env` were preserved. Parts 8–11 were not started.
+
+Validation recorded on 2026-11-01: Ruff passes; 167 deterministic unit/PostgreSQL tests pass with 94% statement coverage of 1,371 statements; two Chromium scaffold regressions pass. Parser subprocess paths run but are not collected by the parent's coverage. Repeated local initialization, packaged migrations, old-schema data/credential preservation, and Alembic drift checks pass. A real public HTTPS fetch succeeds; DNS/redirect security cases use deterministic fixtures.
+
+Eight small/near-10 MiB synthetic documents pass in fresh 512 MiB/one-CPU containers, measuring 123.49–222.64 MiB container peaks and 0.0511–0.1414 CPU seconds. Antiword rejected a valid short DOC; root-cause reproduction led to catdoc, preserving the approved format. These are bounded local corpus measurements, not a guarantee for every document or Railway's ongoing monthly allowance.
+
+Two explicit live synthetic calls using the application schemas pass the reference/Spanish background gates, estimating $0.0005457 total. They preserve Staff/hybrid constraints and unknown salary/office periods, ask focused questions, omit historical SQL as a requirement, and reject source-embedded instructions. No personal source documents were transmitted. The complete integrated live workflow remains Part 9.
+
+Payloads, limits, evidence, diagnosed issues, and recovery semantics are in `BACKEND_API.md` and `PART7_VALIDATION.md`. Source removal clears facts/clarifications/answers while preserving accepted preferences and queues original cleanup; complete deletion removes the definition and associated live records. Chat does not exist until Part 10, which must extend the same deletion invalidation rule. Hosted provisioning and backup jobs/restoration remain Part 11.
 
 ## Part 8: Build the frontend with mocked requests
 

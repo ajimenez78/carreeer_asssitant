@@ -1,8 +1,9 @@
 # MVP persistence
 
 Part 5 design review, 2026-11-01. This implements the approved single-owner,
-single-current-definition lifecycle. API handlers, extraction, authentication,
-and AI remain in Parts 6–7; conversation storage remains in Part 10.
+single-current-definition lifecycle. Parts 6–7 subsequently implemented AI,
+authentication, extraction and API handlers; see [BACKEND_API.md](BACKEND_API.md).
+Conversation storage remains in Part 10.
 
 ## Schema and workflow review
 
@@ -25,7 +26,7 @@ Criterion keys distinguish independent constraints in the same category. For
 example, `remote` can be preferred while `hybrid_location` and
 `onsite_limit` are mandatory. A compensation value can retain separate
 `currency`, `minimum`, `maximum`, `period`, and `basis` members as unknown until
-clarified. Part 7 will validate detailed domain payloads; this part validates
+clarified. Part 7 validates detailed domain payloads; Part 5 validates
 the persistence envelope and does not infer missing values.
 
 | Approved interaction | Persistence behavior |
@@ -106,3 +107,18 @@ applications, interviews, and career progress can reference that owner and their
 relevant offer/process. No tables for those workflows are created now. Part 10
 adds conversation records attached to the current definition, with the same
 source-deletion invalidation rule.
+
+## Part 7 additions
+
+Revision `0003` adds revocable `owner_sessions`, persistent login-throttle fields,
+and source `original_stored`/`extraction_error` status. Original writes coordinate
+with deletion using the definition lock after reserving metadata. Extraction or
+storage failure clears review/facts/derived clarification context. The API
+reports pending cleanup and supplies a retry endpoint. Owner reconfiguration
+revokes sessions without replacing the definition.
+
+The backup manifest must include confirmed originals (`original_stored=true`);
+unconfirmed/failed source metadata stays in the database dump without promising
+missing original bytes. Restore preserves those recoverable source states.
+The consistent write/cleanup pause and seven-day retention contract still apply;
+actual backup/restore implementation remains Part 11.

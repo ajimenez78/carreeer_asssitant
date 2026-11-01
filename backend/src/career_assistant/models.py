@@ -53,6 +53,16 @@ class Owner(Timestamps, Base):
     id: Mapped[int] = mapped_column(SmallInteger, primary_key=True, default=1)
     username: Mapped[str] = mapped_column(Text, unique=True)
     password_hash: Mapped[str | None] = mapped_column(Text)
+    failed_logins: Mapped[int] = mapped_column(default=0, server_default="0")
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class OwnerSession(Base):
+    __tablename__ = "owner_sessions"
+
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    owner_id: Mapped[int] = mapped_column(ForeignKey("owners.id", ondelete="CASCADE"))
+    expires_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), index=True)
 
 
 class JobDefinition(Timestamps, Base):
@@ -152,6 +162,8 @@ class Source(Timestamps, Base):
     )
     extracted_text: Mapped[str | None] = mapped_column(Text)
     reviewed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    original_stored: Mapped[bool] = mapped_column(default=False, server_default="false")
+    extraction_error: Mapped[dict | None] = mapped_column(JSONB(none_as_null=True))
 
 
 class BackgroundFact(Timestamps, Base):

@@ -1,3 +1,4 @@
+import json
 from uuid import uuid4
 
 import pytest
@@ -387,11 +388,36 @@ def test_migration_upgrade_and_repeated_initialization_preserve_data(
         config = migration_config()
         config.attributes["connection"] = connection
         command.downgrade(config, "0001")
-    with sessions.begin() as session:
-        identity = DefinitionRepository(session).save(draft()).id
-        owner = session.get(Owner, 1)
-        owner.username = "configured-owner"
-        owner.password_hash = "synthetic-hash-not-a-real-credential"
+    # Seed the old schema without querying it with the current ORM model.
+    identity = uuid4()
+    with database.begin() as connection:
+        connection.execute(
+            text(
+                "INSERT INTO job_definitions (id, owner_id, description) "
+                "VALUES (:id, 1, :description)"
+            ),
+            {"id": identity, "description": draft().description},
+        )
+        for item in draft().preferences:
+            connection.execute(
+                text(
+                    "INSERT INTO preferences (id, definition_id, key, category, "
+                    "priority, value, note) VALUES (:id, :definition_id, :key, "
+                    ":category, :priority, CAST(:value AS jsonb), :note)"
+                ),
+                {
+                    "id": uuid4(),
+                    "definition_id": identity,
+                    **item.model_dump(),
+                    "value": json.dumps(item.value) if item.value is not None else None,
+                },
+            )
+        connection.execute(
+            text(
+                "UPDATE owners SET username = 'configured-owner', "
+                "password_hash = 'synthetic-hash-not-a-real-credential' WHERE id = 1"
+            )
+        )
     migrate_database(database.url)
     assert ensure_local_database(database.url) is False
     monkeypatch.setenv(

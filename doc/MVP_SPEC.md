@@ -96,7 +96,7 @@ The user explicitly selected the combined application option on 2026-11-01: sepa
 - Test the combined production image locally before release. Identify releases by Git revision and record the deployed image digest. Verify health and the real browser workflow after deployment.
 - Keep application rollback and database recovery distinct. Prefer backward-compatible schema changes; rolling back an image does not undo a migration. Retain the approved daily database/document backups for seven days.
 
-Current implementation: the backend image, local PostgreSQL service, separate Next.js scaffold, schema/migrations, persistence operations, and private storage adapters are implemented. Part 6 adds the backend Responses API client, strict structured validation, token limits/preflight, sanitized failures, and verified synthetic inference/model evaluations. See [PERSISTENCE.md](PERSISTENCE.md) and [AI_EVALUATION.md](AI_EVALUATION.md) for evidence and boundaries. Authentication/private API routes remain Part 7; the combined image remains Part 9; hosted deployment and backup restoration remain Part 11.
+Current implementation: Parts 1–7 are complete locally, including the backend image, local PostgreSQL, separate Next.js scaffold, migrations/storage, bounded Responses API client, owner authentication, private job-definition API, document/public-link extraction, background review, clarification proposals, explicit saving and deletion/recovery. See [PERSISTENCE.md](PERSISTENCE.md), [AI_EVALUATION.md](AI_EVALUATION.md), [BACKEND_API.md](BACKEND_API.md) and [PART7_VALIDATION.md](PART7_VALIDATION.md). Frontend editing remains Part 8; the combined image/integrated workflow remains Part 9; chat remains Part 10; hosted deployment and backup restoration remain Part 11.
 
 ### Persistence and recovery details
 
@@ -180,3 +180,5 @@ Errors follow `{"error": {"code": "...", "message": "...", "fields": {}}}` with 
 - 2026-11-01: Source defaults approved: text-based PDF, legacy Word, DOCX, Markdown; five files at 10 MB each; public-page retrieval with upload/paste fallback; no OCR initially; retain sources until removal; daily backups retained seven days.
 - Part 2 is complete. No unresolved product or architecture question blocks Part 3. Exact salary/office-day periods are inputs for the application's clarification flow.
 - 2026-11-01: Part 6 direct inference and bounded synthetic evaluation completed; evidence and limits are in `AI_EVALUATION.md`. Railway/Neon account setup, hosted credentials, region availability, hosting costs, hosted inference, and deployed backup verification remain Part 11.
+
+- 2026-11-01: The user explicitly approved Part 7. The private backend implementation and local validation are recorded in `BACKEND_API.md` and `PART7_VALIDATION.md`; Part 8 is next.

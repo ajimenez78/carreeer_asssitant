@@ -1,0 +1,153 @@
+{
+  "date": "2026-11-01",
+  "synthetic_only": true,
+  "passed": true,
+  "reference": {
+    "checks": {
+      "staff_scope": true,
+      "architecture": true,
+      "cross_team": true,
+      "learning": true,
+      "international": true,
+      "ai_preferred": true,
+      "remote_preferred": true,
+      "hybrid_madrid_mandatory": true,
+      "frontend_only_excluded": true,
+      "onsite_limit_and_unknown_period": true,
+      "salary_unknown": true,
+      "asks_compensation": true,
+      "asks_office_period": true,
+      "no_historical_sql_requirement": true
+    },
+    "preferences": [
+      {
+        "key": "seniority",
+        "category": "seniority",
+        "priority": "preferred",
+        "value": "Staff",
+        "note": null
+      },
+      {
+        "key": "architecture_system_design",
+        "category": "responsibilities",
+        "priority": "preferred",
+        "value": "Architecture and system design",
+        "note": null
+      },
+      {
+        "key": "cross_team_collaboration",
+        "category": "responsibilities",
+        "priority": "preferred",
+        "value": "Cross-team collaboration",
+        "note": null
+      },
+      {
+        "key": "continuous_learning",
+        "category": "technical_interests",
+        "priority": "preferred",
+        "value": "Continuous learning",
+        "note": null
+      },
+      {
+        "key": "international_scope",
+        "category": "company_context",
+        "priority": "preferred",
+        "value": "International scope",
+        "note": null
+      },
+      {
+        "key": "ai_engineering",
+        "category": "technical_interests",
+        "priority": "preferred",
+        "value": "AI engineering",
+        "note": null
+      },
+      {
+        "key": "remote_work",
+        "category": "work_arrangement",
+        "priority": "preferred",
+        "value": "Remote",
+        "note": null
+      },
+      {
+        "key": "hybrid_location",
+        "category": "location",
+        "priority": "mandatory",
+        "value": "Near Madrid",
+        "note": "Applies only if the role is hybrid."
+      },
+      {
+        "key": "hybrid_onsite_limit",
+        "category": "work_arrangement",
+        "priority": "mandatory",
+        "value": {
+          "days": 2,
+          "period": null
+        },
+        "note": "Applies only if the role is hybrid."
+      },
+      {
+        "key": "compensation",
+        "category": "compensation",
+        "priority": "preferred",
+        "value": {
+          "minimum": null,
+          "maximum": null,
+          "target": null,
+          "currency": null,
+          "period": null,
+          "basis": null
+        },
+        "note": "Good compensation; amount and details unspecified."
+      },
+      {
+        "key": "frontend_only_roles",
+        "category": "responsibilities",
+        "priority": "excluded",
+        "value": "Frontend-only roles",
+        "note": null
+      }
+    ],
+    "questions": [
+      "For hybrid roles, what period does the maximum of 2 onsite days refer to (for example, per week or per month)?",
+      "What compensation range or target would you consider good, and in what currency, period, and gross/net basis?"
+    ],
+    "conflicts": [],
+    "usage": {
+      "model": "gpt-6-luna",
+      "seconds": 8.586712257994805,
+      "input_tokens": 908,
+      "output_tokens": 763,
+      "estimated_cost_usd": "0.0004723"
+    }
+  },
+  "background_es": {
+    "checks": {
+      "facts_present": true,
+      "no_invented_doctorate": true,
+      "employment_preserved": true
+    },
+    "proposal": {
+      "facts": [
+        {
+          "content": "Trabajó como ingeniera en Empresa Ejemplo entre 2019 y 2022.",
+          "evidence": "Ingeniera en Empresa Ejemplo, 2019–2022."
+        },
+        {
+          "content": "Tiene experiencia histórica en frontend.",
+          "evidence": "Experiencia histórica en frontend."
+        }
+      ],
+      "unknowns": [
+        "No se indica formación."
+      ]
+    },
+    "usage": {
+      "model": "gpt-6-luna",
+      "seconds": 3.299903761013411,
+      "input_tokens": 329,
+      "output_tokens": 81,
+      "estimated_cost_usd": "0.0000734"
+    }
+  }
+}

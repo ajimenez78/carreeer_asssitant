@@ -33,21 +33,23 @@ type Category = Literal[
 
 
 class PreferenceData(BaseModel):
-    model_config = ConfigDict(str_strip_whitespace=True, allow_inf_nan=False)
+    model_config = ConfigDict(
+        str_strip_whitespace=True, allow_inf_nan=False, extra="forbid"
+    )
 
     key: str = Field(min_length=1, max_length=80)
     category: Category
     priority: Literal["mandatory", "preferred", "excluded"] = "preferred"
     value: JsonValue = None
-    note: str | None = None
+    note: str | None = Field(default=None, max_length=2000)
 
 
 class DefinitionData(BaseModel):
-    model_config = ConfigDict(str_strip_whitespace=True)
+    model_config = ConfigDict(str_strip_whitespace=True, extra="forbid")
 
-    description: str = Field(min_length=1)
+    description: str = Field(min_length=1, max_length=20_000)
     state: Literal["draft", "ready"] = "draft"
-    preferences: list[PreferenceData] = Field(default_factory=list)
+    preferences: list[PreferenceData] = Field(default_factory=list, max_length=100)
 
     @model_validator(mode="after")
     def unique_criteria(self) -> Self:
