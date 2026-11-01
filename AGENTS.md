@@ -44,6 +44,7 @@ The business requiremens implementation will be incremental. We will start with 
 - You must decide if it is better to use AWS lambda and AWS services in general, or a Docker container instead. You can ask me any additional info you'll neeed.
 - The solution should be tested locally, prior to the real Cloud deployment
 - Use Amazon Bedrock as AI endpoint. The needed enpoints and credentials are provided in an .env file.
+- For each AI requierement, select the most suitable OpenAI model, prefering low cost if the model if good enough for the task at hand.
 - Use a relational database for persistence
 
 ## Coding standards
