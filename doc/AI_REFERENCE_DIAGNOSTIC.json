@@ -1,0 +1,97 @@
+{
+  "case": "reference_preferences",
+  "model": "gpt-6-luna",
+  "passed": false,
+  "checks": {
+    "unknown_salary_preserved": true,
+    "unknown_office_period_preserved": true,
+    "small_clarification_round": true,
+    "unique_criteria": true,
+    "staff_scope": true,
+    "architecture_scope": true,
+    "cross_team_scope": true,
+    "learning": true,
+    "international_scope": true,
+    "ai_preferred": true,
+    "remote_preferred": true,
+    "madrid_hybrid_constraint": false,
+    "two_day_limit": false,
+    "frontend_only_excluded": true,
+    "asks_compensation": true,
+    "asks_office_period": true
+  },
+  "elapsed_seconds": 5.645,
+  "usage": {
+    "input_tokens": 570,
+    "cached_input_tokens": 0,
+    "output_tokens": 347,
+    "reasoning_tokens": 103
+  },
+  "estimated_cost_usd": "0.0002305",
+  "synthetic_proposal": {
+    "preferences": [
+      {
+        "key": "seniority",
+        "priority": "preferred",
+        "value": "Staff scope"
+      },
+      {
+        "key": "architecture",
+        "priority": "preferred",
+        "value": "Architecture and system design"
+      },
+      {
+        "key": "cross_team",
+        "priority": "preferred",
+        "value": "Cross-team collaboration"
+      },
+      {
+        "key": "learning",
+        "priority": "preferred",
+        "value": "Continuous learning"
+      },
+      {
+        "key": "international_scope",
+        "priority": "preferred",
+        "value": "International scope"
+      },
+      {
+        "key": "ai_engineering",
+        "priority": "preferred",
+        "value": "AI engineering"
+      },
+      {
+        "key": "remote",
+        "priority": "preferred",
+        "value": "Remote"
+      },
+      {
+        "key": "hybrid_location",
+        "priority": "preferred",
+        "value": "Hybrid roles only near Madrid"
+      },
+      {
+        "key": "onsite_days",
+        "priority": "preferred",
+        "value": "Maximum 2 days on site"
+      },
+      {
+        "key": "frontend_only",
+        "priority": "excluded",
+        "value": "Frontend-only roles"
+      }
+    ],
+    "salary": {
+      "minimum": null,
+      "maximum": null,
+      "currency": null,
+      "period": null,
+      "basis": null
+    },
+    "onsite_period": null,
+    "questions": [
+      "What compensation range would you consider good, and in which currency, pay period, and gross or net basis?",
+      "For the maximum of 2 on-site days, what period do you mean (for example, per week or per month)?"
+    ]
+  }
+}

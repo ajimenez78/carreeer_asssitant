@@ -96,7 +96,7 @@ The user explicitly selected the combined application option on 2026-11-01: sepa
 - Test the combined production image locally before release. Identify releases by Git revision and record the deployed image digest. Verify health and the real browser workflow after deployment.
 - Keep application rollback and database recovery distinct. Prefer backward-compatible schema changes; rolling back an image does not undo a migration. Retain the approved daily database/document backups for seven days.
 
-Current implementation: the backend-only image, local PostgreSQL service, and separate Next.js static-export scaffold are implemented. Part 5 adds the relational schema, packaged Alembic migrations, local initialization, tested persistence operations, local/Neon private document-store adapters, and a durable original-deletion queue. See [PERSISTENCE.md](PERSISTENCE.md) for the reviewed schema and recovery contract. Authentication/private API routes remain Part 7; the combined image remains Part 9; hosted deployment and real backup restoration remain Part 11.
+Current implementation: the backend image, local PostgreSQL service, separate Next.js scaffold, schema/migrations, persistence operations, and private storage adapters are implemented. Part 6 adds the backend Responses API client, strict structured validation, token limits/preflight, sanitized failures, and verified synthetic inference/model evaluations. See [PERSISTENCE.md](PERSISTENCE.md) and [AI_EVALUATION.md](AI_EVALUATION.md) for evidence and boundaries. Authentication/private API routes remain Part 7; the combined image remains Part 9; hosted deployment and backup restoration remain Part 11.
 
 ### Persistence and recovery details
 
@@ -138,15 +138,15 @@ Local checks on 2026-11-01 confirmed:
 - No `OPENAI_BASE_URL` override or Bedrock token remains in the file. Use the standard direct OpenAI endpoint.
 - `.env` is ignored by Git.
 - An authenticated read-only `GET https://api.openai.com/v1/models` returned HTTP 200 and listed `gpt-6-luna`.
-- This establishes authentication/catalog access only. No inference request has been made; available credit, inference permissions, rate limits, output behavior, and task quality still need the Part 6 checks.
+- These initial Part 2 checks established catalog access only. Part 6 subsequently verified direct inference, strict output, token preflight, and the bounded synthetic task evaluations; see [AI_EVALUATION.md](AI_EVALUATION.md). Remaining credit and account rate ceilings were not measured.
 
-| AI task | Initial candidate | Part 6 selection check |
+| AI task | Selected initial model | Part 6 evidence |
 | --- | --- | --- |
-| Background extraction from locally parsed text | `gpt-6-luna` | Preserve facts and source provenance without inventing employment or skills. |
-| Clarification and structured definition suggestions | `gpt-6-luna` | Ask useful questions, preserve constraints, and leave unknowns unknown. |
-| Open-ended refinement chat | `gpt-6-luna` | Return consistent, reviewable preference changes. |
+| Background extraction from locally parsed text | `gpt-6-luna`, low reasoning | English/Spanish synthetic facts retain source evidence and unknown education; the embedded-command example does not invent a PhD. |
+| Clarification and structured definition suggestions | `gpt-6-luna`, low reasoning | Vague/reference cases preserve constraints and unknowns after correcting conditional-priority prompt wording. |
+| Open-ended refinement chat | `gpt-6-luna`, low reasoning | A targeted synthetic change preserves other accepted values; actual chat remains Part 10. |
 
-Start with one configurable model. Increase reasoning effort or evaluate a stronger model only if representative quality tests show the need, recording the cost/latency tradeoff. Final task-level selection belongs to Part 6. GPT-6 Luna currently supports structured outputs and has Standard text rates of $0.10/1M input tokens and $0.50/1M output tokens. The example cost is $0.10 + 0.2 × $0.50 = $0.20. [Official model documentation](https://developers.openai.com/api/docs/models/gpt-6-luna).
+Keep one configurable model. Increase reasoning effort or evaluate a stronger model only when quality evidence justifies the cost/latency tradeoff. The bounded Part 6 run supports the initial selection; broader document/workflow tests remain later work. GPT-6 Luna supports structured outputs and has verified Standard text rates of $0.10/1M input tokens and $0.50/1M output tokens. The monthly assumption remains $0.10 + 0.2 × $0.50 = $0.20. [Official model documentation](https://developers.openai.com/api/docs/models/gpt-6-luna).
 
 Billable output includes reasoning where applicable. Larger prompts, repeated documents, retries, and longer conversations increase usage. Track per-request tokens and cost estimates; do not expose keys to the frontend. Preserve the existing draft on authentication, quota, provider, or output-validation errors.
 
@@ -179,4 +179,4 @@ Errors follow `{"error": {"code": "...", "message": "...", "fields": {}}}` with 
 - 2026-11-01: Product defaults approved: one current editable definition, explicit save/review, no revision history, English UI with English/Spanish content.
 - 2026-11-01: Source defaults approved: text-based PDF, legacy Word, DOCX, Markdown; five files at 10 MB each; public-page retrieval with upload/paste fallback; no OCR initially; retain sources until removal; daily backups retained seven days.
 - Part 2 is complete. No unresolved product or architecture question blocks Part 3. Exact salary/office-day periods are inputs for the application's clarification flow.
-- Live model evaluation remains in Part 6. Railway/Neon account setup, hosted credentials, region availability, measured costs, and deployed backup verification remain in Part 11. These checks are not marked complete here.
+- 2026-11-01: Part 6 direct inference and bounded synthetic evaluation completed; evidence and limits are in `AI_EVALUATION.md`. Railway/Neon account setup, hosted credentials, region availability, hosting costs, hosted inference, and deployed backup verification remain Part 11.

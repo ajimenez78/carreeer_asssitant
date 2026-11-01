@@ -7,7 +7,7 @@ export NEXT_TELEMETRY_DISABLED ?= 1
 export UV_CACHE_DIR ?= $(CURDIR)/.cache/uv
 export PLAYWRIGHT_BROWSERS_PATH ?= $(CURDIR)/.cache/ms-playwright
 
-.PHONY: setup dev up down db-up db-down db-init db-migrate storage-cleanup integration test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-browser-install frontend-e2e frontend-preview
+.PHONY: setup dev up down db-up db-down db-init db-migrate storage-cleanup integration ai-smoke ai-evaluate test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-browser-install frontend-e2e frontend-preview
 
 setup:
 	$(UV) sync --project backend --locked
@@ -38,6 +38,12 @@ storage-cleanup:
 
 integration: db-up
 	$(UV) run --project backend --locked pytest backend/tests/integration --cov=career_assistant --cov-report=term-missing
+
+ai-smoke:
+	$(UV) run --project backend --locked python -m career_assistant.ai_cli smoke
+
+ai-evaluate:
+	$(UV) run --project backend --locked python -m career_assistant.ai_cli evaluate
 
 test:
 	$(UV) run --project backend --locked pytest backend/tests --ignore=backend/tests/e2e --ignore=backend/tests/integration --cov=career_assistant --cov-report=term-missing

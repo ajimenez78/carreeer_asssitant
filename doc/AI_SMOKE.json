@@ -1,0 +1,25 @@
+{
+  "checked_at": "2026-11-01T17:03:48.332072+00:00",
+  "requested_model": "gpt-6-luna",
+  "reasoning_effort": "low",
+  "max_input_tokens": 20000,
+  "max_output_tokens": 2000,
+  "results": [
+    {
+      "case": "arithmetic",
+      "model": "gpt-6-luna",
+      "passed": true,
+      "checks": {
+        "answer_is_4": true
+      },
+      "elapsed_seconds": 3.875,
+      "usage": {
+        "input_tokens": 56,
+        "cached_input_tokens": 0,
+        "output_tokens": 12,
+        "reasoning_tokens": 0
+      },
+      "estimated_cost_usd": "0.0000116"
+    }
+  ]
+}

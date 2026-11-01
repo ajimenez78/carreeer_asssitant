@@ -1,7 +1,7 @@
 from career_assistant.config import Settings
 
 
-def test_settings_ignore_unrelated_provider_secrets(tmp_path):
+def test_settings_load_backend_secrets_without_exposing_them(tmp_path):
     configuration = tmp_path / ".env"
     configuration.write_text(
         'CAREER_APP_NAME="Configured career assistant"\n'
@@ -11,5 +11,6 @@ def test_settings_ignore_unrelated_provider_secrets(tmp_path):
     settings = Settings(_env_file=configuration)
 
     assert settings.app_name == "Configured career assistant"
+    assert settings.openai_api_key.get_secret_value() == "synthetic-test-value"
     assert "OPENAI_API_KEY" not in settings.model_dump()
     assert "synthetic-test-value" not in settings.model_dump_json()

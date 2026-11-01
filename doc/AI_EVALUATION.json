@@ -1,0 +1,121 @@
+{
+  "checked_at": "2026-11-01T17:08:07.077039+00:00",
+  "requested_model": "gpt-6-luna",
+  "reasoning_effort": "low",
+  "max_input_tokens": 20000,
+  "max_output_tokens": 2000,
+  "results": [
+    {
+      "case": "background_en",
+      "model": "gpt-6-luna",
+      "passed": true,
+      "checks": {
+        "facts_present": true,
+        "valid_provenance": true,
+        "no_invented_education": true,
+        "education_unknown": true,
+        "employment_preserved": true
+      },
+      "elapsed_seconds": 3.96,
+      "usage": {
+        "input_tokens": 323,
+        "cached_input_tokens": 0,
+        "output_tokens": 139,
+        "reasoning_tokens": 49
+      },
+      "estimated_cost_usd": "0.0001018"
+    },
+    {
+      "case": "background_es",
+      "model": "gpt-6-luna",
+      "passed": true,
+      "checks": {
+        "facts_present": true,
+        "valid_provenance": true,
+        "no_invented_education": true,
+        "education_unknown": true,
+        "employment_preserved": true
+      },
+      "elapsed_seconds": 1.973,
+      "usage": {
+        "input_tokens": 318,
+        "cached_input_tokens": 0,
+        "output_tokens": 108,
+        "reasoning_tokens": 0
+      },
+      "estimated_cost_usd": "0.0000858"
+    },
+    {
+      "case": "vague_preferences",
+      "model": "gpt-6-luna",
+      "passed": true,
+      "checks": {
+        "unknown_salary_preserved": true,
+        "unknown_office_period_preserved": true,
+        "small_clarification_round": true,
+        "unique_criteria": true,
+        "asks_compensation": true,
+        "no_invented_requirements": true
+      },
+      "elapsed_seconds": 2.3,
+      "usage": {
+        "input_tokens": 578,
+        "cached_input_tokens": 0,
+        "output_tokens": 105,
+        "reasoning_tokens": 0
+      },
+      "estimated_cost_usd": "0.0001103"
+    },
+    {
+      "case": "reference_preferences",
+      "model": "gpt-6-luna",
+      "passed": true,
+      "checks": {
+        "unknown_salary_preserved": true,
+        "unknown_office_period_preserved": true,
+        "small_clarification_round": true,
+        "unique_criteria": true,
+        "staff_scope": true,
+        "architecture_scope": true,
+        "cross_team_scope": true,
+        "learning": true,
+        "international_scope": true,
+        "ai_preferred": true,
+        "remote_preferred": true,
+        "madrid_hybrid_constraint": true,
+        "two_day_limit": true,
+        "frontend_only_excluded": true,
+        "asks_compensation": true,
+        "asks_office_period": true
+      },
+      "elapsed_seconds": 4.456,
+      "usage": {
+        "input_tokens": 643,
+        "cached_input_tokens": 0,
+        "output_tokens": 409,
+        "reasoning_tokens": 0
+      },
+      "estimated_cost_usd": "0.0002688"
+    },
+    {
+      "case": "reviewable_refinement",
+      "model": "gpt-6-luna",
+      "passed": true,
+      "checks": {
+        "unknown_salary_preserved": true,
+        "unknown_office_period_preserved": true,
+        "small_clarification_round": true,
+        "unique_criteria": true,
+        "only_requested_change": true
+      },
+      "elapsed_seconds": 2.092,
+      "usage": {
+        "input_tokens": 734,
+        "cached_input_tokens": 0,
+        "output_tokens": 126,
+        "reasoning_tokens": 0
+      },
+      "estimated_cost_usd": "0.0001364"
+    }
+  ]
+}

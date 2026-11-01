@@ -2,7 +2,7 @@
 
 The MVP helps one private user define and refine an ideal job. The backend and
 Next.js scaffolds, PostgreSQL persistence, migrations, and private document-store
-adapters are implemented. Requirements and progress live in
+adapters and the backend OpenAI client are implemented. Requirements and progress live in
 [doc/PLAN.md](doc/PLAN.md) and [doc/MVP_SPEC.md](doc/MVP_SPEC.md).
 
 ## Prerequisites
@@ -163,6 +163,37 @@ Open <http://127.0.0.1:3000> and stop with Ctrl+C. This preview serves static
 files only; production will serve them through FastAPI in Part 9. There is no
 production Next.js server or `next start` command.
 
+## OpenAI checks
+
+The backend client uses the official SDK and direct Responses API. Keep
+`OPENAI_API_KEY` in the existing ignored root `.env`; it is never a frontend
+setting. The client is not connected to job-definition HTTP routes yet.
+
+These commands make paid live calls using synthetic data only:
+
+```bash
+make ai-smoke
+make ai-evaluate
+```
+
+The smoke test checks `2+2`; evaluation covers English/Spanish background
+extraction, vague preferences, the reference scenario, and a reviewable update.
+Results include pass/fail checks, elapsed time, token usage, and estimated cost.
+No CV, profile, or other personal source document is sent by these commands.
+To save a sanitized report, use
+`uv run --project backend --locked python -m career_assistant.ai_cli evaluate --report doc/AI_EVALUATION.json`.
+
+Defaults are `gpt-6-luna`, low reasoning, a 60-second timeout budget, 20,000 input
+tokens, and 2,000 output tokens including reasoning. The client counts input
+tokens before inference, rejects oversized context, disables automatic retries
+and truncation, and requests strict structured output with `store=False`.
+Incomplete, refused, or invalid output raises a sanitized error; this client
+does not write to the saved definition. Settings can lower those limits but
+cannot exceed the agreed caps. See [.env.example](.env.example).
+
+Normal tests use fake transports/clients and never make live OpenAI calls. The
+model-selection evidence and its limits are in [doc/AI_EVALUATION.md](doc/AI_EVALUATION.md).
+
 ## Configuration
 
 Settings are optional and read from the root `.env` or process environment.
@@ -206,11 +237,11 @@ libraries. Browser downloads and uv's local cache stay under ignored `.cache/`.
 | FastAPI/Uvicorn, standalone or in Docker | One Railway Free web service |
 | Docker Compose PostgreSQL and named volume | Neon Free PostgreSQL |
 | Private host directory or local Docker document volume | Private Neon Object Storage |
-| No AI calls in this scaffold | Backend-only OpenAI API integration in Part 6 |
+| Explicit synthetic AI commands; routine tests use fakes | Backend-only OpenAI API |
 
 The health route checks application liveness, not database or AI readiness.
-The database schema, migrations, and storage adapters are available. AI
-connectivity is Part 6, and the job-definition API starts in Part 7. The Next.js
+The database schema, migrations, storage adapters, and AI client are available.
+The job-definition API starts in Part 7. The Next.js
 shell is available separately.
 The production image will include its static export when frontend/backend
 integration is implemented.

@@ -26,3 +26,13 @@ class Settings(BaseSettings):
     neon_storage_bucket: str | None = None
     neon_storage_access_key: SecretStr | None = None
     neon_storage_secret_key: SecretStr | None = None
+    openai_api_key: SecretStr | None = Field(
+        default=None, validation_alias="OPENAI_API_KEY"
+    )
+    ai_model: str = Field(default="gpt-6-luna", min_length=1)
+    ai_reasoning_effort: Literal["none", "low", "medium", "high", "xhigh", "max"] = (
+        "low"
+    )
+    ai_timeout_seconds: float = Field(default=60, gt=0, le=60)
+    ai_max_input_tokens: int = Field(default=20_000, ge=1, le=20_000)
+    ai_max_output_tokens: int = Field(default=2_000, ge=1, le=2_000)

@@ -1,6 +1,6 @@
 # Career assistant MVP plan
 
-Status: Parts 1–4 complete and approved by the user on 2026-11-01. Part 5 is implemented and verified locally. Agreed requirements and architecture are in [MVP_SPEC.md](MVP_SPEC.md); persistence design is in [PERSISTENCE.md](PERSISTENCE.md), and setup commands are in [README.md](../README.md). Part 6 is next; Parts 6–11 have not started.
+Status: Parts 1–6 are implemented and verified locally as of 2026-11-01. Earlier approvals are recorded below; the user explicitly authorized Part 6 only. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 is next; Parts 7–11 have not started.
 
 ## Scope and working rules
 
@@ -160,22 +160,25 @@ The two migration revisions establish the core schema and durable file-deletion 
 
 ## Part 6: Verify OpenAI API connectivity and select models
 
-Dependency: the direct OpenAI API is selected in Part 2; backend scaffold available. Catalog authentication is verified; inference and billing/quota checks remain here.
+Dependency: the direct OpenAI API is selected in Part 2; the backend and persistence are available. The user authorized completion of Part 6 only on 2026-11-01.
 
-- [ ] Add backend-only OpenAI configuration using `OPENAI_API_KEY` and the standard OpenAI endpoint; do not print credentials or commit secrets.
-- [ ] Implement a small AI client boundary that supports a fake client for routine tests.
-- [ ] Run an explicit live smoke test asking “2+2” and verify that the response represents 4.
-- [ ] Evaluate `gpt-6-luna` initially on representative extraction, ambiguous-preference clarification, and structured definition updates. Prefer the lowest-cost accessible OpenAI model that meets quality and latency criteria for each task.
-- [ ] Record selected model identifiers, endpoint/account requirements, evaluation results, token limits, and a usage/cost estimate based on verified pricing. Reuse a model across tasks when sufficient.
-- [ ] Define structured-output validation and useful behavior for access errors, unavailable models, timeouts, throttling, and invalid responses.
+- [x] Add backend-only `OPENAI_API_KEY` settings and the fixed direct OpenAI endpoint. Preserve the ignored `.env`; never print or embed its key.
+- [x] Implement an injectable `AIClient` protocol and official SDK boundary; normal tests use fake clients/transports.
+- [x] Run the explicit live `2+2` test: validated structured answer 4, 3.875 s including preflight. See [AI_SMOKE.json](AI_SMOKE.json).
+- [x] Evaluate the initial `gpt-6-luna` candidate at low reasoning on English/Spanish extraction, vague preferences, the reference scenario, and a targeted reviewable update. The final five cases pass; no stronger model was needed for this corpus.
+- [x] Record model/endpoint/account prerequisites, limits, latency, usage, cost assumptions, and limitations in [AI_EVALUATION.md](AI_EVALUATION.md). Keep one configurable model for the evaluated tasks.
+- [x] Validate strict structured output, count input before inference, cap input/output, and map access, quota, timeout, throttling, invalid/incomplete/refused output, and unavailable-model failures to sanitized errors.
 
 Validation:
 
-- [ ] Unit-test request construction, response validation, and error handling with fake responses.
-- [ ] Run the live arithmetic test separately from routine tests; record a sanitized result.
-- [ ] Use synthetic examples to check that the selected models preserve constraints, ask about missing salary information, and avoid inventing background facts.
+- [x] Ruff and the final combined unit/PostgreSQL suite pass: 78 tests, 99% statement coverage of 568 current backend statements. SDK transport tests verify strict JSON requests, token preflight, bounded output, no retries, timeout budgeting, error mapping, and usage/cost accounting without live AI.
+- [x] Run and record the live arithmetic test separately. The final quality run has latencies of 1.973–4.456 s, 2,596 input/887 output tokens, and estimated inference cost $0.0007031. All 12 development generations together estimate $0.0016164; reports contain synthetic/sanitized data only.
+- [x] Verify preservation of Staff scope, architecture, cross-team work, Madrid hybrid constraints, the two-day cap, remote/AI preferences, and the frontend-only exclusion; leave salary and the office-day period unknown and ask for clarification. Reject source-embedded commands in the extraction examples and retain source evidence.
+- [x] Build the backend image and verify SDK/native imports and key-free application construction. No live AI calls are made during builds, startup, or routine tests. Stop local test services while retaining volumes.
 
-Success: direct OpenAI inference works, task-level model choices have evidence, and routine tests need neither credentials nor paid AI calls. Arithmetic alone does not establish model suitability.
+Success: achieved for the bounded Part 6 evaluation. Direct OpenAI inference and token preflight work with the configured account; the initial model satisfies these synthetic quality/latency checks. Routine tests require neither credentials nor paid calls. Account balance/rate ceilings, maximum-document performance, and production reliability are not established by this small corpus.
+
+An initial quality run and diagnostic reproduction showed that conditional hybrid limits were retained as text but incorrectly labelled preferred. The prompt now explicitly distinguishes hard conditions on a preferred alternative; the unchanged acceptance gates pass after this correction. Initial/final reports and the synthetic diagnostic are retained in `doc/`; no model or reasoning upgrade was needed. OpenAI SDK 3.42.0 is locked. API integration/document extraction/authentication remain Part 7, and hosted inference remains Part 11.
 
 ## Part 7: Implement the job-definition backend
 
