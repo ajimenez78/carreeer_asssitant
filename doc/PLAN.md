@@ -1,6 +1,6 @@
 # Career assistant MVP plan
 
-Status: Parts 1–6 are implemented and verified locally as of 2026-11-01. Earlier approvals are recorded below; the user explicitly authorized Part 6 only. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 is next; Parts 7–11 have not started.
+Status: Parts 1–6 are implemented and verified locally as of 2026-11-01. The user explicitly approved Part 6 on 2026-11-01; earlier approvals are recorded below. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 is next; Parts 7–11 have not started.
 
 ## Scope and working rules
 
@@ -161,6 +161,8 @@ The two migration revisions establish the core schema and durable file-deletion 
 ## Part 6: Verify OpenAI API connectivity and select models
 
 Dependency: the direct OpenAI API is selected in Part 2; the backend and persistence are available. The user authorized completion of Part 6 only on 2026-11-01.
+
+The user explicitly approved Part 6 on 2026-11-01. Part 7 has not been started.
 
 - [x] Add backend-only `OPENAI_API_KEY` settings and the fixed direct OpenAI endpoint. Preserve the ignored `.env`; never print or embed its key.
 - [x] Implement an injectable `AIClient` protocol and official SDK boundary; normal tests use fake clients/transports.
