@@ -1,9 +1,13 @@
 UV ?= uv
 BACKEND_PORT ?= 8000
+FRONTEND_PORT ?= 3000
+NPM ?= npm
+export npm_config_cache ?= $(CURDIR)/.cache/npm
+export NEXT_TELEMETRY_DISABLED ?= 1
 export UV_CACHE_DIR ?= $(CURDIR)/.cache/uv
 export PLAYWRIGHT_BROWSERS_PATH ?= $(CURDIR)/.cache/ms-playwright
 
-.PHONY: setup dev up down db-up db-down test browser-install e2e lint check
+.PHONY: setup dev up down db-up db-down test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-browser-install frontend-e2e frontend-preview
 
 setup:
 	$(UV) sync --project backend --locked
@@ -37,3 +41,21 @@ lint:
 	$(UV) run --project backend --locked ruff format --check backend
 
 check: lint test
+
+frontend-setup:
+	$(NPM) --prefix frontend ci
+
+frontend-dev:
+	$(NPM) --prefix frontend run dev -- --hostname 127.0.0.1 --port $(FRONTEND_PORT)
+
+frontend-check:
+	$(NPM) --prefix frontend run check
+
+frontend-browser-install:
+	cd frontend && $(NPM) exec playwright install chromium
+
+frontend-e2e:
+	$(NPM) --prefix frontend run test:e2e
+
+frontend-preview:
+	$(UV) run --project backend --locked python -m http.server $(FRONTEND_PORT) --bind 127.0.0.1 --directory frontend/out

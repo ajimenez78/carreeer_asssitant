@@ -56,4 +56,4 @@ The MVP is for one private user with one current editable job definition, explic
 5. When hitting issues, always identify root cause before trying a fix. Do not guess. Prove with evidence, then fix the root cause.
 
 ## Working documentation
-All documents for planning and executing this project will be in the doc/ directory. Please review the doc/PLAN.md document before proceeding. Agreed Part 2 requirements, architecture, API baseline, and validation status are recorded in doc/MVP_SPEC.md. Example source documents remain in doc/: doc/ajimenez/MY_IDEAL_JOB.md, doc/ajimenez/CV.pdf, and doc/Profile.pdf (LinkedIn export).
+All documents for planning and executing this project will be in the doc/ directory. Please review the doc/PLAN.md document before proceeding. Agreed Part 2 requirements, architecture, API baseline, and validation status are recorded in doc/MVP_SPEC.md. Example source documents remain in doc/: doc/ajimenez/MY_IDEAL_JOB.md, doc/ajimenez/CV.pdf, and doc/ajimenez/Profile.pdf (LinkedIn export).

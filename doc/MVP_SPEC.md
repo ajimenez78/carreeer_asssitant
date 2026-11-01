@@ -96,7 +96,7 @@ The user explicitly selected the combined application option on 2026-11-01: sepa
 - Test the combined production image locally before release. Identify releases by Git revision and record the deployed image digest. Verify health and the real browser workflow after deployment.
 - Keep application rollback and database recovery distinct. Prefer backward-compatible schema changes; rolling back an image does not undo a migration. Retain the approved daily database/document backups for seven days.
 
-Current implementation: Part 3 supplies a backend-only image and the separate local PostgreSQL service. The Next.js scaffold is Part 4; building and testing the combined image is Part 9; hosted deployment is Part 11.
+Current implementation: Part 3 supplies a backend-only image and the separate local PostgreSQL service. Part 4 supplies the separate Next.js scaffold, verified static export, public build-time API configuration, and desktop/mobile browser smoke tests. Building and testing the combined image remains Part 9; hosted deployment remains Part 11.
 
 ### Persistence and recovery details
 

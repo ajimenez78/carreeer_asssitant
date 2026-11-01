@@ -1,7 +1,8 @@
 # Career assistant
 
 The MVP helps one private user define and refine an ideal job. Part 3 provides
-the Python backend scaffold and local PostgreSQL infrastructure. Requirements
+the Python backend scaffold and local PostgreSQL infrastructure. Part 4 adds
+the Next.js frontend shell and static export. Requirements
 and progress live in [doc/PLAN.md](doc/PLAN.md) and [doc/MVP_SPEC.md](doc/MVP_SPEC.md).
 
 ## Prerequisites
@@ -9,6 +10,7 @@ and progress live in [doc/PLAN.md](doc/PLAN.md) and [doc/MVP_SPEC.md](doc/MVP_SP
 - Python 3.14 and [uv](https://docs.astral.sh/uv/getting-started/installation/).
 - Docker with Docker Compose v2 for the container stack or local PostgreSQL.
 - GNU Make for the convenience commands below.
+- Node.js 24 or newer and npm for frontend development/builds.
 
 ## Start and stop locally
 
@@ -63,6 +65,53 @@ it with `CAREER_POSTGRES_PASSWORD` before first database initialization.
 `make down` preserves the named database volume. Do not pass `--volumes` to
 `docker compose down` unless you intend to delete local database data.
 
+## Frontend development
+
+Install the locked frontend dependencies, then start Next.js:
+
+```bash
+make frontend-setup
+make frontend-dev
+```
+
+Open <http://127.0.0.1:3000>. Stop with Ctrl+C. Override the port with
+`make frontend-dev FRONTEND_PORT=3002`. Run `make dev` in another terminal for
+the backend at <http://127.0.0.1:8000>; add `make db-up` when a database is needed.
+The Part 4 entry page explains the workflow and makes no API requests. Editing,
+saving, and uploading arrive in later parts.
+
+The optional public API setting is documented in
+[frontend/.env.example](frontend/.env.example). To override it, create
+`frontend/.env.local` with `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api`.
+It defaults to same-origin `/api` for the combined production application.
+Next.js embeds `NEXT_PUBLIC_*` values at build time; rebuild after changing them.
+Keep the existing root `.env` for backend secrets. Never copy it into `frontend/`,
+prefix secrets with `NEXT_PUBLIC_`, or expose secrets through Next.js configuration.
+Cross-origin API calls and backend authentication are integrated in Part 9.
+
+Check and test the frontend independently:
+
+```bash
+make frontend-check
+make frontend-browser-install
+make frontend-e2e
+```
+
+These run ESLint, TypeScript checks, a production build, and Chromium smoke tests
+at desktop/mobile sizes. Browser tests start and stop their own Next.js server
+on port 3001; leave that port free. Browser binaries use the same ignored cache
+as the backend tests. No provider credentials, database, or backend are needed.
+
+The build generates `frontend/out/`, ready for a static web server. Preview it:
+
+```bash
+make frontend-preview
+```
+
+Open <http://127.0.0.1:3000> and stop with Ctrl+C. This preview serves static
+files only; production will serve them through FastAPI in Part 9. There is no
+production Next.js server or `next start` command.
+
 ## Configuration
 
 Settings are optional and read from the root `.env` or process environment.
@@ -101,8 +150,9 @@ libraries. Browser downloads and uv's local cache stay under ignored `.cache/`.
 
 The health route checks application liveness, not database or AI readiness.
 Database schema/migrations are Part 5, AI connectivity is Part 6, and the job
-definition API starts in Part 7. Next.js begins in Part 4. The production image
-will include its static export when frontend/backend integration is implemented.
+definition API starts in Part 7. The Next.js shell is available separately.
+The production image will include its static export when frontend/backend
+integration is implemented.
 Hosted provisioning and seven-day backup verification belong to Part 11.
 
 ## Production packaging

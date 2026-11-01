@@ -1,6 +1,6 @@
 # Career assistant MVP plan
 
-Status: Parts 1–3 complete on 2026-11-01. The user approved Part 2 and authorized Part 3. The backend scaffold and local PostgreSQL setup are implemented and verified. Agreed requirements and architecture are in [MVP_SPEC.md](MVP_SPEC.md); setup commands are in [README.md](../README.md). Part 4 is next; Parts 4–11 have not started.
+Status: Parts 1–3 complete and approved by the user on 2026-11-01. Part 4 is implemented and verified locally. Agreed requirements and architecture are in [MVP_SPEC.md](MVP_SPEC.md); setup commands are in [README.md](../README.md). Part 5 is next; Parts 5–11 have not started.
 
 ## Scope and working rules
 
@@ -12,7 +12,7 @@ Job discovery, offer scoring, notifications, skill development plans, applicatio
 - Follow the agreed Part 2 decisions in `MVP_SPEC.md`. Evaluate model suitability and live inference in Part 6; provision hosted services in Part 11.
 - Follow the eleven parts in order. Complete each part's checks before marking its tasks done, and record relevant decisions or remaining blockers here.
 - Part 1 approval and Part 2 requirement/architecture clarification are complete. Keep future changes consistent with the approved MVP scope.
-- Keep planning documents and source examples together in `doc/`: [ideal job](ajimenez/MY_IDEAL_JOB.md), [CV](ajimenez/CV.pdf), and [LinkedIn export](Profile.pdf).
+- Keep planning documents and source examples together in `doc/`: [ideal job](ajimenez/MY_IDEAL_JOB.md), [CV](ajimenez/CV.pdf), and [LinkedIn export](ajimenez/Profile.pdf).
 - Verify current stable library versions when adding dependencies, commit lockfiles, and keep the README's setup and test commands current and free of emojis.
 - Prefer simple modules and meaningful tests. Aim for approximately 80% code coverage, prioritizing business logic and user workflows without tests written only to raise coverage.
 - Use synthetic or redacted test fixtures. Keep credentials and personal document contents out of logs, committed fixtures, and test reports.
@@ -104,24 +104,32 @@ Validation:
 
 Success: achieved. The documented setup starts/stops the local backend and database, and both development and packaged-container HTML-to-API checks pass. The test containers and development server were stopped after verification.
 
+The user explicitly approved Part 3 on 2026-11-01.
+
 Verification notes: local Python 3.14.8 and container Python 3.14.10; FastAPI 0.162.0 and Uvicorn 0.54.0 locked. This environment's sandbox stalls Starlette's TestClient thread portal, while the same tests pass unchanged outside it. Browser tests pass with one upstream pytest/Playwright fixture deprecation warning. No application changes were made to bypass these environment/tooling conditions. No inference calls or hosted deployment occurred.
 
 ## Part 4: Scaffold the frontend
 
 Dependency: Parts 2–3 complete.
 
-- [ ] Create `frontend/` with current stable Next.js, TypeScript, dependency lockfile, linting, and the agreed test tooling.
-- [ ] Configure static export for the selected combined application image. Keep frontend development separate and avoid dependencies on a runtime Next.js server.
-- [ ] Add the application shell and a minimal entry page for the ideal-job workflow.
-- [ ] Set up environment-based API configuration without exposing backend, OpenAI, or Neon secrets to the browser.
-- [ ] Document frontend start/stop commands and how to run it alongside the backend.
+- [x] Create `frontend/` with current stable compatible Next.js, TypeScript, dependency lockfile, linting, and Playwright browser tooling.
+- [x] Configure static export for the selected combined application image. Keep frontend development separate and avoid dependencies on a runtime Next.js server.
+- [x] Add the application shell and a minimal entry page for the ideal-job workflow.
+- [x] Set up environment-based API configuration without exposing backend, OpenAI, or Neon secrets to the browser.
+- [x] Document frontend start/stop commands and how to run it alongside the backend.
 
 Validation:
 
-- [ ] Run linting, type checks, and a production build.
-- [ ] Open the entry page locally and verify that the development server stops cleanly.
+- [x] Run `make frontend-setup` from the lockfile and `make frontend-check`: ESLint, route-type generation, TypeScript checks, and the static production build pass.
+- [x] Run `make frontend-browser-install` and `make frontend-e2e`: two Chromium smoke tests pass at desktop/mobile sizes, including keyboard skip navigation and horizontal-overflow/browser-error checks.
+- [x] Run the existing `make check` regression checks: backend Ruff checks and all four API/configuration tests pass, retaining 100% coverage of the scaffold's 28 statements.
+- [x] Open the entry page locally and verify that the development server stops cleanly. `make frontend-dev FRONTEND_PORT=3002` returns HTTP 200 and exits on Ctrl+C; the generated export also returns HTTP 200 and renders correctly in desktop/mobile Chromium through `make frontend-preview FRONTEND_PORT=3003`, with no browser errors or horizontal overflow. Both servers were stopped.
 
-Success: the frontend runs locally and builds successfully; the job-definition UI remains for Part 8.
+Success: achieved. The frontend runs locally and builds successfully; the job-definition UI remains for Part 8. The user authorized Part 4 on 2026-11-01; no later part or hosted deployment was started.
+
+Implementation notes (2026-11-01): Next.js 16.4.3, React 19.3.1, ESLint 10.14.0, Playwright 1.64.1, and TypeScript 6.0.3 are locked. TypeScript 7.0.2 is newer but the current `typescript-eslint` explicitly rejects it (supported range `<6.1.0`). Use the current native Next.js and TypeScript ESLint plugins directly to avoid the incompatible legacy plugins in `eslint-config-next`. Frontend tooling requires Node.js 24 or newer. The optional `NEXT_PUBLIC_API_BASE_URL` is public and fixed at build time, defaults to `/api`, and is reserved for later API integration; the entry page makes no API calls and does not read the root backend `.env`.
+
+Validation limitations: this sandbox suppresses stdout from Next.js's spawned TypeScript process, causing configuration parsing to fail; the unchanged checks pass outside the sandbox. Browser tooling emits harmless `NO_COLOR`/`FORCE_COLOR` environment warnings. `npm audit` reports 12 moderate development-tool findings derived from the transitive `minimatch` glob-amplification advisory (GHSA-g3hv-75wg-m249); current lint-tool dependencies do not provide a compatible fix. `npm audit --omit=dev` reports zero findings. No forced dependency upgrades or major-version overrides were applied. Recheck when updating lint tooling; frontend build tools are excluded from the eventual production runtime.
 
 ## Part 5: Design and implement MVP persistence
 
