@@ -7,7 +7,7 @@ export NEXT_TELEMETRY_DISABLED ?= 1
 export UV_CACHE_DIR ?= $(CURDIR)/.cache/uv
 export PLAYWRIGHT_BROWSERS_PATH ?= $(CURDIR)/.cache/ms-playwright
 
-.PHONY: setup dev up down db-up db-down test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-browser-install frontend-e2e frontend-preview
+.PHONY: setup dev up down db-up db-down db-init db-migrate storage-cleanup integration test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-browser-install frontend-e2e frontend-preview
 
 setup:
 	$(UV) sync --project backend --locked
@@ -27,8 +27,20 @@ db-up:
 db-down:
 	docker compose stop db
 
+db-init: db-up
+	$(UV) run --project backend --locked python -m career_assistant.db_cli init
+
+db-migrate:
+	$(UV) run --project backend --locked python -m career_assistant.db_cli migrate
+
+storage-cleanup:
+	$(UV) run --project backend --locked python -m career_assistant.db_cli cleanup
+
+integration: db-up
+	$(UV) run --project backend --locked pytest backend/tests/integration --cov=career_assistant --cov-report=term-missing
+
 test:
-	$(UV) run --project backend --locked pytest backend/tests --ignore=backend/tests/e2e --cov=career_assistant --cov-report=term-missing
+	$(UV) run --project backend --locked pytest backend/tests --ignore=backend/tests/e2e --ignore=backend/tests/integration --cov=career_assistant --cov-report=term-missing
 
 browser-install:
 	$(UV) run --project backend --locked playwright install chromium

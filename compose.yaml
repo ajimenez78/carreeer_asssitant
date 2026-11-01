@@ -8,6 +8,11 @@ services:
     environment:
       PORT: "8000"
       CAREER_APP_NAME: ${CAREER_APP_NAME:-Career assistant}
+      CAREER_POSTGRES_HOST: db
+      CAREER_POSTGRES_PASSWORD: ${CAREER_POSTGRES_PASSWORD:-local-development-only}
+      CAREER_DOCUMENT_DIRECTORY: /data/documents
+    volumes:
+      - document_data:/data/documents
     mem_limit: 512m
     cpus: 1.0
     healthcheck:
@@ -39,3 +44,4 @@ services:
 
 volumes:
   postgres_data:
+  document_data:

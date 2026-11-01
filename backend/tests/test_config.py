@@ -11,4 +11,5 @@ def test_settings_ignore_unrelated_provider_secrets(tmp_path):
     settings = Settings(_env_file=configuration)
 
     assert settings.app_name == "Configured career assistant"
-    assert settings.model_dump() == {"app_name": "Configured career assistant"}
+    assert "OPENAI_API_KEY" not in settings.model_dump()
+    assert "synthetic-test-value" not in settings.model_dump_json()

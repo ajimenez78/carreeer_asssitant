@@ -12,7 +12,10 @@ COPY pyproject.toml uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
 COPY src ./src
 RUN uv sync --locked --no-dev --no-editable \
-    && useradd --system --uid 10001 --create-home app
+    && useradd --system --uid 10001 --create-home app \
+    && mkdir -p /data/documents \
+    && chown app:app /data/documents \
+    && chmod 700 /data/documents
 
 USER app
 EXPOSE 8000

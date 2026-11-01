@@ -1,0 +1,108 @@
+# MVP persistence
+
+Part 5 design review, 2026-11-01. This implements the approved single-owner,
+single-current-definition lifecycle. API handlers, extraction, authentication,
+and AI remain in Parts 6–7; conversation storage remains in Part 10.
+
+## Schema and workflow review
+
+| Table | Purpose and constraints |
+| --- | --- |
+| `owners` | One configured owner, enforced by primary key/check `id = 1`. Unique login name; nullable password hash means login is not configured. No plaintext password or public registration. |
+| `job_definitions` | Stable UUID, unique owner foreign key, nonempty original description, draft/ready state, creation/update times. Updates replace the current accepted state; no revisions. |
+| `preferences` | Definition foreign key, unique criterion key per definition, category, mandatory/preferred/excluded priority, nullable JSONB value, optional explanatory text. SQL NULL represents unknown. JSONB holds a single structured value, not an entire definition. |
+| `sources` | Definition foreign key, UUID, kind (file/URL/text), display name, original URL or object key as appropriate, media type/size, extraction state/text, review timestamp. File slots 1–5, unique per definition, enforce five files; each is at most 10 MiB. |
+| `background_facts` | Source foreign key, editable fact text, timestamps. Facts are reviewed through their source and never automatically become preferences. |
+| `clarifications` | Definition foreign key, round UUID, position 1–3, question, answer state (unanswered/answered/skipped/unknown), nullable answer, timestamps. Unique round/position limits each round to three questions. |
+| `document_deletions` | Durable queue of object UUIDs to remove after the metadata transaction commits. No foreign key to a deleted source or definition. |
+
+All foreign keys cascade on parent deletion. UUIDs identify domain records;
+UTC-aware timestamps use PostgreSQL `timestamptz`. Check constraints enforce
+states, nonempty text, and source-kind/answer consistency. Referencing columns
+are indexed. Schema changes use Alembic, never application-startup `create_all`.
+
+Criterion keys distinguish independent constraints in the same category. For
+example, `remote` can be preferred while `hybrid_location` and
+`onsite_limit` are mandatory. A compensation value can retain separate
+`currency`, `minimum`, `maximum`, `period`, and `basis` members as unknown until
+clarified. Part 7 will validate detailed domain payloads; this part validates
+the persistence envelope and does not infer missing values.
+
+| Approved interaction | Persistence behavior |
+| --- | --- |
+| Save an incomplete description | Create the current definition; empty optional context is allowed. |
+| Review and explicitly save edits | Update the same UUID and replace only the supplied preference set within one transaction. Source/answer actions use their own transactions. |
+| Add context and review facts | Sources and facts have their own records; only reviewed sources supply accepted background. |
+| Skip or answer a clarification | Store an explicit answer state; skipped/unknown answers remain NULL. Unreviewed proposals do not update preferences. |
+| Remove a source | Delete original-source metadata and facts, clear all derived clarification context, and queue its original file for removal. Accepted preferences remain. |
+| Delete the definition | Cascade all associated records and queue every original file. Keep the configured owner. |
+| Failed save | Roll back the transaction; previously accepted data remains. |
+
+The walkthrough preserves Staff scope, broad architecture, AI preference, and
+the frontend-only exclusion without turning historical CV skills into goals.
+Unknown salary and the office-day period remain unknown. This review establishes
+the schema before implementation; it does not assert that later AI/API behavior
+is already implemented.
+
+## Storage and deletion boundary
+
+`DocumentStore` exposes put/get/delete by an opaque UUID. User filenames never
+become paths. Local originals live in `.data/documents/` in a private directory;
+Neon originals use `documents/<UUID>` in a preconfigured private bucket. Raw
+extracted text, corrected facts, provenance, and preferences live in PostgreSQL.
+Neither originals nor personal text belong in the image or logs.
+
+The Neon adapter uses its HTTPS S3 endpoint, explicit Neon-issued credentials,
+SigV4, path-style addressing, and bounded timeouts. It neither provisions a
+bucket nor uses an AWS account. Tests use a stubbed S3 client. Real account,
+endpoint, bucket privacy, and provider behavior are verified in Part 11.
+See [Neon S3 compatibility](https://neon.com/docs/storage/s3-compatibility).
+
+Database and object storage do not share a transaction. Deletion therefore
+removes live context and records a cleanup entry atomically; a separate cleanup
+operation removes private bytes and acknowledges the entry. Missing objects
+count as success; failures leave the queue available for retry. Never run cleanup
+before the metadata transaction commits. Part 7 must report pending cleanup
+accurately and trigger retries; Part 11 adds scheduled operational retries.
+Neon describes deletion as a branch-local soft delete, so physical provider
+retention/other branches must also be checked during deployment.
+
+Upload coordination in Part 7 must avoid orphan objects: reserve the source/key
+in a committed transaction, write the object, then update extraction state;
+retain a failed source for retry or explicit removal. Do not acknowledge a
+successful upload before both metadata and bytes are durable.
+
+## Initialization, migration, and recovery contract
+
+Keep PostgreSQL 18 for local/Neon parity; Neon currently supports this major
+([version policy](https://neon.com/docs/postgresql/postgres-version-support)).
+Local initialization creates a missing database through the local `postgres`
+maintenance database and applies Alembic to head. Repeating it preserves data.
+Hosted migrations use an already provisioned database and the direct TLS URL;
+they never try to create a hosted database. Migrations run as a separate release
+step, not with each web process. Integration tests create a unique disposable
+local database, migrate it, and drop only that generated database on teardown.
+
+The Part 11 backup format will pair a custom-format `pg_dump` with a UTF-8 JSON
+manifest and originals under `documents/<UUID>`. The manifest records format
+version, UTC capture time, Alembic revision, database-dump SHA-256, and each live
+source ID, object UUID, relative path, size, and SHA-256. Obtain a consistent
+database snapshot and source manifest while writes/cleanup are paused; copy and
+verify every referenced original before marking the backup successful. Include
+the deletion queue in the dump; never resurrect deleted sources from loose files.
+
+Restore into a disposable empty database/private directory: verify hashes and
+manifest paths, restore the dump, restore referenced originals, check foreign
+keys and reviewed context, then drain pending deletions. Validate before swapping
+runtime configuration. Retain seven successful daily copies; prune older copies
+only after a successful backup. Source deletions are immediate in live context;
+backup copies expire under this policy. Backup jobs and actual restore exercises
+remain Part 11, rather than being claimed by these persistence tests.
+
+## Later phases
+
+Future offers and matches can reference the stable definition UUID; skill plans,
+applications, interviews, and career progress can reference that owner and their
+relevant offer/process. No tables for those workflows are created now. Part 10
+adds conversation records attached to the current definition, with the same
+source-deletion invalidation rule.

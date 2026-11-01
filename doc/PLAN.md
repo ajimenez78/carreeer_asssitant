@@ -1,6 +1,6 @@
 # Career assistant MVP plan
 
-Status: Parts 1–3 complete and approved by the user on 2026-11-01. Part 4 is implemented and verified locally. Agreed requirements and architecture are in [MVP_SPEC.md](MVP_SPEC.md); setup commands are in [README.md](../README.md). Part 5 is next; Parts 5–11 have not started.
+Status: Parts 1–4 complete and approved by the user on 2026-11-01. Part 5 is implemented and verified locally. Agreed requirements and architecture are in [MVP_SPEC.md](MVP_SPEC.md); persistence design is in [PERSISTENCE.md](PERSISTENCE.md), and setup commands are in [README.md](../README.md). Part 6 is next; Parts 6–11 have not started.
 
 ## Scope and working rules
 
@@ -135,21 +135,28 @@ Validation limitations: this sandbox suppresses stdout from Next.js's spawned Ty
 
 Dependency: approved requirements and working scaffolds.
 
-- [ ] Propose a relational schema for the agreed user/ownership model, background sources, ideal-job drafts, preferences, and clarification questions/answers. Add conversation persistence when required by Part 10.
-- [ ] Define keys, relationships, constraints, timestamps, and how accepted changes update the current definition. Follow the approved scope without revision history.
-- [ ] Sketch how future offers, matches, development plans, application processes, interviews, and career progress relate to the MVP entities; do not create unused later-phase tables.
-- [ ] Review the schema against the interaction flow before adding migrations and the necessary persistence operations.
-- [ ] Provide reproducible local database initialization and an isolated test database. Create the local database when absent and apply migrations; document managed-database provisioning separately.
-- [ ] Document where original files and extracted content are stored, consistent with the approved retention requirements.
-- [ ] Define the document-storage adapter for local files and Neon private object storage; cover the approved deletion behavior and backup/restore format.
+The user explicitly approved Part 4 and requested Part 5 on 2026-11-01.
+
+- [x] Propose the schema for one owner/current definition, sources, preferences, facts, and clarification questions/answers. See [PERSISTENCE.md](PERSISTENCE.md); conversation persistence remains Part 10.
+- [x] Define stable UUIDs, keys, relationships, constraints, timestamps, and updates without revision history. Keep reviewed background separate and unknown values explicit.
+- [x] Sketch relationships to later workflows without creating unused tables.
+- [x] Review the schema against the approved interaction flow before adding migrations and persistence operations. Record the walkthrough and deletion effects in `PERSISTENCE.md`.
+- [x] Provide repeatable local database creation/migration and unique disposable PostgreSQL test databases. Separate local initialization from migrations against an already provisioned hosted database.
+- [x] Document private original-file storage versus SQL extracted/reviewed context and the retention/deletion rules.
+- [x] Implement local/Neon document-store adapters and retryable original-file deletion. Define the backup manifest and restore contract; actual backup/restore verification remains Part 11.
 
 Validation:
 
-- [ ] Initialize an empty local environment, apply migrations, and repeat initialization without losing data.
-- [ ] Test create, save, reload, and update operations against the selected relational engine; verify relevant constraints and transaction rollback.
-- [ ] Verify that schema upgrades preserve existing data and that persistence supports the approved single-owner access model.
+- [x] Create fresh disposable PostgreSQL databases, apply migrations, and verify repeated initialization preserves data and configured credentials. Run `make db-init` twice and `make db-migrate` against the development database.
+- [x] Run Ruff and the combined unit/PostgreSQL suite: 41 tests pass with 99% statement coverage of the current 390 backend statements. `make check` and `make integration` also pass independently. Tests cover save/reload/refine, unknowns, reviewed facts, answer states, file limits, constraints, rollback, and deletion with cleanup failure/retry.
+- [x] Verify a real `0001` → `0002` migration preserves the definition, preferences, and owner credentials; Alembic detects no schema drift. Enforce one owner/current definition in PostgreSQL. Authentication/session handling remains Part 7; no private HTTP routes are added here.
+- [x] Build the backend image, run its packaged migrations, verify private document-volume read/write/delete and API health. Stop test services while retaining database/document volumes.
 
-Success: the MVP schema supports saved and revisable definitions and their context, with repeatable migrations and persistence tests.
+Success: achieved. The schema supports saved and revisable definitions and context through tested persistence operations and repeatable Alembic migrations.
+
+Implementation notes (2026-11-01): SQLAlchemy 2.1.6, Psycopg 3.3.6, Alembic 1.20.1, and boto3/botocore 1.43.123 are locked; PostgreSQL 18.6 matches a Neon-supported major. Connections use bounded timeouts, hidden SQL parameters, and no idle application pool. Runtime and direct migration URLs remain backend-only. Imports do not open provider connections.
+
+The two migration revisions establish the core schema and durable file-deletion queue. Source deletion removes source facts and derived clarification context transactionally while preserving accepted preferences. Original deletion runs after commit and remains queued after failure. Neon calls are tested with botocore stubs, including missing objects/provider errors; actual bucket privacy, deletion retention, hosted credentials, and backup/restore remain Part 11. No AI inference or cloud provisioning occurred. Database/container checks ran outside the sandbox's documented process/network restrictions; application code does not work around those tooling limits.
 
 ## Part 6: Verify OpenAI API connectivity and select models
 
