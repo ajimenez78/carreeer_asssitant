@@ -71,7 +71,7 @@ The user selected Railway + Neon + OpenAI on 2026-11-01. FastAPI, SQLAlchemy/Psy
 
 | Component | Decision and rationale |
 | --- | --- |
-| Frontend | Next.js with TypeScript and static export. Keep `frontend/` separate for development; serve production assets through FastAPI on Railway alongside `/api`. Use a fixed editor route. This keeps one web service and one production origin. [Next.js static export](https://nextjs.org/docs/app/guides/static-exports). |
+| Frontend | Next.js with TypeScript and static export. Keep `frontend/` separate for development; compile it in a Node.js Docker build stage and copy the generated assets into the Python runtime image. FastAPI serves them alongside `/api` on one production origin. Use a fixed editor route and avoid features requiring a runtime Next.js server. [Next.js static export](https://nextjs.org/docs/app/guides/static-exports). |
 | API | FastAPI with Pydantic validation and generated OpenAPI schemas. Keep handlers, job-definition logic, and provider/storage adapters in one small backend. [Railway FastAPI deployment](https://railway.com/guides/fastapi), [FastAPI](https://fastapi.tiangolo.com/). |
 | Database | PostgreSQL with SQLAlchemy, Psycopg, and Alembic migrations. Use local PostgreSQL via Docker Compose and managed Neon PostgreSQL in deployment. Select a current stable PostgreSQL major supported by Neon when implementing persistence. |
 | Connections | Configure backend-only `DATABASE_URL` with TLS for Neon runtime access and a separate direct connection for migrations/backups where required. Keep connection counts bounded for this one-user application. [Neon connections](https://neon.com/docs/connect/connection-pooling). |
@@ -79,11 +79,24 @@ The user selected Railway + Neon + OpenAI on 2026-11-01. FastAPI, SQLAlchemy/Psy
 | Owner access | One configured owner, no public registration. Use a password hash and a maintained session mechanism; validate access on every private API/file operation. Keep session secrets backend-only, secure cookies in production, and origin/CSRF protection on cookie-authenticated writes. |
 | AI | Official OpenAI Python SDK and Responses API, authenticated with backend-only `OPENAI_API_KEY`. Use the standard `https://api.openai.com/v1` endpoint and a fake client for routine tests. [Official Python SDK](https://developers.openai.com/api/reference/python). |
 | Local workflow | Run PostgreSQL via Docker Compose, Python locally or in the backend container, and Next.js development tooling. Test the production image/static export locally before cloud deployment. Use isolated local databases and file directories for tests. |
-| Railway deployment | Start with Free and one web service. Use a version-controlled Docker build, Railway configuration, health route, and documented release commands; bind the Python server to the platform-provided port. Target 0.5 GB RAM and 1 vCPU per service. Enable sleeping/serverless mode, measure idle traffic and wake-up behavior, and choose an available EU region close to Neon. |
+| Railway deployment | Start with Free and one web service using the combined application image. Run one Python/Uvicorn process; Node.js is a build dependency, not a second production server. Use a version-controlled multi-stage Docker build, health route, and documented release commands; bind the server to the platform-provided port. Target 0.5 GB RAM and 1 vCPU per service. Enable sleeping/serverless mode, measure wake-up behavior, and choose an available EU region close to Neon. |
 | Neon deployment | Start with Free while measured storage/compute/transfer fit the plan. Prefer Frankfurt because Neon Object Storage is supported there. Verify account availability and limits before provisioning; credentials are not needed for the local scaffold. |
 | Backups | A daily Railway cron job exports PostgreSQL and copies source documents into a separate private Railway storage bucket, retaining seven daily copies. This separates backups from the Neon project and supports the approved seven-day policy. Test restoration of both database and files. |
 
 Use the latest stable compatible library versions and lockfiles when each part is implemented. No scaffolding, dependency installation, or cloud provisioning is included in Part 2.
+
+### Production packaging and release
+
+The user explicitly selected the combined application option on 2026-11-01: separate frontend/backend source directories, one deployable application image, and externally managed persistence.
+
+- Build the frontend with its Node.js toolchain and lockfile; copy only the static export into the final image containing locked Python runtime dependencies and the backend. Include neither development servers nor a runtime Node.js server.
+- Extend the existing backend Dockerfile to use the repository-root build context during Part 9. Exclude `.env`, credentials, personal/example documents, Git data, caches, and test artifacts from the build context and final image.
+- Keep production PostgreSQL in Neon and original uploads in private Neon Object Storage. Locally, PostgreSQL remains a separate Compose service with a named volume. Replacing the application image must not replace or delete persistent data.
+- Supply database, storage, session, and OpenAI configuration at runtime. Run Alembic migrations once in a pre-deployment/release step, using the direct database connection where needed; do not run migrations independently in every web-server startup.
+- Test the combined production image locally before release. Identify releases by Git revision and record the deployed image digest. Verify health and the real browser workflow after deployment.
+- Keep application rollback and database recovery distinct. Prefer backward-compatible schema changes; rolling back an image does not undo a migration. Retain the approved daily database/document backups for seven days.
+
+Current implementation: Part 3 supplies a backend-only image and the separate local PostgreSQL service. The Next.js scaffold is Part 4; building and testing the combined image is Part 9; hosted deployment is Part 11.
 
 ### Persistence and recovery details
 
@@ -162,6 +175,7 @@ Errors follow `{"error": {"code": "...", "message": "...", "fields": {}}}` with 
 - 2026-11-01: Part 1 approved; one private initial user confirmed.
 - 2026-11-01: Railway + Neon + direct OpenAI selected, replacing AWS and Bedrock.
 - 2026-11-01: The user explicitly selected Railway Free as the starting plan, with Neon Free and separately metered OpenAI calls. This supersedes the earlier Hobby estimate; paid hosting upgrades require a separate user decision.
+- 2026-11-01: The user approved one combined application Docker image containing FastAPI and the static Next.js export, with PostgreSQL and documents managed separately in Neon.
 - 2026-11-01: Product defaults approved: one current editable definition, explicit save/review, no revision history, English UI with English/Spanish content.
 - 2026-11-01: Source defaults approved: text-based PDF, legacy Word, DOCX, Markdown; five files at 10 MB each; public-page retrieval with upload/paste fallback; no OCR initially; retain sources until removal; daily backups retained seven days.
 - Part 2 is complete. No unresolved product or architecture question blocks Part 3. Exact salary/office-day periods are inputs for the application's clarification flow.

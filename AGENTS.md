@@ -41,7 +41,7 @@ The MVP is for one private user with one current editable job definition, explic
 
 ## Technical decisions
 - Start on Railway Free, with Neon Free for managed PostgreSQL and private document storage. Measure usage against the ongoing free allowances, including backup jobs/storage; do not rely on introductory trial credits to prove the app fits. Any paid hosting upgrade requires the user's explicit choice. This replaces the earlier AWS deployment requirement.
-- Use Next.js with TypeScript. Build a static export served by the Python service in production; keep frontend/ and backend/ separate for local development.
+- Use Next.js with TypeScript. Package its static export and FastAPI together in one application Docker image and one Railway web service. Use Node.js only in the frontend build stage and Python/Uvicorn in the final runtime image; keep frontend/ and backend/ separate for local development. PostgreSQL and uploaded documents stay outside the application container in Neon.
 - Use Python with FastAPI, SQLAlchemy, Psycopg, and Alembic migrations. Use local PostgreSQL through Docker Compose for development and integration tests.
 - Test the complete solution locally before the real cloud deployment.
 - Call the OpenAI API directly using the backend-only OPENAI_API_KEY in .env. This replaces Amazon Bedrock; AWS authentication is no longer an MVP prerequisite.

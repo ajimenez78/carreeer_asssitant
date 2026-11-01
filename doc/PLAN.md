@@ -1,6 +1,6 @@
 # Career assistant MVP plan
 
-Status: Parts 1–2 complete on 2026-11-01. The user selected Railway Free + Neon Free + direct OpenAI API calls and approved the product/source defaults. Agreed requirements, architecture, and the API baseline are in [MVP_SPEC.md](MVP_SPEC.md). Part 3 is next; Parts 3–11 have not started.
+Status: Parts 1–3 complete on 2026-11-01. The user approved Part 2 and authorized Part 3. The backend scaffold and local PostgreSQL setup are implemented and verified. Agreed requirements and architecture are in [MVP_SPEC.md](MVP_SPEC.md); setup commands are in [README.md](../README.md). Part 4 is next; Parts 4–11 have not started.
 
 ## Scope and working rules
 
@@ -80,32 +80,38 @@ Validation:
 
 Success: achieved. Requirements, user flow, architecture, acceptance criteria, and the initial API baseline are recorded; later-phase features remain outside implementation scope.
 
+The user explicitly approved Part 2 and requested Part 3 on 2026-11-01.
+
 Validation recorded on 2026-11-01: `.env` contains the correctly named `OPENAI_API_KEY`, has no Bedrock base-URL override, and is ignored by Git. Direct OpenAI model discovery returned HTTP 200 and listed `gpt-6-luna`. This proves read-only authentication/catalog access, not inference access, available credit, or model quality. No inference calls or cloud provisioning have been performed. The previous AWS authentication issue is superseded by the approved provider change.
 
 ## Part 3: Scaffold the backend and local infrastructure
 
 Dependency: Part 2 decisions recorded.
 
-- [ ] Create `backend/` with the selected Python framework, dependency lockfile, basic configuration, and test tooling.
-- [ ] Separate configuration, HTTP handlers, and application logic without introducing unused abstractions.
-- [ ] Add a health API route and a small static “hello world” HTML page that calls the API and displays its result.
-- [ ] Provide documented backend start/stop commands and a credential-free configuration template. Read secrets from local configuration or the environment.
-- [ ] Set up the agreed local infrastructure and document how local PostgreSQL, file storage, and application processes map to Railway and Neon. Keep cloud provisioning outside this scaffold step.
-- [ ] Record a local runtime memory baseline and distinguish production runtime limits from build requirements; target Railway Free's 0.5 GB RAM and 1 vCPU per service.
-- [ ] Create a simple README with prerequisites, configuration, and reproducible start/stop/test instructions.
+- [x] Create `backend/` with FastAPI, `uv.lock`, environment-backed settings, Ruff, pytest/coverage, and Playwright tooling. Resolve current stable libraries when adding dependencies.
+- [x] Separate settings, application construction, and HTTP routing; leave business logic for the job-definition implementation without adding empty layers.
+- [x] Add `/api/health` and a packaged static “hello world” page that fetches the real API, displays the result, and supports retry after an error.
+- [x] Provide development and Docker start/stop commands in the Makefile/README and a credential-free `.env.example`. Preserve the existing ignored `.env`.
+- [x] Set up Docker Compose PostgreSQL with a named volume and localhost-only ports. Document local-to-Railway/Neon mapping; do not provision hosted services.
+- [x] Measure the production scaffold container at approximately 48 MiB after smoke checks, with a 512 MiB memory limit and one CPU enforced. This excludes build tooling, development reload processes, and the separate local database; later document processing/full-MVP usage remains to be measured.
+- [x] Create a concise README with prerequisites, configuration, setup, start/stop commands, tests, and scope boundaries.
 
 Validation:
 
-- [ ] Run the backend from the documented setup; verify the HTML page, successful API call, health response, and shutdown.
-- [ ] Run basic API tests without provider credentials or network access.
+- [x] Run `make setup`, start `make dev BACKEND_PORT=8001`, check HTTP health, and verify graceful Ctrl+C shutdown. Build/start `make up`, verify packaged HTML and browser-to-API behavior, run SQL against PostgreSQL 18.6, exercise `make db-down`/`make db-up`, and finish with `make down` while retaining the database volume.
+- [x] Run `make check`: Ruff passes and four in-process API/configuration tests pass with 100% coverage of the current 28 backend statements. Tests use no provider calls or external network services.
+- [x] Run `make browser-install` and `make e2e`: two Chromium tests pass, covering a successful real API call and failure/retry recovery. Also check the built production container with Chromium.
 
-Success: another developer can start and stop the local backend and demonstrate the HTML-to-API call using the README.
+Success: achieved. The documented setup starts/stops the local backend and database, and both development and packaged-container HTML-to-API checks pass. The test containers and development server were stopped after verification.
+
+Verification notes: local Python 3.14.8 and container Python 3.14.10; FastAPI 0.162.0 and Uvicorn 0.54.0 locked. This environment's sandbox stalls Starlette's TestClient thread portal, while the same tests pass unchanged outside it. Browser tests pass with one upstream pytest/Playwright fixture deprecation warning. No application changes were made to bypass these environment/tooling conditions. No inference calls or hosted deployment occurred.
 
 ## Part 4: Scaffold the frontend
 
 Dependency: Parts 2–3 complete.
 
 - [ ] Create `frontend/` with current stable Next.js, TypeScript, dependency lockfile, linting, and the agreed test tooling.
+- [ ] Configure static export for the selected combined application image. Keep frontend development separate and avoid dependencies on a runtime Next.js server.
 - [ ] Add the application shell and a minimal entry page for the ideal-job workflow.
 - [ ] Set up environment-based API configuration without exposing backend, OpenAI, or Neon secrets to the browser.
 - [ ] Document frontend start/stop commands and how to run it alongside the backend.
@@ -204,6 +210,8 @@ Success: the agreed user journey is usable and tested entirely with API-compatib
 Dependency: Parts 7–8 complete.
 
 - [ ] Connect the frontend API client to the real backend and isolate mock mode for tests/development.
+- [ ] Extend the existing Dockerfile to build the frontend in a Node.js stage and copy its static export into a final Python image with the backend and locked runtime dependencies. Run one Uvicorn process serving assets and `/api`.
+- [ ] Update the build context and Docker ignore rules for both source directories, excluding `.env`, personal/example documents, credentials, caches, and test artifacts. Keep PostgreSQL and documents outside the application image.
 - [ ] Verify API configuration, upload handling, and the agreed authentication/CORS behavior across local frontend and backend origins.
 - [ ] Run the complete flow against the real relational database and verify reopening persisted work after an application restart.
 - [ ] Resolve integration failures from reproducible evidence and identified root causes.
@@ -216,6 +224,7 @@ Validation:
 - [ ] Cover initial description → upload/link → clarification → review → save → reload → refine, plus unavailable-AI and invalid-upload recovery.
 - [ ] Perform an explicit live-OpenAI workflow check using synthetic data, separate from routine tests.
 - [ ] Run the established backend/frontend checks and verify the documented setup from an empty local database.
+- [ ] Run the combined release image locally with the separate Compose PostgreSQL service; verify frontend routes/assets, `/api` routing, same-origin sessions, and persistence across application replacement.
 
 Success: the structured job-definition flow works locally across all layers and survives restarts; local validation evidence and deployment instructions are recorded.
 
@@ -246,8 +255,8 @@ Dependency: Parts 1–10 complete, local acceptance checks passing, and the depl
 - [ ] Add version-controlled Railway build/start/health configuration and repeatable deployment commands. Provision Neon PostgreSQL and private document storage with backend-only credentials.
 - [ ] Configure HTTPS and the single-owner access model; keep OpenAI, database, storage, and session secrets out of browser assets, release images, and deployment output.
 - [ ] Verify direct OpenAI inference from Railway and configure the Part 6 model identifiers and usage limits.
-- [ ] Build versioned release artifacts from the locally tested revision, serving the static Next.js export and Python API through one Railway web service.
-- [ ] Initialize the cloud database, apply migrations using the appropriate direct Neon connection, configure runtime connections and document storage, and deploy the application. Back up existing data before schema changes.
+- [ ] Deploy the combined application image from the locally tested revision to one Railway web service. Record its Git revision and deployed image digest; Node.js is used only during the frontend build.
+- [ ] Initialize Neon PostgreSQL independently of the web service and configure private Neon document storage and backend-only runtime connections. Back up existing data before schema changes, then apply Alembic migrations once in a separate pre-deployment/release step before rolling out the web process.
 - [ ] Configure useful logs, health/error monitoring, usage alerts, and the daily database/document backup job with seven-day retention in independent private storage. Do not rely on Neon's free restore window to satisfy this policy.
 - [ ] Enable and verify Railway's sleeping/serverless behavior to reduce idle usage. Avoid background traffic and unnecessary open connections that prevent sleep; verify first-request recovery without duplicate writes.
 - [ ] Document redeployment, application rollback, database recovery, and resource cleanup, distinguishing disposable resources from persistent user data.
@@ -259,6 +268,7 @@ Validation:
 - [ ] Run the deployed browser workflow using synthetic data: description → upload/link → clarification → review → save → reload → structured refinement → chat refinement.
 - [ ] Verify HTTPS, authentication/access boundaries, production API/CORS configuration, and restricted database/document-storage access according to the approved design.
 - [ ] Verify that saved definitions, background sources, and conversation context survive an application restart or redeployment.
+- [ ] Verify that application image replacement and rollback preserve external database/document data; document database recovery separately from application rollback.
 - [ ] Measure web-service, backup-job, storage, and egress usage against ongoing free limits, including the 0.5 GB RAM/1 vCPU runtime cap. Record projected monthly usage; if the complete MVP cannot fit, report the limitation and options before any paid upgrade.
 - [ ] Check useful error reporting and exercise application rollback and database backup/recovery against disposable test data without affecting user data.
 - [ ] Record the deployed revision, URLs, validation results, and any remaining operational limitations.
