@@ -55,4 +55,4 @@ The business requiremens implementation will be incremental. We will start with 
 5. When hitting issues, always identify root cause before trying a fix. Do not guess. Prove with evidence, then fix the root cause.
 
 ## Working documentation
-All documents for planning and executing this project will be in the docs/ directory. Please review the docs/PLAN.md document before proceeding. the subfolder doc/ajimenez folder contains examples of an initial Job description, aCV and a LinkedIn profile
+All documents for planning and executing this project will be in the doc/ directory. Please review the doc/PLAN.md document before proceeding. Example source documents remain in doc/: doc/ajimenez/MY_IDEAL_JOB.md, doc/ajimenez/CV.pdf, and doc/Profile.pdf (LinkedIn export).
