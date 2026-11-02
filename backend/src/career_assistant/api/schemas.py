@@ -4,10 +4,10 @@ from datetime import datetime
 from typing import Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from career_assistant.persistence import PreferenceData
-from career_assistant.workflow import ExtractedBackground
+from career_assistant.workflow import Assessment, ExtractedBackground
 
 
 class Representation(BaseModel):
@@ -53,10 +53,18 @@ class QuestionView(Representation):
     answer: str | None
 
 
+class AssessmentView(Assessment):
+    language: Literal["English", "Spanish"]
+    assessed_at: datetime = Field(strict=False)
+    context: str = Field(pattern="^[a-f0-9]{64}$")
+
+
 class DefinitionView(Representation):
     id: UUID
     description: str
     state: Literal["draft", "ready"]
+    assessment: AssessmentView | None
+    clarification_paused: bool
     created_at: datetime
     updated_at: datetime
     preferences: list[PreferenceData]
@@ -85,6 +93,8 @@ class ClarificationView(Representation):
     proposal: ProposedChanges
     clarifications: list[QuestionView]
     proposal_context: str
+    assessment: AssessmentView
+    state: Literal["draft", "ready"]
     usage: UsageView
 
 

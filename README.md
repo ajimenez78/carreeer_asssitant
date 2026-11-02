@@ -1,329 +1,237 @@
 # Career assistant
 
-The MVP helps one private user clarify the role they are looking for. The backend and
-Next.js shell and private job-definition backend are implemented, including owner
-login, document/link extraction, reviewed background, AI proposals, saving and
-deletion. Requirements and progress live in
-[doc/PLAN.md](doc/PLAN.md) and [doc/MVP_SPEC.md](doc/MVP_SPEC.md).
+A private workspace for clarifying the role you are looking for. Describe your
+preferences, add background documents or public links, review extracted facts,
+answer focused questions, and explicitly save or refine your current definition.
+The interface supports English and Spanish with a remembered language switcher.
+The system assesses clarity and provides a natural-language summary; clarification
+can be stopped at any time and resumed explicitly.
+
+Parts 1–9 work locally. Chat remains Part 10; Railway/Neon deployment, scheduled
+backups and restoration remain Part 11. See [the plan](doc/PLAN.md),
+[requirements](doc/MVP_SPEC.md), and [Part 9 validation](doc/PART9_VALIDATION.md).
+The subsequent clarity/summary extension is tracked in
+[CLARITY_SUMMARY.md](doc/CLARITY_SUMMARY.md).
 
 ## Prerequisites
 
-- Python 3.14 and [uv](https://docs.astral.sh/uv/getting-started/installation/).
-- Docker with Docker Compose v2 for the container stack or local PostgreSQL.
-- GNU Make for the convenience commands below.
-- Node.js 24 or newer and npm for frontend development/builds.
-- `catdoc` for legacy Word extraction when running Python locally
-  (`sudo apt-get install catdoc` on Debian/Ubuntu). The Docker image includes it.
+- Docker with Compose for local PostgreSQL and the combined application image.
+- Python 3.14 and [uv](https://docs.astral.sh/uv/) for local backend development.
+- Node.js 24 or newer and npm; the image builds with Node.js 26 LTS.
+- Chromium for browser tests, installed with the commands below.
 
-## Start and stop locally
+Run commands from the repository root. Keep an existing ignored `.env`; do not
+replace its credentials. For a new checkout, create `.env` from `.env.example`.
+Configure a stable `CAREER_SESSION_SECRET` of at least 32 random characters before
+signing in. Generate one locally with:
 
-Run commands from the repository root. The current health/example routes need no
-provider credentials or database; persistence commands use local PostgreSQL.
+```bash
+uv run --project backend --locked python -c 'import secrets; print(secrets.token_urlsafe(48))'
+```
+
+Save it in the backend `.env`. Add `OPENAI_API_KEY` there to enable explicit
+background-fact and clarification requests. The application uses the approved
+`gpt-6-luna` model with low reasoning and bounded input/output. Ordinary startup,
+uploads, document extraction and saves make no AI calls. Never put secrets in
+`frontend/`, `NEXT_PUBLIC_*` variables, build arguments, or tracked files.
+
+## Start locally from a clean checkout
+
+Install the locked dependencies, create/migrate the local database, and configure
+the owner on first setup:
 
 ```bash
 make setup
+make frontend-setup
+make db-init
+make owner
+make frontend-check
 make dev
 ```
 
-Open <http://127.0.0.1:8000>. The example page calls `/api/health` and displays
-`API status: ok`. API documentation is at <http://127.0.0.1:8000/docs>.
-Stop the development server with Ctrl+C. To use another port:
+Open <http://127.0.0.1:8000> and sign in. `make dev` serves the built frontend and
+API through one Uvicorn process. Stop it with Ctrl+C. Use `BACKEND_PORT=8001` to
+choose another port and add that exact origin to `CAREER_ALLOWED_ORIGINS`.
+
+`make owner` prompts for a password of 12–1,024 characters. It is an explicit
+credential change: repeating it revokes existing sessions. Repeated `make db-init`
+and `make db-migrate` preserve saved data and configured credentials. Startup does
+not migrate databases or configure accounts automatically.
+
+For frontend hot reload, keep `make dev` running and start another terminal:
 
 ```bash
-make dev BACKEND_PORT=8001
+make frontend-dev
 ```
 
-For the backend and PostgreSQL together in Docker:
+Open <http://127.0.0.1:3000>. This command targets the backend at port 8000 by
+default; use `FRONTEND_API_BASE_URL=http://127.0.0.1:8001/api` when needed.
+`FRONTEND_PORT` changes the frontend port. Add nondefault origins to the backend's
+`CAREER_ALLOWED_ORIGINS` JSON array. Use the same hostname and scheme for both
+processes (`127.0.0.1` on both); mixing `localhost` and `127.0.0.1` crosses the
+site boundary of the Strict session cookie. Cookies and CORS require exact origins.
+
+Direct `npm --prefix frontend run dev` uses `frontend/.env.local` or the default
+same-origin `/api`; see [the public example](frontend/.env.example). Public API
+configuration is compiled into the frontend, so rebuild/restart after changing it.
+
+## Run the combined application image
+
+After the initial database/owner/secret setup above:
 
 ```bash
 make up
 ```
 
-`make up` builds the locked backend image, starts both services, and waits for
-health checks. Ports bind to localhost. The backend container is limited to
-512 MiB RAM and one CPU to match the initial Railway Free target.
+Open <http://127.0.0.1:8000>. The root-context Docker build compiles the Next.js
+static export in a Node.js stage and copies it into a non-root Python image.
+One Uvicorn process serves the frontend and `/api`; no Node.js server runs in the
+final image. Compose enforces 512 MiB RAM and one CPU for this application.
+PostgreSQL and original documents use separate named volumes.
 
-Check the API from a terminal:
+Stop/start with `make down` / `make up`. Those commands retain the volumes. Stop
+only PostgreSQL with `make db-down`, and start it with `make db-up`. Do not use
+`docker compose down --volumes` for saved work.
 
-```bash
-curl http://127.0.0.1:8000/api/health
-```
-
-Expected response: `{"status":"ok"}`. Stop the Docker stack with:
-
-```bash
-make down
-```
-
-To run only PostgreSQL alongside `make dev`:
+Apply migrations explicitly before replacing an application image:
 
 ```bash
 make db-up
-make db-down
-```
-
-PostgreSQL is available at `127.0.0.1:5432`, database/user `career`. Its default
-password, `local-development-only`, is for this disposable local setup. Override
-it with `CAREER_POSTGRES_PASSWORD` before first database initialization.
-`make down` preserves the named database and document volumes. Do not pass
-`--volumes` to `docker compose down` unless you intend to delete local data.
-
-## Database and private documents
-
-After `make setup`, initialize the local schema:
-
-```bash
-make db-init
-```
-
-This starts PostgreSQL, creates the local database if missing, applies Alembic
-migrations, and reserves the single owner. Repeating it preserves definitions,
-sources, and any configured credentials. The initial owner is named `owner`
-with no password hash. Configure login as described below. The schema and storage
-contract are in
-[doc/PERSISTENCE.md](doc/PERSISTENCE.md).
-
-`DATABASE_URL` optionally overrides the runtime connection. `DATABASE_DIRECT_URL`
-overrides the migration connection, falling back to `DATABASE_URL`. PostgreSQL
-URLs with or without `+psycopg` are accepted. Keep hosted connections TLS-enabled
-and backend-only. Local initialization rejects remote database hosts. For an
-already provisioned database, run the separate migration command:
-
-```bash
 make db-migrate
+make up
 ```
 
-Migrations never run automatically with the web server. To create a migration
-after editing models, use
-`uv run --project backend --locked alembic -c backend/alembic.ini revision --autogenerate -m "Describe the change"`
-against a local database at the current head, and review the generated operations.
+The packaged migration command is
+`docker compose run --rm --no-deps backend python -m career_assistant.db_cli migrate`.
+It can be used instead of the local migration command after building the image.
+The packaged owner command is the same with `owner`, run interactively only when
+initializing or deliberately changing credentials.
 
-Host-run originals use `.data/documents/`; Docker uses a separate `document_data`
-volume at `/data/documents`. Extracted text, reviewed facts, and preferences stay
-in PostgreSQL. Source filenames are metadata, not file paths. Local/Neon storage
-configuration is listed in [.env.example](.env.example). The Neon adapter needs
-explicit Neon credentials and an existing private bucket; no AWS login or cloud
-account is needed for local operation.
+Migration `0004` adds saved assessments and clarification control. Existing
+manually selected `ready` definitions become unassessed `draft` definitions;
+their accepted preferences and sources remain. Request an assessment to have
+the system determine clarity under the new workflow.
 
-Removing source metadata queues its original for retryable deletion. Process the
-committed queue with:
+## Workspace and data handling
+
+Save an initial description before adding sources or requesting suggestions.
+Incomplete drafts and explicit unknowns are valid. Source reviews and answers
+save independently. Suggested criteria stay unapplied until you review and save
+them; changing context marks pending suggestions stale. Errors retain typed input,
+and an expired session lets you sign in again without discarding pending edits.
+Sign-out removes the current workspace from the page.
+
+Request clarification to assess the current saved definition and generate a
+natural-language summary in **Summary / Resumen**. The system decides whether
+more clarification is useful and explains remaining gaps. Optional unknowns and
+skipped questions are allowed. Readiness is not selected manually. Summary text
+describes saved criteria; pending suggestions and unsaved edits require review
+and saving before they can appear as accepted requirements. Changes to the
+definition or its context clear the previous assessment until the next explicit
+request. Assessments and summaries reuse the clarification call; opening the
+workspace and saving do not trigger AI.
+
+Use **Stop clarification / Detener aclaración** even while a request is running.
+The stopped state persists after reopening and does not mark the definition
+ready or discard edits. Resume explicitly before requesting another round.
+
+Use **Interface language / Idioma de la interfaz** in the header. Switching keeps
+user content and unsaved edits intact. Assistance defaults to the selected UI
+language, with an independent selector for new requests. Existing documents,
+answers, and previously generated content keep their original language.
+
+Supported uploads are text-based PDF, `.doc`, `.docx`, `.md`, and `.markdown`:
+up to five files of 10 MiB each. Scanned-document OCR is deferred. Public URLs are
+retrieved with bounded processing and internal-network/redirect protection;
+restricted pages offer upload/paste fallback. Only explicitly accepted facts
+become background context. Historical skills do not become desired job criteria
+automatically. No personal example files are used by routine tests.
+
+Removing a source removes its text/facts and clears derived questions/answers
+and the clarity assessment/summary;
+accepted job criteria remain. Whole-definition deletion removes its associated
+live records. Original-file deletion is queued durably; the UI reports pending
+cleanup and can retry. A failed original upload leaves a visible reserved source
+that can be removed and uploaded again. Retry queued originals from the CLI with:
 
 ```bash
 make storage-cleanup
 ```
 
-For Docker-managed originals, use
-`docker compose run --rm --no-deps backend python -m career_assistant.db_cli cleanup`
-so cleanup uses the same document volume. To apply migrations from the packaged
-backend, replace `cleanup` with `migrate`. Host `.data/documents` and the Docker
-document volume are separate local stores; keep the same store when reopening a
-definition. A failed cleanup leaves its queue entries for retry. API deletions
-attempt cleanup after committing and report pending original deletion.
+Backups with seven-day retention are an agreed Part 11 requirement and are not
+scheduled by the local application. Keep appropriate independent copies until
+that operational work is implemented. Detailed payloads and limits are in
+[the backend API](doc/BACKEND_API.md) and [persistence notes](doc/PERSISTENCE.md).
 
-## Private backend workflow
+## Mock preview
 
-After `make db-init`, configure the owner password interactively:
+The real backend is the default. For the isolated Part 8 browser-local preview:
 
 ```bash
-make owner
+NEXT_PUBLIC_API_MODE=mock make frontend-dev
 ```
 
-Use at least 12 characters. Repeating this command changes the password and
-revokes existing sessions. For a different username, run
-`uv run --project backend --locked python -m career_assistant.db_cli owner --username your-name`.
-For Docker, use `docker compose run --rm --no-deps backend python -m career_assistant.db_cli owner`.
+The visible mock notice distinguishes it from the private workspace. Mock data is
+stored only in that browser and is never imported into PostgreSQL automatically.
+The preview simulates binary extraction, public retrieval and AI; it provides no
+real authentication, original storage or backups. Use synthetic data. This setting
+is build-time only; a URL or browser-storage value cannot enable mocks in a real
+build. The combined Docker image always builds in real-backend mode.
 
-Add `CAREER_SESSION_SECRET` (at least 32 random characters) to the existing ignored
-root `.env`, preserving its OpenAI key. Generate the secret locally with
-`uv run --project backend --locked python -c 'import secrets; print(secrets.token_urlsafe(48))'`.
-Set `CAREER_ALLOWED_ORIGINS` to a JSON array if using other ports/origins. Every
-API write, including login, requires a matching `Origin` header. Hosted cookies
-must use `CAREER_SESSION_SECURE=true` and an HTTPS origin. Login is disabled
-until both the owner password and session secret are configured.
-
-Start `make dev` and use <http://127.0.0.1:8000/docs> to sign in with
-`POST /api/session`, save the first draft with `PUT /api/job-definition`, then
-add sources, review facts, request clarification, and explicitly save accepted
-proposals. The API uses an HttpOnly cookie with twelve-hour sessions; logout
-revokes the session on the server. Health remains public.
-
-See [doc/BACKEND_API.md](doc/BACKEND_API.md) for payloads, supported formats,
-processing limits, failure/retry behavior, and deletion effects. The Part 8 editing
-screens use mocks; real frontend integration remains Part 9.
-
-## Frontend development
-
-Install the locked frontend dependencies, then start Next.js:
-
-```bash
-make frontend-setup
-make frontend-dev
-```
-
-Open <http://127.0.0.1:3000>. Stop with Ctrl+C. Override the port with
-`make frontend-dev FRONTEND_PORT=3002`. No backend, database, credentials, or
-OpenAI access is needed for the Part 8 preview.
-
-The workspace covers description → optional documents/links/pasted background →
-fact review → clarification → structured review/save. Incomplete drafts, explicit
-unknowns, mandatory/preferred/excluded criteria, and later refinement are supported.
-Source reviews and answers save independently; suggested criteria require explicit
-review and save. Changing context marks pending suggestions stale and preserves
-edited criteria for review. Errors retain typed input.
-
-Use **Interface language / Idioma de la interfaz** in the header to switch between
-English and Spanish. The choice is remembered in this browser, and switching keeps
-unsaved work intact. Your descriptions, facts, answers, and criteria keep their
-original text. Assistance defaults to the interface language; its separate selector
-can override that choice for new requests.
-
-All requests currently use a local mock adapter through the Part 7 API client
-contract. Saved work reopens from this browser's local storage, including after a
-reload. Markdown and pasted text supply preview text; PDF/Word extraction, public
-page retrieval, background suggestions, and job suggestions use deterministic
-fixtures. Originals are not retained, and this preview provides no real login,
-document processing, backups, or AI inference. The visible preview notice explains
-the simulation. Use synthetic content. Delete the definition in Review & save to
-clear its saved mock data.
-
-The optional public API setting is documented in
-[frontend/.env.example](frontend/.env.example). To override it, create
-`frontend/.env.local` with `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api`.
-It defaults to same-origin `/api` for the combined production application. This
-setting is reserved for Part 9 and does not enable real requests in the mock preview.
-Next.js embeds `NEXT_PUBLIC_*` values at build time; rebuild after changing them.
-Keep the existing root `.env` for backend secrets. Never copy it into `frontend/`,
-prefix secrets with `NEXT_PUBLIC_`, or expose secrets through Next.js configuration.
-Cross-origin API calls and backend authentication are integrated in Part 9.
-
-Check and test the frontend independently:
-
-```bash
-make frontend-check
-make frontend-test
-make frontend-browser-install
-make frontend-e2e
-```
-
-These run ESLint, TypeScript checks, a production build, rendered-component and
-mock-client tests, and complete Chromium workflows at desktop/mobile sizes.
-Browser tests start and stop their own Next.js server
-on port 3001; leave that port free. Browser binaries use the same ignored cache
-as the backend tests. No provider credentials, database, or backend are needed.
-
-If a Next.js preview is already running, test against it without stopping it:
-`PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 make frontend-e2e`. Tests use isolated
-browser contexts and do not change work saved in your own browser.
-
-With the backend's Python dependencies installed, also run `make frontend-contract`.
-It runs frontend component/client tests, then validates 15 synthetic request/response
-payloads against the existing Part 7 Pydantic schemas. It opens no database or HTTP
-connection. [Part 8 validation](doc/PART8_VALIDATION.md) records coverage and mock limits.
-
-The build generates `frontend/out/`, ready for a static web server. Preview it:
-
-```bash
-make frontend-preview
-```
-
-Open <http://127.0.0.1:3000> and stop with Ctrl+C. This preview serves static
-files only; production will serve them through FastAPI in Part 9. There is no
-production Next.js server or `next start` command.
-
-## OpenAI checks
-
-The backend client uses the official SDK and direct Responses API. Keep
-`OPENAI_API_KEY` in the existing ignored root `.env`; it is never a frontend
-setting. Only explicit facts/clarification requests and the commands below call AI;
-uploads, source retrieval, startup, and ordinary saves make no AI calls.
-
-These commands make paid live calls using synthetic data only:
-
-```bash
-make ai-smoke
-make ai-evaluate
-```
-
-The smoke test checks `2+2`; evaluation covers English/Spanish background
-extraction, vague preferences, the reference scenario, and a reviewable update.
-Results include pass/fail checks, elapsed time, token usage, and estimated cost.
-No CV, profile, or other personal source document is sent by these commands.
-To save a sanitized report, use
-`uv run --project backend --locked python -m career_assistant.ai_cli evaluate --report doc/AI_EVALUATION.json`.
-
-Defaults are `gpt-6-luna`, low reasoning, a 60-second timeout budget, 20,000 input
-tokens, and 2,000 output tokens including reasoning. The client counts input
-tokens before inference, rejects oversized context, disables automatic retries
-and truncation, and requests strict structured output with `store=False`.
-Incomplete, refused, or invalid output raises a sanitized error; this client
-does not write to the saved definition. Settings can lower those limits but
-cannot exceed the agreed caps. See [.env.example](.env.example).
-
-Normal tests use fake transports/clients and never make live OpenAI calls. The
-model-selection evidence and its limits are in [doc/AI_EVALUATION.md](doc/AI_EVALUATION.md).
-
-## Configuration
-
-Settings are optional and read from the root `.env` or process environment.
-See [.env.example](.env.example). If `.env` already contains your OpenAI key,
-keep it and add settings as needed; do not overwrite it with the example file.
-`CAREER_APP_NAME` sets the application name in its API documentation.
-
-The Docker scaffold passes only its explicit settings, not the root `.env`
-contents. No provider key is embedded in the image. Runtime dependencies and
-development tooling are recorded in `backend/pyproject.toml` and `backend/uv.lock`.
-
-## Tests and checks
+## Tests and validation
 
 ```bash
 make check
 make integration
+make frontend-check
+make frontend-contract
 make browser-install
+make frontend-browser-install
+make frontend-e2e
 make e2e
 ```
 
-`make check` runs Ruff and unit tests with coverage; `make test` runs those tests
-alone, without a database or external services. `make integration` starts local
-PostgreSQL and tests migrations, persistence, constraints, rollback, and deletion
-in a uniquely named disposable database. It drops only that database on teardown
-and refuses remote connections. The database service stays running; stop it with
-`make db-down`. Unit and integration coverage are reported separately. To measure
-them together, run
-`uv run --project backend --locked pytest backend/tests --ignore=backend/tests/e2e --cov=career_assistant --cov-report=term-missing`
-with PostgreSQL running.
-`make e2e` launches its own local server and Chromium to test the HTML-to-API
-flow and failure/retry behavior; stop commands are not needed for that server.
-Tests use synthetic data and stub Neon S3 calls; they need no provider credentials
-or cloud access. On Linux, install
-Playwright's documented system dependencies if Chromium reports missing shared
-libraries. Browser downloads and uv's local cache stay under ignored `.cache/`.
+`make check` runs Ruff and backend unit tests; `make integration` starts local
+PostgreSQL and uses disposable migrated databases. `make frontend-contract` runs
+component/client/catalog tests and validates synthetic payloads against the backend
+schemas without a server. `make frontend-e2e` runs desktop/mobile mock workflows
+on port 3001 in an isolated Next.js output directory. If using `PLAYWRIGHT_BASE_URL`,
+point it only at an explicitly mock-enabled preview.
 
-## Local and hosted components
+`make e2e` builds/checks the real-mode frontend and starts local PostgreSQL.
+It serves that export with the real backend, sessions,
+PostgreSQL and file parser. Fake AI and deterministic URL retrieval are injected
+only by the test harness. Each run creates/removes its own database and temporary
+originals. No existing owner, definitions or documents are changed. The live test
+is skipped in ordinary runs.
 
-| Local scaffold | Hosted MVP target |
-| --- | --- |
-| FastAPI/Uvicorn, standalone or in Docker | One Railway Free web service |
-| Docker Compose PostgreSQL and named volume | Neon Free PostgreSQL |
-| Private host directory or local Docker document volume | Private Neon Object Storage |
-| Explicit synthetic AI commands; routine tests use fakes | Backend-only OpenAI API |
+Validate the combined image, packaged migrations, browser workflow and application
+replacement with external persistence:
 
-The health route checks application liveness, not database or AI readiness.
-The private job-definition API, migrations, document storage and AI proposals are
-available. The Next.js shell is available separately.
-The production image will include its static export when frontend/backend
-integration is implemented.
-Hosted provisioning and seven-day backup verification belong to Part 11.
+```bash
+make release-check
+```
 
-## Production packaging
+This builds `career-assistant:part9`, uses a disposable database and Docker volume,
+and records [the release check](doc/PART9_RELEASE_CHECK.json). Its first container
+mounts a read-only test launcher with fake AI; the replacement runs the unchanged
+production command without that mount. All test resources are removed afterward.
 
-The selected deployment is one application Docker image containing FastAPI and
-the Next.js static export. A Node.js build stage compiles the frontend; the final
-runtime contains Python and the generated assets, with one Uvicorn process.
-Keep the source directories and local development processes separate.
+The explicitly paid live workflow uses two bounded generations and synthetic
+content only, against its own temporary database:
 
-Production PostgreSQL and original documents stay in Neon, outside the application
-container. Supply secrets at runtime and run database migrations once as a separate
-release step. Local Compose keeps PostgreSQL in its own container and named volume.
+```bash
+make workflow-live
+```
 
-The current image contains the backend and packaged migrations. The combined
-frontend/backend build will be added and tested in Part 9, before hosted deployment.
+Results are in [the live workflow report](doc/PART9_AI_WORKFLOW.json). Additional
+provider-only diagnostics remain available as `make ai-smoke` and `make ai-evaluate`.
+They require the backend key and incur inference charges; ordinary tests do not.
+
+## Deployment
+
+No cloud resources have been provisioned. [The Part 11 deployment procedure](doc/DEPLOYMENT.md)
+records configuration, separate migrations, authentication, smoke checks and
+rollback. Railway/Neon account availability, ongoing free allowances, private
+object storage, independent backups and restoration must be verified in Part 11.
+Any paid hosting upgrade requires your explicit choice.

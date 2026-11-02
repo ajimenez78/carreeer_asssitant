@@ -1,13 +1,15 @@
 UV ?= uv
 BACKEND_PORT ?= 8000
 FRONTEND_PORT ?= 3000
+FRONTEND_API_BASE_URL ?= http://127.0.0.1:$(BACKEND_PORT)/api
+RELEASE_IMAGE ?= career-assistant:part9
 NPM ?= npm
 export npm_config_cache ?= $(CURDIR)/.cache/npm
 export NEXT_TELEMETRY_DISABLED ?= 1
 export UV_CACHE_DIR ?= $(CURDIR)/.cache/uv
 export PLAYWRIGHT_BROWSERS_PATH ?= $(CURDIR)/.cache/ms-playwright
 
-.PHONY: setup dev up down db-up db-down db-init db-migrate owner storage-cleanup integration ai-smoke ai-evaluate test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-test frontend-contract frontend-browser-install frontend-e2e frontend-preview
+.PHONY: setup dev up down db-up db-down db-init db-migrate owner storage-cleanup integration workflow-live clarity-live release-image release-check ai-smoke ai-evaluate test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-test frontend-contract frontend-browser-install frontend-e2e frontend-preview
 
 setup:
 	$(UV) sync --project backend --locked
@@ -54,8 +56,20 @@ test:
 browser-install:
 	$(UV) run --project backend --locked playwright install chromium
 
-e2e:
+e2e: frontend-check db-up
 	$(UV) run --project backend --locked pytest backend/tests/e2e --browser chromium
+
+workflow-live: frontend-check db-up
+	$(UV) run --project backend --locked pytest backend/tests/e2e/test_live_workflow.py --browser chromium --live-openai
+
+clarity-live:
+	$(UV) run --project backend --locked python backend/tests/clarity_live_check.py
+
+release-image:
+	docker build -f backend/Dockerfile -t $(RELEASE_IMAGE) .
+
+release-check: release-image db-up
+	CAREER_RELEASE_IMAGE=$(RELEASE_IMAGE) $(UV) run --project backend --locked python backend/tests/release_check.py
 
 lint:
 	$(UV) run --project backend --locked ruff check backend
@@ -67,7 +81,7 @@ frontend-setup:
 	$(NPM) --prefix frontend ci
 
 frontend-dev:
-	$(NPM) --prefix frontend run dev -- --hostname 127.0.0.1 --port $(FRONTEND_PORT)
+	NEXT_PUBLIC_API_BASE_URL=$(FRONTEND_API_BASE_URL) $(NPM) --prefix frontend run dev -- --hostname 127.0.0.1 --port $(FRONTEND_PORT)
 
 frontend-check:
 	$(NPM) --prefix frontend run check

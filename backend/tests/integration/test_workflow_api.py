@@ -16,7 +16,7 @@ from career_assistant.main import create_app
 from career_assistant.models import Owner, OwnerSession, Source
 from career_assistant.persistence import DefinitionRepository
 from career_assistant.storage import LocalDocumentStore
-from career_assistant.workflow import ExtractedBackground
+from career_assistant.workflow import ExtractedBackground, ai_context, context_token
 
 ROOT = "/api/job-definition"
 ORIGIN = "http://testserver"
@@ -47,6 +47,17 @@ class FakeAI:
                 "Which period covers the on-site day limit?",
             ],
             "conflicts": [],
+            "assessment": {
+                "summary": (
+                    "You are looking for a Staff engineering role "
+                    "with architecture responsibilities."
+                ),
+                "sufficient": False,
+                "explanation": (
+                    "The period of the hard office-day limit needs clarification."
+                ),
+                "gaps": ["Office-day period"],
+            },
         }
         self.background = {
             "facts": [
@@ -135,6 +146,7 @@ def test_full_flow_creates_reviews_clarifies_saves_reloads_and_refines(api):
     assert review.status_code == 200
     assert review.json()["facts"][0]["source_id"] == sid
     assert client.get(ROOT).json()["clarifications"] == []
+    assert client.get(ROOT).json()["assessment"] is None
     response = client.post(ROOT + "/clarifications", json={"language": "Spanish"})
     assert response.status_code == 200, response.text
     proposal = response.json()
@@ -178,7 +190,8 @@ def test_full_flow_creates_reviews_clarifies_saves_reloads_and_refines(api):
         restarted, headers={"Origin": ORIGIN}, cookies=dict(client.cookies)
     ) as reopened:
         loaded = reopened.get(ROOT).json()
-        assert loaded["id"] == identity and loaded["state"] == "ready"
+        assert loaded["id"] == identity and loaded["state"] == "draft"
+        assert loaded["assessment"] is None
         assert loaded["sources"][0]["id"] == sid
         assert [row["answer_state"] for row in loaded["clarifications"]] == [
             "unknown",
@@ -321,6 +334,131 @@ def test_stale_inflight_and_reviewed_proposals_are_rejected(api, sessions):
     ai.callback = mutate
     assert client.post(ROOT + "/clarifications", json={}).status_code == 409
     assert client.get(ROOT).json()["description"] == "Changed during AI call"
+
+
+def test_assessment_persists_saved_summary_and_drives_readiness(api, sessions):
+    client, ai, *_ = api
+    initial = save(client, state="ready", preferences=[criterion()])
+    assert initial["state"] == "draft" and initial["assessment"] is None
+    ai.proposal["assessment"].update(
+        sufficient=True,
+        explanation="The role and meaningful constraints are clear enough.",
+        gaps=[],
+    )
+    ai.proposal["preferences"] = [criterion(value="Principal")]
+    response = client.post(ROOT + "/clarifications", json={"language": "Spanish"})
+    assert response.status_code == 200, response.text
+    result = response.json()
+    assert result["state"] == "ready" and result["clarifications"] == []
+    assert result["assessment"]["language"] == "Spanish"
+    assert result["assessment"]["assessed_at"]
+    assert result["assessment"]["context"] == result["proposal_context"]
+    with sessions() as session:
+        assert result["proposal_context"] == context_token(ai_context(session))
+    loaded = client.get(ROOT).json()
+    assert loaded["assessment"] == result["assessment"]
+    assert loaded["state"] == "ready" and loaded["preferences"] == [criterion()]
+    assert ai.calls[-1]["data"]["accepted_preferences"] == [criterion()]
+    assert "not the unaccepted changes" in ai.calls[-1]["instructions"]
+    # Caller-selected state is ignored; saving the same content keeps the assessment.
+    same = save(client, state="draft", preferences=[criterion()])
+    assert same["state"] == "ready" and same["assessment"] == loaded["assessment"]
+    changed = save(client, description="A different role", state="ready")
+    assert changed["state"] == "draft" and changed["assessment"] is None
+
+
+def test_insufficient_assessment_matches_post_question_context_and_answer_invalidates(
+    api, sessions
+):
+    client, *_ = api
+    save(client)
+    response = client.post(ROOT + "/clarifications", json={}).json()
+    assert response["assessment"]["sufficient"] is False
+    assert response["state"] == "draft" and response["clarifications"]
+    with sessions() as session:
+        assert response["assessment"]["context"] == context_token(ai_context(session))
+    question = response["clarifications"][0]
+    client.patch(f"{ROOT}/clarifications/{question['id']}", json={"state": "unknown"})
+    loaded = client.get(ROOT).json()
+    assert loaded["assessment"] is None and loaded["state"] == "draft"
+    assert loaded["clarifications"][0]["answer_state"] == "unknown"
+
+
+def test_changing_preference_value_type_invalidates_assessment(api):
+    client, ai, *_ = api
+    save(client, preferences=[criterion("remote", "work_arrangement", True)])
+    ai.proposal["assessment"]["sufficient"] = True
+    assert client.post(ROOT + "/clarifications", json={}).json()["state"] == "ready"
+    changed = save(client, preferences=[criterion("remote", "work_arrangement", 1)])
+    assert changed["assessment"] is None and changed["state"] == "draft"
+
+
+def test_pause_preserves_work_and_blocks_new_ai_calls_until_resume(api):
+    client, ai, *_ = api
+    save(client, preferences=[criterion()])
+    client.post(ROOT + "/clarifications", json={})
+    before = client.get(ROOT).json()
+    paused = client.patch(ROOT + "/clarification-control", json={"paused": True})
+    assert paused.status_code == 200
+    expected = {**before, "clarification_paused": True}
+    # The definition timestamp may record a control change.
+    assert {**paused.json(), "updated_at": before["updated_at"]} == expected
+    calls = len(ai.calls)
+    blocked = client.post(ROOT + "/clarifications", json={})
+    assert blocked.status_code == 409
+    assert blocked.json()["error"]["code"] == "clarification_paused"
+    assert len(ai.calls) == calls
+    assert client.get(ROOT).json()["clarification_paused"] is True
+    resumed = client.patch(ROOT + "/clarification-control", json={"paused": False})
+    assert resumed.status_code == 200
+    assert resumed.json()["assessment"] == before["assessment"]
+    assert client.post(ROOT + "/clarifications", json={}).status_code == 200
+
+
+@pytest.mark.parametrize("resume", [False, True])
+def test_stop_during_generation_rejects_result_even_if_resumed(api, sessions, resume):
+    client, ai, *_ = api
+    save(client, preferences=[criterion()])
+    client.post(ROOT + "/clarifications", json={})
+    before = client.get(ROOT).json()
+
+    def stop():
+        with sessions.begin() as session:
+            repo = DefinitionRepository(session)
+            repo.set_clarification_paused(True)
+            if resume:
+                repo.set_clarification_paused(False)
+
+    ai.callback = stop
+    response = client.post(ROOT + "/clarifications", json={})
+    assert response.status_code == 409
+    loaded = client.get(ROOT).json()
+    assert loaded["clarification_paused"] is not resume
+    for key in ("assessment", "clarifications", "preferences", "state"):
+        assert loaded[key] == before[key]
+
+
+@pytest.mark.parametrize(
+    "change",
+    [
+        {"summary": " "},
+        {"summary": "x" * 4001},
+        {"explanation": ""},
+        {"sufficient": "true"},
+        {"gaps": [" "]},
+        {"gaps": ["gap"] * 10},
+    ],
+)
+def test_invalid_assessment_cannot_replace_saved_work(api, change):
+    client, ai, *_ = api
+    save(client, preferences=[criterion()])
+    assert client.post(ROOT + "/clarifications", json={}).status_code == 200
+    before = client.get(ROOT).json()
+    ai.proposal["assessment"].update(change)
+    response = client.post(ROOT + "/clarifications", json={})
+    assert response.status_code == 502, response.text
+    assert response.json()["error"]["code"] == "ai_invalid_response"
+    assert client.get(ROOT).json() == before
 
 
 def test_failed_commit_rolls_back_definition_and_preferences(api, database):
@@ -477,6 +615,7 @@ def test_source_deletion_removes_future_context_but_retains_accepted_preferences
     assert client.delete(f"{ROOT}/sources/{sid}").json()["cleanup_pending"] is False
     loaded = client.get(ROOT).json()
     assert loaded["sources"] == [] and loaded["clarifications"] == []
+    assert loaded["assessment"] is None and loaded["state"] == "draft"
     assert loaded["preferences"] == [criterion()]
     client.post(ROOT + "/clarifications", json={})
     assert "Deleted source marker" not in str(ai.calls[-1]["data"])
@@ -543,6 +682,7 @@ def test_failed_retry_of_reviewed_file_clears_derived_context(api, monkeypatch):
     assert loaded["facts"] == [] and loaded["reviewed_at"] is None
     definition = client.get(ROOT).json()
     assert definition["clarifications"] == []
+    assert definition["assessment"] is None and definition["state"] == "draft"
     assert definition["preferences"] == [criterion()]
 
 

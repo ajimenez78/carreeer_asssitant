@@ -2,7 +2,10 @@
 
 Part 7 implements the private API for one owner and one current definition.
 The generated request/response schemas are at `/openapi.json` and `/docs`.
-Frontend editing uses mocks in Part 8; real integration remains Part 9 and chat Part 10.
+Part 9 connects the bilingual frontend to this API and serves its static export from the same Python service. Mocks are an explicit development/test option; chat remains Part 10.
+The subsequent clarity/summary extension adds system readiness, a persisted
+assessment, and independent clarification stop/resume control. Its validation
+record is [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md).
 
 ## Access and initialization
 
@@ -10,6 +13,11 @@ Run `make db-init` explicitly before using private routes. It creates only a loc
 database, migrates it, and reserves the owner without enabling login. Repeating
 initialization preserves data and credentials. Hosted migrations remain a
 separate release command; web startup performs no migrations or provider calls.
+
+Migration `0004` adds the assessment and clarification-control fields. Existing
+manual readiness is reset to unassessed `draft`; accepted preferences, sources,
+answers, and owner credentials are retained. New assessments determine readiness
+under the system-controlled workflow.
 
 Run `make owner` to configure a password interactively, then configure a stable
 `CAREER_SESSION_SECRET` of at least 32 random characters in the ignored `.env`.
@@ -26,14 +34,13 @@ passwords, documents, or job preferences.
 Every write, including login and multipart uploads, requires an `Origin` header
 matching `CAREER_ALLOWED_ORIGINS` exactly. Requests without it are rejected.
 This applies to curl and other API clients too. Configure only trusted origins;
-use HTTPS origins and `CAREER_SESSION_SECURE=true` for hosted operation. CORS
-browser integration is Part 9. Private responses disable caching; originals
+use HTTPS origins and `CAREER_SESSION_SECURE=true` for hosted operation. Credentialed CORS allows only the configured exact origins and supported methods/headers, including preflights and API errors. Private responses disable caching; originals
 are attachment downloads. `/api/health` remains a public liveness check.
 
 ## Saved definitions and proposals
 
-`PUT /api/job-definition` explicitly creates or replaces the accepted description,
-state, and complete preference list. A description of 1–20,000 characters is enough
+`PUT /api/job-definition` explicitly creates or replaces the accepted description
+and complete preference list. A description of 1–20,000 characters is enough
 to save an incomplete draft. Example:
 
 ```json
@@ -50,9 +57,13 @@ to save an incomplete draft. Example:
 }
 ```
 
-Use `draft` or `ready`; the owner decides readiness. `GET /api/job-definition`
-returns the stable UUID, timestamps, accepted preferences, source metadata and
-clarification questions/answers. No current definition returns 404. Omitted
+The request's `state` remains accepted for compatibility but does not set
+readiness. The system sets `ready` only after a sufficient-clarity assessment;
+changed saved criteria clear the assessment and return to `draft`. An unchanged
+save preserves the current assessment/readiness. `GET /api/job-definition`
+returns the stable UUID, timestamps, accepted preferences, source metadata,
+clarification questions/answers, `assessment` (or null), and
+`clarification_paused`. No current definition returns 404. Omitted
 preferences in an explicit save are removed; source and answer records are
 independent of this action. There is no revision history.
 
@@ -76,7 +87,19 @@ previous answer states. It returns:
   AI changes with accepted criteria so omitted accepted values are preserved;
 - `proposal.conflicts`: explanations/requests to review changes to accepted values;
 - `clarifications`: at most three newly persisted questions, with UUIDs and round;
+- `assessment`: persisted natural-language `summary`, boolean `sufficient`,
+  `explanation`, and `gaps`, plus `language`, `assessed_at`, and `context` metadata;
+- `state`: `ready` when sufficiently clear, otherwise `draft`;
 - `proposal_context`: a context fingerprint, and `usage`: tokens/model/cost estimate.
+
+The model's strict proposal includes `assessment` with a 1–4,000 character summary,
+1–2,000 character explanation, and at most nine gaps. The saved summary describes
+the current accepted definition; proposed preferences are not accepted facts.
+Assess meaningful clarity rather than field completion: optional unknowns and
+skipped questions are allowed. No new questions are added when sufficiently
+clear. Assessment and summary share this existing explicit AI call; loading and
+saving do not call AI. Generated prose retains its requested language when the
+interface language changes.
 
 Preferences are not applied by this call. After review, send the edited complete
 preference set through `PUT`, including `proposal_context` when applying the AI
@@ -84,6 +107,15 @@ proposal. A changed context returns 409 instead of applying stale suggestions.
 An in-flight AI result is also rejected if its context changes. Ordinary manual
 saves need no fingerprint. Failed AI calls and failed save transactions preserve
 the previous definition and accepted preferences.
+
+`PATCH /api/job-definition/clarification-control` accepts `{"paused":true}` to
+stop or `{"paused":false}` to resume, returning the full current definition.
+Pause persists independently of `state`; it neither marks ready nor removes
+accepted preferences, questions, or an otherwise-current assessment. New
+clarification calls are rejected while paused. Control changes invalidate
+in-flight AI context, including stop followed immediately by resume, so a late
+response cannot apply. The frontend keeps stop available during requests and
+discards aborted results. Resume alone makes no AI call.
 
 `PATCH /api/job-definition/clarifications/{question_id}` persists one answer:
 
@@ -93,7 +125,9 @@ the previous definition and accepted preferences.
 
 Alternatively send `{"state":"skipped"}` or `{"state":"unknown"}`. Only an
 answered question accepts text. Answers persist independently of definition saves
-and do not apply preferences automatically; request another proposal when ready.
+and do not apply preferences automatically. Changed answer state/text clears the
+assessment and returns the definition to `draft`; request another assessment
+when ready.
 
 ## Sources, correction, and processing limits
 
@@ -127,7 +161,8 @@ may leave a pending source, which can be retried or removed.
 `GET /sources/{id}/original` downloads an authenticated stored file.
 `POST /sources/{id}/retry` re-reads the stored original or retrieves the URL again.
 If no original bytes were stored, remove the failed source and upload it again.
-Retried extraction invalidates previous review, source facts and derived questions.
+Retried extraction invalidates previous review, source facts, derived questions,
+and the clarity assessment/summary.
 
 `POST /sources/{id}/facts` with an optional language requests AI background-fact
 proposals from that source's raw extracted text. Each proposed fact must include
@@ -136,7 +171,8 @@ sent to job clarification until the owner reviews them.
 `PATCH /sources/{id}` with `{"facts":["Corrected historical fact", "…"]}`
 explicitly replaces and accepts the source's facts (up to 100, 2,000 characters
 each). An empty list accepts no facts. Provenance stays attached to the source.
-Reviewing or correcting facts clears derived clarification context. Historical
+Reviewing or correcting facts clears derived clarification context and the
+clarity assessment/summary, returning the definition to `draft`. Historical
 facts remain separate from desired job criteria. Conflicting source facts can be
 compared/corrected before review; they are never automatically reconciled as truth.
 
@@ -172,7 +208,8 @@ correctness. See [official structured-output guidance](https://developers.openai
 
 Before deleting a source, the UI must explain that `DELETE /sources/{id}` removes
 its live text/facts and clears all derived clarification/answer context. Accepted
-job preferences remain independent. `DELETE /api/job-definition` deletes the
+job preferences remain independent; the assessment/summary is invalidated and
+readiness returns to `draft`. `DELETE /api/job-definition` deletes the
 definition, all sources/facts/preferences/answers, and queues its originals;
 the configured owner and login remain. Part 10 will apply this invalidation rule
 to chat records when they exist.

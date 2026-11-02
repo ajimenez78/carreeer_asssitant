@@ -70,6 +70,7 @@ class JobDefinition(Timestamps, Base):
     __table_args__ = (
         CheckConstraint("length(btrim(description)) > 0", name="description_not_blank"),
         CheckConstraint("state IN ('draft', 'ready')", name="valid_state"),
+        CheckConstraint("control_version >= 0", name="valid_control_version"),
     )
 
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
@@ -78,6 +79,11 @@ class JobDefinition(Timestamps, Base):
     )
     description: Mapped[str] = mapped_column(Text)
     state: Mapped[str] = mapped_column(Text, default="draft", server_default="draft")
+    assessment: Mapped[dict[str, Any] | None] = mapped_column(JSONB(none_as_null=True))
+    clarification_paused: Mapped[bool] = mapped_column(
+        default=False, server_default="false"
+    )
+    control_version: Mapped[int] = mapped_column(default=0, server_default="0")
 
 
 class Preference(Timestamps, Base):

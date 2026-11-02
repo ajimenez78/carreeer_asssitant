@@ -1,0 +1,43 @@
+{
+  "checked_at": "2026-11-02T07:21:57.223695+00:00",
+  "synthetic_only": true,
+  "requested_model": "gpt-6-luna",
+  "checks": {
+    "background_request_succeeded": true,
+    "clarification_request_succeeded": true,
+    "staff_scope_preserved": true,
+    "architecture_preserved": true,
+    "hybrid_location_preserved": true,
+    "onsite_period_stays_unknown": true,
+    "compensation_not_invented": true,
+    "questions_present": true,
+    "save_reload_refine_preserves_identity_and_criteria": true,
+    "exactly_two_live_generations": true
+  },
+  "results": [
+    {
+      "task": "ExtractedBackground",
+      "model": "gpt-6-luna",
+      "elapsed_seconds": 4.473,
+      "usage": {
+        "input_tokens": 306,
+        "cached_input_tokens": 0,
+        "output_tokens": 77,
+        "reasoning_tokens": 0
+      },
+      "estimated_cost_usd": "0.0000691"
+    },
+    {
+      "task": "Proposal",
+      "model": "gpt-6-luna",
+      "elapsed_seconds": 9.748,
+      "usage": {
+        "input_tokens": 937,
+        "cached_input_tokens": 0,
+        "output_tokens": 813,
+        "reasoning_tokens": 225
+      },
+      "estimated_cost_usd": "0.0005002"
+    }
+  ]
+}

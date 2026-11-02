@@ -1,2 +1,3 @@
 import { Workspace } from "../components/workspace";
-export default function Home() { return <Workspace />; }
+import { SessionGate } from "../components/session-gate";
+export default function Home() { return <SessionGate><Workspace /></SessionGate>; }

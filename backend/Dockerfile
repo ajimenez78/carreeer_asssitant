@@ -1,3 +1,13 @@
+FROM node:26-bookworm-slim AS frontend
+WORKDIR /web
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    NEXT_PUBLIC_API_MODE=live \
+    NEXT_PUBLIC_API_BASE_URL=/api
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
+COPY frontend/ ./
+RUN npm run build
+
 FROM ghcr.io/astral-sh/uv:0.12.23 AS uv
 FROM python:3.14-slim
 
@@ -9,11 +19,13 @@ WORKDIR /app
 ENV UV_LINK_MODE=copy \
     UV_COMPILE_BYTECODE=1 \
     PYTHONUNBUFFERED=1 \
+    CAREER_FRONTEND_DIRECTORY=/app/frontend \
     PATH="/app/.venv/bin:$PATH"
 
-COPY pyproject.toml uv.lock ./
+COPY backend/pyproject.toml backend/uv.lock ./
 RUN uv sync --locked --no-dev --no-install-project
-COPY src ./src
+COPY backend/src ./src
+COPY --from=frontend /web/out ./frontend
 RUN uv sync --locked --no-dev --no-editable \
     && useradd --system --uid 10001 --create-home app \
     && mkdir -p /data/documents \

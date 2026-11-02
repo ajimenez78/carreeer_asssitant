@@ -7,5 +7,5 @@ export default defineConfig([
   js.configs.recommended,
   tseslint.configs.recommended,
   next.configs["core-web-vitals"],
-  globalIgnores([".next/**", "out/**", "next-env.d.ts", "playwright-report/**", "test-results/**"]),
+  globalIgnores([".next/**", ".next-mock-tests/**", "out/**", "next-env.d.ts", "playwright-report/**", "test-results/**"]),
 ]);

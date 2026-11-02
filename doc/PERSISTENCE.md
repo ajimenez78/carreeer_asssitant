@@ -10,7 +10,7 @@ Conversation storage remains in Part 10.
 | Table | Purpose and constraints |
 | --- | --- |
 | `owners` | One configured owner, enforced by primary key/check `id = 1`. Unique login name; nullable password hash means login is not configured. No plaintext password or public registration. |
-| `job_definitions` | Stable UUID, unique owner foreign key, nonempty original description, draft/ready state, creation/update times. Updates replace the current accepted state; no revisions. |
+| `job_definitions` | Stable UUID, unique owner foreign key, nonempty original description, system-assessed draft/ready state, creation/update times. Nullable JSONB assessment stores summary/clarity and language/time/context metadata. A separate clarification-paused flag and nonnegative monotonic control version persist stop/resume and reject obsolete in-flight results. Updates replace the current accepted state; no revisions. |
 | `preferences` | Definition foreign key, unique criterion key per definition, category, mandatory/preferred/excluded priority, nullable JSONB value, optional explanatory text. SQL NULL represents unknown. JSONB holds a single structured value, not an entire definition. |
 | `sources` | Definition foreign key, UUID, kind (file/URL/text), display name, original URL or object key as appropriate, media type/size, extraction state/text, review timestamp. File slots 1–5, unique per definition, enforce five files; each is at most 10 MiB. |
 | `background_facts` | Source foreign key, editable fact text, timestamps. Facts are reviewed through their source and never automatically become preferences. |
@@ -33,6 +33,9 @@ the persistence envelope and does not infer missing values.
 | --- | --- |
 | Save an incomplete description | Create the current definition; empty optional context is allowed. |
 | Review and explicitly save edits | Update the same UUID and replace only the supplied preference set within one transaction. Source/answer actions use their own transactions. |
+| Assess clarity and summarize | Store the validated assessment and post-question context in the explicit clarification transaction; only sufficient clarity sets ready. Unaccepted preference proposals remain separate. |
+| Change saved criteria or answer/source context | Invalidate derived assessment/summary and return to draft. An unchanged definition save preserves the current assessment. |
+| Stop or resume clarification | Persist the separate paused flag and increment control version when changed; keep accepted data and current assessment. Stop/resume changes prevent an older in-flight result from applying. |
 | Add context and review facts | Sources and facts have their own records; only reviewed sources supply accepted background. |
 | Skip or answer a clarification | Store an explicit answer state; skipped/unknown answers remain NULL. Unreviewed proposals do not update preferences. |
 | Remove a source | Delete original-source metadata and facts, clear all derived clarification context, and queue its original file for removal. Accepted preferences remain. |
@@ -83,6 +86,12 @@ Hosted migrations use an already provisioned database and the direct TLS URL;
 they never try to create a hosted database. Migrations run as a separate release
 step, not with each web process. Integration tests create a unique disposable
 local database, migrate it, and drop only that generated database on teardown.
+
+The 2026-11-02 clarity/summary extension uses migration `0004` to add assessment
+and pause/control-version columns. Legacy manually selected ready state becomes
+unassessed draft; accepted preferences, sources, answers, and credentials remain.
+The next explicit assessment determines readiness. Validation for this extension
+is recorded separately in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md).
 
 The Part 11 backup format will pair a custom-format `pg_dump` with a UTF-8 JSON
 manifest and originals under `documents/<UUID>`. The manifest records format

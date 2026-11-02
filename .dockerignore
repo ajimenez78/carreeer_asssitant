@@ -1,0 +1,27 @@
+# Deny by default, then admit only source and lockfiles needed by the build.
+*
+!backend
+backend/*
+!backend/Dockerfile
+!backend/pyproject.toml
+!backend/uv.lock
+!backend/src
+!backend/src/**
+backend/src/**/__pycache__
+backend/src/**/*.pyc
+backend/src/career_assistant/static
+!frontend
+frontend/*
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/next.config.ts
+!frontend/tsconfig.json
+!frontend/src
+!frontend/src/**
+!frontend/public
+!frontend/public/**
+# Never admit private config, even if someone puts it below a source directory.
+**/.env
+**/.env.*
+**/*.pem
+**/*.key

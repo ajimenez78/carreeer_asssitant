@@ -1,6 +1,6 @@
 # MVP requirements and architecture
 
-Status: Part 2 complete, 2026-11-01. The user selected Railway Free + Neon Free + direct OpenAI API calls and approved the product/source defaults. This is the implementation baseline; live inference/model evaluation and cloud provisioning remain in Parts 6 and 11.
+Status: Part 2 baseline approved on 2026-11-01, with English/Spanish UI and system-assessed clarity/summary requirements added on 2026-11-02. Parts 1–9 work locally; validation of the new clarity/summary extension is tracked separately in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md). Chat remains Part 10 and cloud provisioning remains Part 11.
 
 ## Confirmed baseline
 
@@ -16,8 +16,9 @@ Status: Part 2 complete, 2026-11-01. The user selected Railway Free + Neon Free 
 | --- | --- |
 | Access | One configured owner login over HTTPS on Railway; no public registration. Use a maintained authentication/session library and protect API and source-file access. Local development defaults to localhost. |
 | Definitions | One current definition, updated in place. Incomplete drafts can be saved; no revision-history UI. Use a stable identifier so later phases can reference it. |
-| Completion | A nonempty initial description is enough to save. Other fields may remain unknown; the owner chooses when the definition is ready and can revisit it. |
-| Clarification | Ask at most three focused questions per round. Allow skip and “not sure.” Explain conflicts and ask before replacing accepted information. |
+| Completion | A nonempty initial description is enough to save. The system assesses sufficient clarity from saved context and explains remaining gaps. Optional unknowns and skipped questions do not themselves prevent readiness. The user may stop and revisit clarification at any time; stopping does not mark the definition ready. This replaces owner-selected readiness at the user's request on 2026-11-02. |
+| Clarification | Ask at most three focused questions per explicit round when further clarification is useful. Allow skip and “not sure.” Explain conflicts and ask before replacing accepted information. Persist a separate stop/resume choice, with a stop control available during a request. |
+| Summary | Provide a natural-language view of the current saved role definition, with its clarity explanation and remaining gaps. Generate and persist the assessment/summary in the existing explicit clarification request, with its language and context; no AI on load or save. Describe accepted criteria separately from unaccepted proposals. Changed descriptions/preferences, answers, and source context invalidate the old assessment. |
 | Preferences | Separate mandatory constraints, preferences, and exclusions. Do not infer desired future responsibilities from every historical CV skill. |
 | Compensation | Record currency, range or target, payment period, and gross/net basis when known. Ask what vague terms mean; never invent amounts. |
 | Documents | Support text-based PDF, legacy `.doc`, `.docx`, and Markdown. Allow five documents per definition and 10 MB per document. Use bounded extraction/conversion; explain unsupported scanned PDFs and request a text-based alternative. OCR is deferred. |
@@ -32,15 +33,15 @@ The salary target and the period of the example's two-day office limit are data 
 
 1. Sign in and reopen the current definition, or start with a free-text description. Save an incomplete draft at any point after entering a description; save the initial draft before proceeding to sources or AI assistance.
 2. Optionally attach documents and public URLs. Show each source's extraction status and a clear recovery action on failure.
-3. Review extracted background facts and correct them before using them to clarify the ideal job. Keep source references with extracted facts.
-4. Answer a small batch of targeted questions. A skipped answer remains unknown; a conflicting answer produces a reviewable correction.
+3. Review extracted background facts and correct them before using them to clarify the role being sought. Keep source references with extracted facts.
+4. Request a clarity assessment and answer a small batch of targeted questions when needed. A skipped answer remains unknown; a conflicting answer produces a reviewable correction. The system decides whether the definition is sufficiently clear. Stop at any time, including while a request is running, and resume explicitly later.
 5. Review an editable definition covering role/seniority, responsibilities and scope, technical interests, business/team context, compensation, location, remote/hybrid arrangement, hours/travel, and learning/work–life preferences.
-6. Save accepted edits and supporting context. Reopen and refine the same definition later, including after application restarts.
+6. Save accepted edits and supporting context. Use the Summary view to read the saved definition in natural language and see assessed clarity or an invitation to assess the changed context. Reopen and refine the same definition later, including after application restarts.
 7. In Part 10, discuss changes in chat. Display proposed changes to the definition, apply only reviewed changes, and keep structured editing and chat consistent.
 
 ## Acceptance criteria and design walkthroughs
 
-These define future tests; no application tests have run during clarification.
+These are acceptance requirements, not a claim that every row has been verified. Historical results are recorded by part; the clarity/summary extension has a separate validation record.
 
 | Scenario | Expected result |
 | --- | --- |
@@ -48,6 +49,9 @@ These define future tests; no application tests have run during clarification.
 | Remote/hybrid preference | Preserve remote as preferred and Madrid or nearby as the constraint for hybrid work. Ask which period the two-day on-site limit covers before normalizing it. |
 | “Good compensation” | Ask for the desired range, currency, period, and gross/net basis. Leave unanswered values unknown. |
 | Description only: “I want a better software job” | Save a draft without demanding documents; ask about responsibilities/seniority, compensation, and work arrangement in manageable rounds. |
+| System-assessed clarity | The explicit clarification call explains whether the saved definition is sufficiently clear and identifies meaningful gaps. Ready is system controlled; optional unknowns/skips do not trigger endless repeated questions. |
+| Stop during clarification → reopen → resume | The stop control remains available during inference. Late results cannot change the definition after a persisted stop, including rapid stop/resume. Accepted data and local edits remain; stopped state persists independently of readiness. Resuming does not automatically call AI. |
+| Summary and context changes | Summary prose covers saved accepted criteria in the requested assistance language, with an explanation and gaps. It persists on reload; unsaved edits/proposals are identified separately. Changed definition/answers/source context clears the assessment, and failed AI calls preserve accepted data. Switching UI language preserves generated content. |
 | Background documents | Extract supported files, show source provenance, allow corrections, and distinguish career facts from job requirements. Conflicting CV/profile facts are surfaced for review. |
 | Unusable source | Corrupt/oversized/unsupported files, PDFs without text, or inaccessible links produce a useful message and upload/paste/retry path without clearing the draft. |
 | AI failure or invented information | Reject invalid model output, preserve the accepted draft, and show a retry/edit path. Unprovided background facts must not become accepted claims. |
@@ -96,7 +100,7 @@ The user explicitly selected the combined application option on 2026-11-01: sepa
 - Test the combined production image locally before release. Identify releases by Git revision and record the deployed image digest. Verify health and the real browser workflow after deployment.
 - Keep application rollback and database recovery distinct. Prefer backward-compatible schema changes; rolling back an image does not undo a migration. Retain the approved daily database/document backups for seven days.
 
-Current implementation: Parts 1–7 are complete locally, including the backend image, local PostgreSQL, separate Next.js scaffold, migrations/storage, bounded Responses API client, owner authentication, private job-definition API, document/public-link extraction, background review, clarification proposals, explicit saving and deletion/recovery. See [PERSISTENCE.md](PERSISTENCE.md), [AI_EVALUATION.md](AI_EVALUATION.md), [BACKEND_API.md](BACKEND_API.md) and [PART7_VALIDATION.md](PART7_VALIDATION.md). Frontend editing remains Part 8; the combined image/integrated workflow remains Part 9; chat remains Part 10; hosted deployment and backup restoration remain Part 11.
+Current implementation: Parts 1–9 are complete locally, including the private backend, bilingual frontend, real HTTP/session/CORS integration, and the combined Next.js-static-export/Python image. Explicit mock mode remains isolated to development/tests. Local deterministic/live browser flows and image replacement are recorded in [PART9_VALIDATION.md](PART9_VALIDATION.md), [PART9_AI_WORKFLOW.json](PART9_AI_WORKFLOW.json), and [PART9_RELEASE_CHECK.json](PART9_RELEASE_CHECK.json). The release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Chat remains Part 10; hosted deployment and backup restoration remain Part 11.
 
 ### Persistence and recovery details
 
@@ -158,12 +162,13 @@ Use JSON for structured data and multipart form uploads for files. The API retur
 | --- | --- |
 | `GET /api/health` | Sanitized service health; no configuration details. |
 | `POST /api/session`, `DELETE /api/session` | Owner sign-in/sign-out using the selected maintained session mechanism. |
-| `GET /api/job-definition` | Read the current draft, structured preferences, clarification state, and source metadata. |
-| `PUT /api/job-definition` | Create or save the current draft and user-reviewed edits; allow unknown optional fields. |
+| `GET /api/job-definition` | Read the current draft, structured preferences, clarification state, source metadata, saved assessment/summary, and paused state. |
+| `PUT /api/job-definition` | Create or save the current draft and user-reviewed edits; allow unknown optional fields. System controls readiness; changed saved criteria invalidate the assessment. |
 | `DELETE /api/job-definition` | Delete the definition and its agreed associated data. |
 | `POST /api/job-definition/sources` | Add an uploaded document, public URL, or pasted source text; retain provenance and extraction status. |
 | `GET`, `PATCH`, `DELETE /api/job-definition/sources/{source_id}` | Review/correct extracted background or remove a source. |
-| `POST /api/job-definition/clarifications` | Return focused questions and proposed definition changes from the supplied description, reviewed context, and answers. Persist clarification context without applying unreviewed preferences. |
+| `POST /api/job-definition/clarifications` | Assess and summarize saved context, returning focused questions when needed and reviewable definition proposals. Persist assessment/context without applying unreviewed preferences. Reject requests while paused. |
+| `PATCH /api/job-definition/clarification-control` | Persist `{"paused":true}` or `{"paused":false}` and return the current definition. Prevent a stopped in-flight response from applying. |
 | `GET`, `POST /api/job-definition/chat` | Part 10 conversation retrieval and messages; return reviewable preference proposals. |
 
 Definition fields follow the user-flow categories above; detailed relational columns and payload schemas are Part 5/7 work. Store background facts separately from preferences and represent unknown values explicitly. Manual and chat-approved updates use the same saving operation.
@@ -183,3 +188,4 @@ Errors follow `{"error": {"code": "...", "message": "...", "fields": {}}}` with 
 
 - 2026-11-01: The user explicitly approved Part 7. The private backend implementation and local validation are recorded in `BACKEND_API.md` and `PART7_VALIDATION.md`; Part 8 is next.
 - 2026-11-02: The user extended the language requirement to English/Spanish interfaces with a switcher and support for adding more locales. This supersedes the English-only UI default. The Part 8 frontend implements it with remembered browser preferences and preservation of user content and pending edits.
+- 2026-11-02: The user requested system-assessed clarity with the option to stop iteration at any time, plus a natural-language summary of the current definition. This supersedes manual readiness selection and extends the integrated structured workflow; it does not authorize Part 10 chat or job discovery. See `CLARITY_SUMMARY.md` for acceptance and validation.

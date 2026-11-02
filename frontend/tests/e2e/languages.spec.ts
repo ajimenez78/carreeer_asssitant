@@ -16,13 +16,13 @@ test("English and Spanish switch immediately, persist, and preserve the full edi
   await expect(page).toHaveTitle("El puesto que buscas | Asistente profesional");
   await expect(page.getByRole("main").getByRole("alert")).toContainText("Introduce una descripción");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText("Aclara qué puesto estás buscando.");
-  const description = "Busco un puesto Staff de arquitectura y trabajo remoto cerca de Madrid.";
+  const description = "Busco un puesto Staff de arquitectura y trabajo remoto cerca de Madrid. Quiero una buena retribución, aún sin concretar.";
   await page.getByRole("textbox", { name: "El puesto que buscas", exact: true }).fill(description);
   await switchTo(page, "en");
   await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toHaveValue(description);
   await switchTo(page, "es");
   await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("Borrador guardado");
+  await expect(page.getByRole("status")).toContainText("Definición guardada");
   await nav(page, /Trayectoria/);
   await page.getByLabel("Tipo de fuente").selectOption("text");
   await page.getByLabel("Nombre de la fuente").fill("Save draft");
@@ -61,7 +61,7 @@ test("English and Spanish switch immediately, persist, and preserve the full edi
   await expect(salary.getByLabel("Minimum", { exact: true })).toHaveValue("100000");
   await switchTo(page, "es");
   await page.getByRole("button", { name: "Aplicar las sugerencias revisadas y guardar" }).click();
-  await expect(page.getByRole("status")).toContainText("Borrador guardado");
+  await expect(page.getByRole("status")).toContainText("Definición guardada");
   await page.screenshot({ path: info.outputPath("spanish-review.png"), fullPage: true });
   const before = await page.evaluate(key => localStorage.getItem(key), MOCK_STORAGE_KEY);
   await switchTo(page, "en");

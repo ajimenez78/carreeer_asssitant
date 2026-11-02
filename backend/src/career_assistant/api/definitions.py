@@ -1,6 +1,7 @@
 """Private, explicit-save job-definition workflow."""
 
 import json
+from datetime import UTC, datetime
 from typing import Annotated
 from uuid import UUID, uuid4
 
@@ -39,6 +40,7 @@ from career_assistant.storage import cleanup_documents, document_store
 from career_assistant.workflow import (
     Answer,
     Assistance,
+    ClarificationControl,
     SaveDefinition,
     SourceInput,
     SourceReview,
@@ -118,6 +120,13 @@ def save_definition(data: SaveDefinition, request: Request):
         repo.save(
             DefinitionData.model_validate(data.model_dump(exclude={"proposal_context"}))
         )
+        return definition_view(session)
+
+
+@router.patch("/clarification-control", response_model=DefinitionView)
+def control_clarification(data: ClarificationControl, request: Request):
+    with sessions(request).begin() as session:
+        DefinitionRepository(session).set_clarification_paused(data.paused)
         return definition_view(session)
 
 
@@ -391,6 +400,12 @@ def clarify(
 ):
     with sessions(request).begin() as session:
         context = ai_context(session)
+        if context["clarification_paused"]:
+            raise AppError(
+                "clarification_paused",
+                "Clarification is stopped. Resume it before requesting another round.",
+                409,
+            )
     token = context_token(context)
     result, preferences, conflicts = propose(client, context, data.language)
     with sessions(request).begin() as session:
@@ -404,14 +419,24 @@ def clarify(
             )
         questions = (
             repo.add_clarifications(result.value.questions)
-            if result.value.questions
+            if result.value.questions and not result.value.assessment.sufficient
             else []
         )
         # Include newly persisted questions in the token used to apply this proposal.
+        token = context_token(ai_context(session))
+        assessment = {
+            **result.value.assessment.model_dump(),
+            "language": data.language,
+            "assessed_at": datetime.now(UTC).isoformat(),
+            "context": token,
+        }
+        definition = repo.record_assessment(assessment)
         return {
             "proposal": {"preferences": preferences, "conflicts": conflicts},
             "clarifications": [question_view(row) for row in questions],
-            "proposal_context": context_token(ai_context(session)),
+            "proposal_context": token,
+            "assessment": assessment,
+            "state": definition.state,
             "usage": usage_view(result),
         }
 

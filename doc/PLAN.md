@@ -1,10 +1,10 @@
 # Career assistant MVP plan
 
-Status: Parts 1–8 are implemented and verified locally; Part 8 was completed on 2026-11-02. The user explicitly approved Part 7 on 2026-11-01 and requested Part 8 on 2026-11-02; earlier approvals are recorded below. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 evidence and payloads are in [PART7_VALIDATION.md](PART7_VALIDATION.md) and [BACKEND_API.md](BACKEND_API.md). Part 8 evidence and mock limitations are in [PART8_VALIDATION.md](PART8_VALIDATION.md). Part 9 is next; Parts 9–11 have not started.
+Status: Parts 1–9 are implemented and verified locally; Parts 8–9 were completed on 2026-11-02. The user explicitly approved Part 7 on 2026-11-01 and Parts 8–9 on 2026-11-02; earlier approvals are recorded below. The user subsequently requested system-assessed clarity, stoppable iteration, and a natural-language summary; this structured-workflow extension is tracked below and in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md), separately from historical Part 9 evidence. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 evidence and payloads are in [PART7_VALIDATION.md](PART7_VALIDATION.md) and [BACKEND_API.md](BACKEND_API.md). Part 8 evidence and mock limitations are in [PART8_VALIDATION.md](PART8_VALIDATION.md). Part 9 evidence is in [PART9_VALIDATION.md](PART9_VALIDATION.md); the release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Part 10 is next; Parts 10–11 have not started.
 
 ## Scope and working rules
 
-The MVP helps a user define, save, revisit, and refine an ideal job using their preferences and optional background documents or profile links. It covers responsibilities, scope, compensation, location, work arrangement, and work–life balance.
+The MVP helps a user clarify, save, revisit, and refine the role they are looking for using their preferences and optional background documents or profile links. It covers responsibilities, scope, compensation, location, work arrangement, and work–life balance.
 
 Frontend wording, updated at the user's request on 2026-11-02, frames this as clarifying the role the user is looking for. English and Spanish headings, navigation, description labels, and page metadata follow that framing; the existing workflow and API terminology remain unchanged.
 
@@ -24,12 +24,12 @@ Job discovery, offer scoring, notifications, skill development plans, applicatio
 
 Part 2 defaults approved on 2026-11-01; detailed saving, source, and review behavior is recorded in `MVP_SPEC.md`:
 
-1. Start an ideal-job draft with a free-text description, even if it is incomplete.
+1. Start a role-definition draft with a free-text description, even if it is incomplete.
 2. Optionally upload a CV or other background documents and add profile or personal-site links.
 3. Review extracted background information and correct mistakes. Keep background facts separate from desired job preferences.
-4. Answer focused clarification questions about missing or ambiguous preferences. Allow skipped questions and explicitly unknown values.
+4. Explicitly request a system clarity assessment and focused clarification questions about meaningful gaps or ambiguities. Allow skipped questions and explicitly unknown values; stop the process at any time and resume explicitly.
 5. Review and edit a structured definition covering role, seniority, responsibilities, technical interests, company context, compensation, location, work arrangement, and work–life balance. Distinguish mandatory constraints from preferences.
-6. Save the draft or completed definition, reopen it later, and refine it without losing previously accepted information.
+6. Save the definition and read a natural-language summary of saved criteria, assessed clarity, and remaining gaps. The system controls readiness; stopping remains a separate choice. Reopen and refine without losing previously accepted information. Changed context clears the assessment until the next explicit request.
 7. In Part 10, use open chat to discuss preferences and review proposed changes through the same editing and saving flow.
 
 The supplied ideal-job example is the reference acceptance scenario: preserve Staff scope, architecture and system design, collaboration across teams, learning, international scope, and an AI-engineering preference. Remote is preferred; hybrid is acceptable near Madrid with a two-day on-site limit whose period the application must clarify. Clarify “good compensation” rather than inventing a salary, and preserve the constraint against a role focused only on frontend work.
@@ -242,26 +242,47 @@ Language extension (2026-11-02): the user requested a bilingual interface becaus
 
 ## Part 9: Integrate frontend and backend
 
-Dependency: Parts 7–8 complete.
+Dependency: Parts 7–8 complete. The user explicitly approved Part 8 and requested Part 9 on 2026-11-02.
 
-- [ ] Connect the frontend API client to the real backend and isolate mock mode for tests/development.
-- [ ] Extend the existing Dockerfile to build the frontend in a Node.js stage and copy its static export into a final Python image with the backend and locked runtime dependencies. Run one Uvicorn process serving assets and `/api`.
-- [ ] Update the build context and Docker ignore rules for both source directories, excluding `.env`, personal/example documents, credentials, caches, and test artifacts. Keep PostgreSQL and documents outside the application image.
-- [ ] Verify API configuration, upload handling, and the agreed authentication/CORS behavior across local frontend and backend origins.
-- [ ] Run the complete flow against the real relational database and verify reopening persisted work after an application restart.
-- [ ] Resolve integration failures from reproducible evidence and identified root causes.
-- [ ] Update the README with one clean-checkout local setup and commands for starting, stopping, and testing the complete application.
-- [ ] Document the cloud deployment procedure for Part 11 using the chosen architecture, including configuration, migrations, access controls, smoke checks, and rollback. Do not deploy during this local integration step.
+- [x] Connect the frontend API client to the real backend and isolate mock mode for tests/development.
+- [x] Extend the existing Dockerfile to build the frontend in a Node.js stage and copy its static export into a final Python image with the backend and locked runtime dependencies. Run one Uvicorn process serving assets and `/api`.
+- [x] Update the build context and Docker ignore rules for both source directories, excluding `.env`, personal/example documents, credentials, caches, and test artifacts. Keep PostgreSQL and documents outside the application image.
+- [x] Verify API configuration, upload handling, and the agreed authentication/CORS behavior across local frontend and backend origins.
+- [x] Run the complete flow against the real relational database and verify reopening persisted work after an application restart.
+- [x] Resolve integration failures from reproducible evidence and identified root causes.
+- [x] Update the README with one clean-checkout local setup and commands for starting, stopping, and testing the complete application.
+- [x] Document the cloud deployment procedure for Part 11 using the chosen architecture, including configuration, migrations, access controls, smoke checks, and rollback. Do not deploy during this local integration step.
 
 Validation:
 
-- [ ] Run browser end-to-end tests with the real frontend, backend, and database, using a fake AI client for deterministic automated runs.
-- [ ] Cover initial description → upload/link → clarification → review → save → reload → refine, plus unavailable-AI and invalid-upload recovery.
-- [ ] Perform an explicit live-OpenAI workflow check using synthetic data, separate from routine tests.
-- [ ] Run the established backend/frontend checks and verify the documented setup from an empty local database.
-- [ ] Run the combined release image locally with the separate Compose PostgreSQL service; verify frontend routes/assets, `/api` routing, same-origin sessions, and persistence across application replacement.
+- [x] Run browser end-to-end tests with the real frontend, backend, and database, using a fake AI client for deterministic automated runs.
+- [x] Cover initial description → upload/link → clarification → review → save → reload → refine, plus unavailable-AI and invalid-upload recovery.
+- [x] Perform an explicit live-OpenAI workflow check using synthetic data, separate from routine tests.
+- [x] Run the established backend/frontend checks and verify the documented setup from an empty local database.
+- [x] Run the combined release image locally with the separate Compose PostgreSQL service; verify frontend routes/assets, `/api` routing, same-origin sessions, and persistence across application replacement.
 
-Success: the structured job-definition flow works locally across all layers and survives restarts; local validation evidence and deployment instructions are recorded.
+Success: achieved. The private structured flow works locally across the real frontend, API, file parser, and PostgreSQL; the combined release image preserves sessions, definitions and originals across replacement. The user authorized and explicitly approved Part 9 on 2026-11-02, after the clarity and summary extension was completed.
+
+Validation: Ruff, frontend lint/type/build, 168 backend unit/PostgreSQL tests (94% statement coverage), 15 frontend unit/component/client/catalog tests, 15 schema payload checks, 22 mock desktop/mobile browser checks, and seven real-backend browser checks pass. The live synthetic browser workflow separately passes two bounded gpt-6-luna generations, estimating $0.0005693. The release harness verifies packaged repeatable migrations, the full workflow, Python-only non-root runtime, and replacement under 512 MiB/one CPU using isolated SQL and original storage. A runtime memory snapshot was 113.6 MiB; this does not establish monthly free-tier fit. Detailed evidence, scope and known tooling limitations are in [PART9_VALIDATION.md](PART9_VALIDATION.md), [PART9_AI_WORKFLOW.json](PART9_AI_WORKFLOW.json), and [PART9_RELEASE_CHECK.json](PART9_RELEASE_CHECK.json). [DEPLOYMENT.md](DEPLOYMENT.md) records the Part 11 procedure. Existing user data, credentials, and .env were preserved; no personal source documents or cloud provisioning were used. Parts 10–11 were not started.
+
+### Structured-workflow extension: clarity and summary
+
+Requested on 2026-11-02 after the Part 9 implementation. It supersedes manual
+readiness selection and extends Parts 7–9; it does not start Part 10.
+
+- [x] Assess sufficient clarity and generate a natural-language summary in the existing explicit clarification call, using saved accepted criteria and reviewed context.
+- [x] Persist the assessment, its language/context, and a separate stop/resume choice; invalidate derived assessment when definition/context changes. Migration `0004` resets legacy manual readiness to unassessed `draft`, retaining accepted preferences and sources.
+- [x] Keep stop available during inference and reject late results after stop, including rapid stop/resume. Preserve accepted data and pending edits.
+- [x] Add the bilingual Summary view, clarity explanation/gaps, and explicit resume without automatic inference; preserve proposed-versus-accepted distinctions and optional unknowns/skips.
+
+Validation:
+
+- [x] Run backend migration/workflow tests, frontend contract/component checks, and mock-browser regressions: 180 backend unit/integration tests (94% coverage), 19 frontend unit tests, 17 contract samples, and 30 desktop/mobile mock browser checks pass. Frontend lint also passes.
+- [x] Check live synthetic assessment quality separately: two `gpt-6-luna` cases pass, distinguishing vague English from sufficiently clear Spanish with an optional unknown; estimated total $0.00063286. See [CLARITY_AI_EVALUATION.json](CLARITY_AI_EVALUATION.json).
+- [x] Run the final real-backend browser suite: 10 passed, with one live workflow test skipped in the routine run (17.49 seconds).
+- [x] Complete the new production-image/replacement check, including persisted summary/pause, packaged repeatable migrations, private sessions/originals, and Python-only non-root runtime. See [CLARITY_RELEASE_CHECK.json](CLARITY_RELEASE_CHECK.json).
+- [x] Back up the existing local database privately, restore and migrate an isolated clone, then migrate local `0003` → `0004`. Compare original data before/after, allowing only the expected readiness reset; retain preferences/sources/credentials and remove the disposable clone.
+- [x] Record executed evidence in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md). Historical Part 9 reports describe the earlier schema and do not validate this extension.
 
 ## Part 10: Add open-ended assistant chat
 

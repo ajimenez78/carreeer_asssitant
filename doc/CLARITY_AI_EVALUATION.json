@@ -1,0 +1,63 @@
+{
+  "synthetic_only": true,
+  "results": [
+    {
+      "case": "vague_en",
+      "language": "English",
+      "assessment": {
+        "summary": "You are looking for an interesting job with good compensation and good work-life balance. The desired role and what makes work interesting are unspecified; compensation details are also unknown.",
+        "sufficient": false,
+        "explanation": "The description gives broad preferences but does not yet identify the role or type of work to guide a focused job search.",
+        "gaps": [
+          "Desired role or type of work",
+          "Meaning of an interesting job",
+          "Compensation amount and terms"
+        ]
+      },
+      "checks": {
+        "appropriate_clarity_decision": true,
+        "natural_language_summary_present": true,
+        "background_not_promoted": true,
+        "focused_questions_or_clear_stop": true,
+        "vague_input_does_not_invent_staff": true
+      },
+      "model": "gpt-6-luna",
+      "elapsed_seconds": 8.027,
+      "usage": {
+        "input_tokens": 1126,
+        "cached_input_tokens": 0,
+        "output_tokens": 561,
+        "reasoning_tokens": 226
+      },
+      "estimated_cost_usd": "0.0003931"
+    },
+    {
+      "case": "clear_es_optional_unknown",
+      "language": "Spanish",
+      "assessment": {
+        "summary": "Puesto de ingeniería de software Staff, con preferencia por arquitectura, diseño de sistemas, colaboración entre equipos e ingeniería de IA. Ubicación obligatoria en España: se prefiere trabajo remoto; si es híbrido, debe ser en Madrid o cerca y con un máximo de dos días por semana en la oficina. La retribución preferida es de 100.000 a 120.000 EUR brutos anuales. Son requisitos una jornada de 32 horas semanales y no tener guardias. Se excluye el trabajo exclusivamente frontend. El sector es indiferente.",
+        "sufficient": true,
+        "explanation": "Las preferencias guardadas definen con claridad el nivel, el alcance del puesto, las condiciones de ubicación y asistencia, la retribución, la jornada y las exclusiones. El sector se ha indicado como desconocido y flexible, por lo que no impide orientar la búsqueda.",
+        "gaps": []
+      },
+      "checks": {
+        "appropriate_clarity_decision": true,
+        "natural_language_summary_present": true,
+        "background_not_promoted": true,
+        "focused_questions_or_clear_stop": true,
+        "staff_preserved": true,
+        "conditional_madrid_limit_preserved": true,
+        "explicit_optional_unknown_is_not_blocking": true
+      },
+      "model": "gpt-6-luna",
+      "elapsed_seconds": 4.505,
+      "usage": {
+        "input_tokens": 1695,
+        "cached_input_tokens": 1036,
+        "output_tokens": 327,
+        "reasoning_tokens": 96
+      },
+      "estimated_cost_usd": "0.00023976"
+    }
+  ]
+}

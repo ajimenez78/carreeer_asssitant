@@ -16,7 +16,7 @@ async function step(page: Page, name: string) {
 async function start(page: Page, text = description) {
   await page.goto("/"); await page.getByRole("textbox", { name: "The role you’re looking for", exact: true }).fill(text);
   await page.getByRole("button", { name: "Save draft", exact: true }).click();
-  await expect(page.getByRole("status")).toContainText("Draft saved");
+  await expect(page.getByRole("status")).toContainText("Definition saved");
 }
 async function failNext(page: Page, operation: string) { await page.evaluate(([key, value]) => sessionStorage.setItem(key, value), [MOCK_FAILURE_KEY, operation]); }
 async function saved(page: Page) { return page.evaluate(key => JSON.parse(localStorage.getItem(key)!).definition, MOCK_STORAGE_KEY); }
@@ -59,7 +59,7 @@ test("full mocked journey: upload, review, answer states, save, reload, and refi
   await expect(onsite.getByLabel("On-site period")).toHaveValue("");
   await expect(onsite.getByLabel("Priority")).toHaveValue("mandatory");
   await page.getByRole("button", { name: "Apply reviewed suggestions & save" }).click();
-  await expect(page.getByRole("status")).toContainText("Draft saved");
+  await expect(page.getByRole("status")).toContainText("Definition saved");
   expect((await saved(page)).preferences.some((p: { value: unknown }) => JSON.stringify(p.value).includes("SQL"))).toBe(false);
   await page.reload(); await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toHaveValue(description);
   await step(page, "Clarify");
@@ -73,16 +73,16 @@ test("full mocked journey: upload, review, answer states, save, reload, and refi
   await salary.getByLabel("Minimum", { exact: true }).fill("100000"); await salary.getByLabel("Maximum", { exact: true }).fill("120000");
   await salary.getByLabel("Currency").fill("eur"); await salary.getByLabel("Pay period").selectOption("year"); await salary.getByLabel("Tax basis").selectOption("gross");
   await onsite.getByLabel("On-site period").selectOption("week");
-  await page.getByLabel("Definition status").selectOption("ready");
   await failNext(page, "save");
   await page.getByRole("button", { name: "Save definition", exact: true }).click();
   await expect(page.getByRole("main").getByRole("alert")).toBeInViewport();
   await expect(salary.getByLabel("Minimum", { exact: true })).toHaveValue("100000");
-  await page.getByRole("button", { name: "Save definition", exact: true }).click(); await expect(page.getByRole("status")).toContainText("saved as ready");
+  await page.getByRole("button", { name: "Save definition", exact: true }).click(); await expect(page.getByRole("status")).toContainText("Definition saved");
   await page.screenshot({ path: info.outputPath("review.png"), fullPage: true });
   await page.reload(); await step(page, "Review & save");
   await expect(salary.getByLabel("Minimum", { exact: true })).toHaveValue("100000"); await expect(onsite.getByLabel("On-site period")).toHaveValue("week");
-  await expect(page.getByLabel("Definition status")).toHaveValue("ready");
+  await expect(page.getByLabel("Definition status")).toHaveCount(0);
+  expect((await saved(page)).state).toBe("draft");
   expect(privateRequests).toEqual([]);
 });
 
@@ -92,7 +92,7 @@ test("save and AI errors preserve edits and allow recovery", async ({ page }) =>
   await page.getByRole("button", { name: "Save draft", exact: true }).click(); await expect(page.getByRole("main").getByRole("alert")).toContainText("Try again");
   await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toHaveValue("Un puesto con equilibrio y aprendizaje");
   expect((await saved(page)).description).toBe("A role I enjoy");
-  await page.getByRole("button", { name: "Save draft", exact: true }).click(); await expect(page.getByRole("status")).toContainText("Draft saved");
+  await page.getByRole("button", { name: "Save draft", exact: true }).click(); await expect(page.getByRole("status")).toContainText("Definition saved");
   await step(page, "Clarify"); await page.getByLabel("Assistance language").selectOption("Spanish"); await failNext(page, "ai"); await generate(page);
   await expect(page.getByRole("main").getByRole("alert")).toContainText("assistant is unavailable");
   await generate(page); await expect(page.locator(".question-card").first()).toContainText("rango salarial");
@@ -130,15 +130,15 @@ test("manual criteria validate, preserve all value types, and survive refinement
     await page.getByRole("button", { name: "+ Add criterion", exact: true }).click(); const row = page.locator(".criterion").last(); await row.getByLabel("Criterion name").fill(key); await row.getByLabel("Value type").selectOption(type);
     if (type === "boolean") await row.getByRole("combobox", { name: "Value", exact: true }).selectOption(value); else await row.getByLabel(type === "list" ? "Values, one per line" : "Value", { exact: true }).fill(value);
   }
-  await page.getByRole("button", { name: "Save definition", exact: true }).click(); await expect(page.getByRole("status")).toContainText("Draft saved");
+  await page.getByRole("button", { name: "Save definition", exact: true }).click(); await expect(page.getByRole("status")).toContainText("Definition saved");
   await page.reload(); await step(page, "Review & save"); expect((await saved(page)).preferences.map((p: { value: unknown }) => p.value)).toEqual([expect.objectContaining({ minimum: 120000, maximum: 130000, currency: null, period: null, basis: null }), "Architecture", false, 32, ["AI", "Systems"]]);
-  await page.getByRole("button", { name: "Remove criterion 2", exact: true }).click(); await page.getByRole("button", { name: "Save definition", exact: true }).click(); await expect(page.getByRole("status")).toContainText("Draft saved"); expect((await saved(page)).preferences).toHaveLength(4);
+  await page.getByRole("button", { name: "Remove criterion 2", exact: true }).click(); await page.getByRole("button", { name: "Save definition", exact: true }).click(); await expect(page.getByRole("status")).toContainText("Definition saved"); expect((await saved(page)).preferences).toHaveLength(4);
 });
 
 test("source and whole-definition deletion explain effects and clear derived context", async ({ page }) => {
   await start(page); await step(page, "Background");
   await page.getByLabel("Document", { exact: true }).setInputFiles({ name: "cv.md", mimeType: "text/markdown", buffer: Buffer.from("Historical experience.") }); await page.getByRole("button", { name: "Add source", exact: true }).click();
-  await step(page, "Clarify"); await generate(page); await step(page, "Review & save"); await page.getByRole("button", { name: "Apply reviewed suggestions & save" }).click(); await expect(page.getByRole("status")).toContainText("Draft saved");
+  await step(page, "Clarify"); await generate(page); await step(page, "Review & save"); await page.getByRole("button", { name: "Apply reviewed suggestions & save" }).click(); await expect(page.getByRole("status")).toContainText("Definition saved");
   const before = (await saved(page)).preferences;
   await step(page, "Background"); await page.getByRole("button", { name: "Remove cv.md", exact: true }).click(); await expect(page.getByText(/clears all clarification questions and answers/)).toBeVisible(); await page.getByRole("button", { name: "Confirm remove source" }).click(); await expect(page.getByRole("status")).toContainText("Source removed");
   expect((await saved(page)).preferences).toEqual(before); expect((await saved(page)).clarifications).toEqual([]);

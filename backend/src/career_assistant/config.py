@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     )
 
     app_name: str = "Career assistant"
+    frontend_directory: Path = Path("frontend/out")
     session_secret: SecretStr | None = None
     session_secure: bool = False
     allowed_origins: list[str] = [

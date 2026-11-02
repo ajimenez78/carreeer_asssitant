@@ -14,7 +14,7 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   webServer: existingPreview ? undefined : {
-    command: "npm run dev -- --hostname 127.0.0.1 --port 3001",
+    command: "NEXT_PUBLIC_API_MODE=mock CAREER_NEXT_DIST_DIR=.next-mock-tests npm run dev -- --hostname 127.0.0.1 --port 3001",
     url: "http://127.0.0.1:3001",
     reuseExistingServer: false,
     timeout: 60_000,

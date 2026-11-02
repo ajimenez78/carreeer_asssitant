@@ -1,5 +1,6 @@
 """Small transactional operations for the current definition; callers own commits."""
 
+import json
 from datetime import UTC, datetime
 from typing import Literal, Self
 from uuid import UUID, uuid4
@@ -103,8 +104,6 @@ class DefinitionRepository:
             definition = JobDefinition(owner_id=1, description=data.description)
             self.session.add(definition)
             self.session.flush()
-        definition.description = data.description
-        definition.state = data.state
         definition.updated_at = datetime.now(UTC)
         existing = {
             item.key: item
@@ -112,6 +111,22 @@ class DefinitionRepository:
                 select(Preference).where(Preference.definition_id == definition.id)
             )
         }
+        accepted = {
+            key: {
+                name: getattr(item, name)
+                for name in ("key", "category", "priority", "value", "note")
+            }
+            for key, item in existing.items()
+        }
+        changed = definition.description != data.description or json.dumps(
+            accepted, sort_keys=True
+        ) != json.dumps(
+            {item.key: item.model_dump() for item in data.preferences}, sort_keys=True
+        )
+        # Readiness is assessed by the system, never selected by a save request.
+        if changed:
+            self._invalidate_assessment(definition)
+        definition.description = data.description
         for item in data.preferences:
             preference = existing.pop(item.key, None)
             if preference is None:
@@ -126,6 +141,27 @@ class DefinitionRepository:
             self.session.delete(removed)
         self.session.flush()
         return definition
+
+    def set_clarification_paused(self, paused: bool) -> JobDefinition:
+        definition = self.require_current()
+        definition.clarification_paused = paused
+        # Every explicit stop/resume invalidates calls already in flight, including
+        # a stop followed by a resume before the old request finishes.
+        definition.control_version += 1
+        self.session.flush()
+        return definition
+
+    def record_assessment(self, assessment: dict) -> JobDefinition:
+        definition = self.require_current()
+        definition.assessment = assessment
+        definition.state = "ready" if assessment["sufficient"] else "draft"
+        self.session.flush()
+        return definition
+
+    def _invalidate_assessment(self, definition: JobDefinition) -> None:
+        definition.assessment = None
+        definition.state = "draft"
+        definition.control_version += 1
 
     def add_source(self, data: SourceData) -> Source:
         definition = self.require_current()
@@ -249,6 +285,7 @@ class DefinitionRepository:
             raise LookupError("Clarification not found in the current definition")
         question.answer_state = state
         question.answer = answer.strip() if answer else None
+        self._invalidate_assessment(definition)
         self.session.flush()
         return question
 
@@ -277,6 +314,7 @@ class DefinitionRepository:
             )
 
     def _clear_clarifications(self, definition_id: UUID) -> None:
+        self._invalidate_assessment(self.require_current())
         self.session.execute(
             delete(Clarification).where(Clarification.definition_id == definition_id)
         )

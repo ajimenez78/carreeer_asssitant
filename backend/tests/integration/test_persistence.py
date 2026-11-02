@@ -101,7 +101,7 @@ def test_save_reload_refine_preserves_id_constraints_and_unknowns(sessions):
         definition = DefinitionRepository(session).current()
         assert definition.id == identity
         assert definition.created_at == created_at
-        assert definition.state == "ready"
+        assert definition.state == "draft"
         assert "Madrid" in definition.description
         assert definition.updated_at >= definition.created_at
         preferences = {item.key: item for item in session.scalars(select(Preference))}
@@ -393,8 +393,8 @@ def test_migration_upgrade_and_repeated_initialization_preserve_data(
     with database.begin() as connection:
         connection.execute(
             text(
-                "INSERT INTO job_definitions (id, owner_id, description) "
-                "VALUES (:id, 1, :description)"
+                "INSERT INTO job_definitions (id, owner_id, description, state) "
+                "VALUES (:id, 1, :description, 'ready')"
             ),
             {"id": identity, "description": draft().description},
         )
@@ -433,6 +433,11 @@ def test_migration_upgrade_and_repeated_initialization_preserve_data(
     with sessions.begin() as session:
         ensure_owner(session)
         assert DefinitionRepository(session).current().id == identity
+        definition = DefinitionRepository(session).current()
+        assert definition.state == "draft"
+        assert definition.assessment is None
+        assert definition.clarification_paused is False
+        assert definition.control_version == 0
         assert session.get(Owner, 1).username == "configured-owner"
         assert (
             session.get(Owner, 1).password_hash

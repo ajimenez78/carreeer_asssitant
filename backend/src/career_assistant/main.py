@@ -1,11 +1,11 @@
 from contextlib import asynccontextmanager
-from pathlib import Path
 from secrets import token_urlsafe
 
 from fastapi import FastAPI
-from fastapi.responses import FileResponse
 from sqlalchemy.orm import sessionmaker
+from starlette.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
+from starlette.staticfiles import StaticFiles
 
 from career_assistant.api.definitions import router as definitions_router
 from career_assistant.api.health import router as health_router
@@ -15,9 +15,7 @@ from career_assistant.boundary import RequestBoundary
 from career_assistant.config import Settings
 from career_assistant.database import database_engine, database_url
 from career_assistant.documents import SourceProcessor
-from career_assistant.errors import register_errors
-
-INDEX_FILE = Path(__file__).parent / "static" / "index.html"
+from career_assistant.errors import AppError, register_errors
 
 
 def create_app(
@@ -61,14 +59,30 @@ def create_app(
     application.add_middleware(
         RequestBoundary, allowed_origins=settings.allowed_origins
     )
+    application.add_middleware(
+        CORSMiddleware,
+        allow_origins=settings.allowed_origins,
+        allow_credentials=True,
+        allow_methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        allow_headers=["Content-Type"],
+    )
     register_errors(application)
     application.include_router(health_router)
     application.include_router(session_router)
     application.include_router(definitions_router)
 
-    @application.get("/", include_in_schema=False)
-    def index() -> FileResponse:
-        return FileResponse(INDEX_FILE)
+    @application.api_route(
+        "/api/{path:path}",
+        methods=["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+        include_in_schema=False,
+    )
+    def missing_api(path: str):
+        raise AppError("not_found", "The API route does not exist.", 404)
+
+    application.mount(
+        "/",
+        StaticFiles(directory=settings.frontend_directory, html=True, check_dir=False),
+    )
 
     return application
 

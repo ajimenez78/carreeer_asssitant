@@ -6,7 +6,7 @@ import { PreferenceEditor } from "../../src/components/preference-editor";
 import { SourceReview } from "../../src/components/background";
 import { QuestionCard } from "../../src/components/question-card";
 import { ApiError, createClient, type Transport } from "../../src/lib/client";
-import { createMockTransport, MOCK_FAILURE_KEY, MOCK_STORAGE_KEY } from "../../src/lib/mock-transport";
+import { createMockTransport, MOCK_AI_DELAY_KEY, MOCK_FAILURE_KEY, MOCK_STORAGE_KEY } from "../../src/lib/mock-transport";
 import { emptyCompensation, validateDefinition } from "../../src/lib/preferences";
 import type { Preference, SaveDefinition } from "../../src/lib/contracts";
 
@@ -63,6 +63,8 @@ test("mocked workflow uses Part 7 request and response envelopes", async () => {
   samples.push({ schema: "SourceView", value: source });
   samples.push({ schema: "BackgroundView", value: await api.suggestFacts(source.id, "English") });
   await api.reviewSource(source.id, ["Built distributed systems."]);
+  samples.push({ schema: "ClarificationControl", value: { paused: false } });
+  samples.push({ schema: "DefinitionView", value: await api.controlClarification(false) });
   const proposal = await api.clarify("English");
   samples.push({ schema: "ClarificationView", value: proposal });
   const saved = await api.save({ ...draft, preferences: proposal.proposal.preferences, proposal_context: proposal.proposal_context });
@@ -144,4 +146,63 @@ test("request boundary converts connection failures into recoverable errors", as
   const api = createClient(async () => { throw new Error("internal transport details"); });
   await expect(api.read()).rejects.toBeInstanceOf(ApiError);
   await expect(api.read()).rejects.toThrow("Your input is still here");
+});
+
+test("readiness is system-owned, summary uses saved content, and control preserves work", async () => {
+  const { api } = setup();
+  const clear = { description: "Staff architect designing distributed systems, remote in Spain. Salary is flexible.", state: "ready" as const, preferences: [] };
+  expect((await api.save(clear)).state).toBe("draft");
+  const result = await api.clarify("English");
+  expect(result.assessment.sufficient).toBe(true);
+  expect(result.assessment.summary).toContain(clear.description);
+  expect((await api.read()).preferences).toEqual([]);
+  expect((await api.save({ ...clear, state: "draft" })).assessment).toEqual(result.assessment);
+  expect((await api.controlClarification(true)).state).toBe("ready");
+  await expect(api.clarify("English")).rejects.toMatchObject({ status: 409 });
+  await api.controlClarification(false);
+  await expect(api.save({ ...clear, preferences: result.proposal.preferences, proposal_context: result.proposal_context })).rejects.toMatchObject({ status: 409 });
+  const edited = await api.save({ ...clear, description: "An unclear new direction" });
+  expect(edited.state).toBe("draft"); expect(edited.assessment).toBeNull();
+});
+
+test("canceling a mock assessment never persists late questions or a summary", async () => {
+  const { storage, failures } = setup();
+  const api = createClient(createMockTransport(storage, failures, 0));
+  await api.save(draft); failures.setItem(MOCK_AI_DELAY_KEY, "1000");
+  const controller = new AbortController();
+  const pending = api.clarify("English", controller.signal);
+  controller.abort();
+  await expect(pending).rejects.toMatchObject({ name: "AbortError" });
+  await api.controlClarification(true);
+  const current = await api.read();
+  expect(current.clarification_paused).toBe(true);
+  expect(current.assessment).toBeNull(); expect(current.clarifications).toEqual([]);
+});
+
+test("stop then resume rejects an uncanceled assessment from the previous context", async () => {
+  const { api, failures } = setup();
+  await api.save(draft);
+  failures.setItem(MOCK_AI_DELAY_KEY, "500");
+  const pending = api.clarify("English");
+  const rejected = expect(pending).rejects.toMatchObject({ status: 409, code: "stale_proposal" });
+  await api.controlClarification(true);
+  await api.controlClarification(false);
+  await rejected;
+  const current = await api.read();
+  expect(current.clarification_paused).toBe(false);
+  expect(current.assessment).toBeNull(); expect(current.clarifications).toEqual([]);
+  expect(current.preferences).toEqual([]);
+});
+
+test("source mutations remove derived summary prose and preserve saved preferences", async () => {
+  const { api } = setup(); await api.save(draft);
+  const first = await api.clarify("English"); expect(first.assessment.summary).not.toBe("");
+  const source = await api.addSource({ kind: "text", display_name: "CV", text: "Historical experience" });
+  expect((await api.read()).assessment).toBeNull();
+  expect((await api.read()).clarifications).toEqual([]);
+  await api.clarify("English"); await api.reviewSource(source.id, []);
+  expect((await api.read()).assessment).toBeNull();
+  await api.clarify("English"); await api.removeSource(source.id);
+  const current = await api.read();
+  expect(current.assessment).toBeNull(); expect(current.preferences).toEqual([]);
 });

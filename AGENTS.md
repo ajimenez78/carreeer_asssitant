@@ -1,13 +1,14 @@
 # Carreer assistant system
 
 ## General description
-This is a carrerr assistan systemt that helps user to define his ideal job, select interesting offers, develop a plan for closing the gap to get one of those positins, prepare the user to pass the job interviews and once the job starts, helps to efficiently domain the daily work and develop a carreer continuous growth.
+This career assistant helps the user clarify the role they are looking for, select interesting offers, close skill gaps, prepare for interviews, and continue growing after starting a job.
 
 ## Business requierements
 
 ### 1. Job definition
-- The user can define its ideal job position
-- If the initial description is vague, The system can make questions to the user to help him clarify
+- The user can clarify the role they are looking for.
+- The system assesses whether the saved definition is sufficiently clear and asks focused questions to help the user iterate. The user can stop clarification at any time and resume explicitly; stopping is separate from clarity/readiness.
+- Provide a natural-language summary of the current saved definition, its clarity assessment, and remaining gaps. Keep unaccepted suggestions separate from accepted preferences.
 - Include not only job responsabilities. Also compensations like salary and life/work balance.
 - An example of an initial, partially vague description is referenced in doc/ajimenez/MY_IDEAL_JOB.md
 - In the job definition, the user can be able to provide it's background, uploading it's CV in PDF, doc or even markdonw format and additional documents like the LinkedIn profile.
@@ -17,6 +18,7 @@ This is a carrerr assistan systemt that helps user to define his ideal job, sele
 ### 2. Job finding
 - The system provides an Agent that can actively  find for job positions across Internet. The defined job position is used as template for this search.
 - In an initial phase, The main source for finding positions will be LinkedIn. If needed, the system will ask to connect to the user LinkedIn account for more accurate finding.
+- You can also manually add positions and proposals.
 - An score of position vs ideal job descriptions will be provided
 - The system will notify to the user with the most interesting offers
 - The user can provide feedback to the system about the found offers. The system will learn of this feedback.
@@ -38,6 +40,8 @@ This is a carrerr assistan systemt that helps user to define his ideal job, sele
 The business requiremens implementation will be incremental. We will start with a MVP that will only match with the first step, Job definition. But the initial design will take into account that the system will grouth with the rest of provided requirements
 
 The MVP is for one private user with one current editable job definition, explicit save/review actions, and no revision history. Provide English and Spanish interfaces with a persistent language switcher and catalogs that can support additional languages; preserve user content when switching. Accept English and Spanish content. Support text-based PDF, legacy .doc, .docx, and Markdown, up to five files of 10 MB each; scanned-document OCR is deferred. Retrieve public URLs with an upload/paste fallback. Retain sources until deleted, with daily backups retained for seven days. The Part 2 defaults were approved on 2026-11-01; bilingual UI support was requested on 2026-11-02.
+
+The system-assessed clarity and summary extension was requested on 2026-11-02. Reuse explicit clarification requests to assess and summarize saved context; do not call AI on page load or save. Changed definition/context invalidates the saved assessment. Optional unknowns or skipped questions do not by themselves prevent sufficient clarity.
 
 ## Technical decisions
 - Start on Railway Free, with Neon Free for managed PostgreSQL and private document storage. Measure usage against the ongoing free allowances, including backup jobs/storage; do not rely on introductory trial credits to prove the app fits. Any paid hosting upgrade requires the user's explicit choice. This replaces the earlier AWS deployment requirement.

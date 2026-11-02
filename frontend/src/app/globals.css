@@ -16,6 +16,7 @@ button, a, summary { -webkit-tap-highlight-color: transparent; }
 .locale-switcher select { width: auto; padding: .4rem .65rem; font-size: .85rem; margin-top: .2rem; }
 .nav-link { font-size: .9rem; text-underline-offset: .5rem; text-decoration-color: var(--accent); }
 .workspace { max-width: 78rem; margin: auto; padding: 3rem 2.5rem; }
+.sign-in { max-width: 42rem; }
 .workspace-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; }
 .eyebrow, .section-kicker { color: var(--accent); font-size: .75rem; font-weight: 700; letter-spacing: .11em; text-transform: uppercase; margin: 0 0 1rem; }
 h1 { font-size: clamp(2rem, 4vw, 3.25rem); letter-spacing: -.055em; font-weight: 600; line-height: 1.1; margin: 0; }
@@ -77,6 +78,15 @@ summary { cursor: pointer; color: var(--accent); font-weight: 600; padding: .5re
 blockquote { font-size: .85rem; border-left: 2px solid #a4bba5; padding-left: .8rem; margin: 1rem 0; color: var(--muted); overflow-wrap: anywhere; }
 .language-control { max-width: 16rem; }
 .proposal-callout { border-left: 3px solid var(--accent); padding: 1rem; background: #edf2e9; margin: 1.5rem 0; font-size: .85rem; }
+.clarification-controls { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; border: 1px solid var(--line); border-radius: .4rem; background: var(--paper); padding: 1rem 1.25rem; margin-bottom: 1.5rem; font-size: .85rem; }
+.clarification-controls p { margin: .4rem 0 0; color: var(--muted); }
+.clarification-controls button { flex: 0 0 auto; }
+.clarity-status { border-left: 3px solid var(--accent); padding: 1rem 1.25rem; margin: 0 0 1.5rem; background: #f3f5ee; overflow-wrap: anywhere; }
+.clarity-status p { margin: .6rem 0; }
+.clarity-status h3:not(:first-child) { margin-top: 1.5rem; }
+.clarity-status ul { margin-bottom: 1rem; padding-left: 1.3rem; line-height: 1.7; }
+.role-summary { margin-bottom: 1.25rem; }
+.summary-prose { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 1rem; line-height: 1.8; }
 .question-card { margin-top: 1.5rem; }
 .question-card label { margin-top: 1rem; font-size: .95rem; }
 .criterion { border: 1px solid var(--line); border-radius: .4rem; margin: 0 0 1.5rem; padding: 1.25rem; min-width: 0; }
@@ -101,6 +111,7 @@ blockquote { font-size: .85rem; border-left: 2px solid #a4bba5; padding-left: .8
   .save-summary p { margin: 0; }
   .editor-content { padding: 1.5rem; }
   .mock-notice { flex-direction: column; gap: .25rem; }
+  .clarification-controls { align-items: flex-start; flex-direction: column; gap: .8rem; }
   .site-footer { padding-left: 1.25rem; padding-right: 1.25rem; }
 }
 @media (max-width: 440px) {
