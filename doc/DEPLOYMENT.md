@@ -3,15 +3,16 @@
 Part 11 was authorized on 2026-11-02. Render replaces Railway at the user's request.
 The user re-enabled Cloudflare backups on 2026-11-02, superseding the temporary
 deferral. Provision separate private original-document and backup buckets. The
-workflow daily schedule and `BACKUPS_ENABLED` guard are restored; actual runs
-await configured credentials, database access and verification.
+workflow daily schedule is active, with `BACKUPS_ENABLED=true`, configured
+credentials, temporary runner access and a verified backup/restoration.
 The user selected a free external backup scheduler/storage option. Current setup:
 Render Free web service, Render PostgreSQL, private R2 original storage, GitHub Actions
 scheduling, and a separate private R2 backup bucket. Neon is no longer used.
 The user explicitly selected the Free 30-day PostgreSQL preview on 2026-11-02,
 accepting its expiration. Keep the declared Free plan; no paid upgrade is authorized.
 The free database was created on 2 November 2026 at 17:45 Madrid time and expires
-on 2 December 2026 at 17:45 Madrid time. No web service is deployed yet. Export
+on 2 December 2026 at 17:45 Madrid time. The app is live at
+https://career-assistant-jgpm.onrender.com and daily GitHub backups are enabled. Export
 any workspace to retain before expiration. See [PART11_VALIDATION.md](PART11_VALIDATION.md)
 and [resource details](PART11_RENDER_PREVIEW.json).
 
@@ -97,6 +98,9 @@ older-than-24-hour, or invalid selected backup archives.
 
 ```bash
 make operations-image
+# Open access from this runner and retain its private cleanup state.
+mkdir -p .cache/render-maintenance
+docker run --rm --user "$(id -u):$(id -g)" --env-file .env.operations.local --mount "type=bind,source=$PWD/.cache/render-maintenance,target=/maintenance" career-assistant-operations:part11 python -m career_assistant.render_access open /maintenance/access.json
 # Empty database initialization, or repeatable migration check at current head:
 docker run --rm --env-file .env.operations.local career-assistant-operations:part11 python -m career_assistant.operations release
 # Before a schema change on an existing database:
@@ -105,22 +109,31 @@ docker run --rm --env-file .env.operations.local career-assistant-operations:par
 docker run --rm --env-file .env.operations.local career-assistant-operations:part11 python -m career_assistant.operations release --backup-key career-backups/TIMESTAMP-ID.zip
 # First installation only: enter the owner password interactively.
 docker run -it --rm --env-file .env.operations.local career-assistant-operations:part11 python -m career_assistant.db_cli owner
+# Always close runner access, including after a failed operation.
+docker run --rm --user "$(id -u):$(id -g)" --env-file .env.operations.local --mount "type=bind,source=$PWD/.cache/render-maintenance,target=/maintenance" career-assistant-operations:part11 python -m career_assistant.render_access close /maintenance/access.json
 ```
 
-External operations and GitHub Actions need database network access. The blueprint
-blocks public database connections by default. Configure an allowlist for the
-trusted runner/operator before migration and backup checks. Standard GitHub-hosted
-runner addresses vary; a schedule cannot work with the private-only default.
-Choose and validate the external access policy before enabling the workflow;
-do not silently open the database to all IPs. Keep verified TLS and separate
-least-privilege credentials. The runner access policy remains a pending cloud acceptance requirement; the
-Free preview database plan is already selected.
+External maintenance uses `career_assistant.render_access` to add only the runner's
+IPv4 /32, preserving other entries. The GitHub workflow supplies encrypted
+`RENDER_API_KEY` and repository variable `RENDER_POSTGRES_ID`; its always-run cleanup
+removes only its own rule. The database returns to an empty public allowlist while
+the app keeps using Render's private network. Force-cancelled runners may need
+operator cleanup of their uniquely labeled `career-maintenance-*` entry.
+
+For local maintenance, use the operations image with a writable private state mount
+and the host UID, just as the workflow does. Open access before release/backup;
+close it after the operation. The private operations file includes the database ID.
+Keep the state file for cleanup if an API call times out. Database TLS remains
+`verify-full`; the backend resolves `system` trust to an explicit available CA
+bundle because binary Psycopg can use a different OpenSSL trust location.
 
 Passwords never appear in command arguments. Repeating `release` preserves existing
 owner credentials and data. Deliberately rerunning `owner` changes credentials and
 revokes sessions. Do not overwrite an existing private environment file.
 
 Create the Render service from `render.yaml` and configure the prompted secrets.
+The existing preview was created through the Render API and is not Blueprint-managed.
+Deploy updates on the existing service ID recorded in `PART11_RENDER_PREVIEW.json`.
 Trigger a manual deployment of the tested commit after release/owner setup.
 For subsequent releases: back up → migrate separately → deploy that commit → smoke
 test. Keep the previous compatible commit/image available for rollback. Initial
@@ -128,6 +141,13 @@ Blueprint creation can trigger a deployment; startup will fail safely if schema
 or owner prerequisites are not ready yet.
 
 ## Daily independent backups
+
+Current state: `BACKUPS_ENABLED=true`; the first GitHub-hosted run and real
+restoration passed. The supplied S3 key is shared between originals/backups.
+Create separate bucket-scoped keys, and a read-only originals key for CI, to
+complete credential isolation. R2 denied lifecycle management for this key;
+configure the seven-day prefix expiry below through the R2 dashboard. Worker
+pruning already runs after each verified backup.
 
 Create a dedicated private R2 Standard bucket. Configure a seven-day object lifecycle
 expiry on the dedicated `career-backups/` prefix as a backstop if the scheduler stops.
@@ -156,6 +176,7 @@ a 15-minute timeout and no pull-request trigger. The job executes only when the
 repository variable `BACKUPS_ENABLED=true` is set. Before activation, configure
 these Actions secrets and validate the database network access:
 
+- `RENDER_API_KEY` and repository variable `RENDER_POSTGRES_ID` (temporary runner access).
 - `BACKUP_DATABASE_DIRECT_URL` (external Render URL with verified TLS).
 - `DOCUMENT_STORAGE_ENDPOINT`, `DOCUMENT_STORAGE_BUCKET`, `DOCUMENT_BACKUP_ACCESS_KEY`,
   `DOCUMENT_BACKUP_SECRET_KEY` (separate R2 read-only original access).

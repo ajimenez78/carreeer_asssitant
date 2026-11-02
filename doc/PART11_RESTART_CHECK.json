@@ -1,0 +1,12 @@
+{
+  "service_id": "srv-dbkc9l4s728c73cohshg",
+  "url": "https://career-assistant-jgpm.onrender.com",
+  "checked_at_utc": "2026-11-02T17:46:45.541771+00:00",
+  "restart_http_status": 200,
+  "health_after_restart": 200,
+  "observed_seconds_after_restart": 46.011,
+  "saved_workspace_unchanged": true,
+  "existing_session_survived": true,
+  "verification_session_revoked": true,
+  "passed": true
+}

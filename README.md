@@ -8,8 +8,9 @@ The system assesses clarity and provides a natural-language summary; clarificati
 can be stopped at any time and resumed explicitly. Chat refines the same definition
 through proposals that you review and save.
 
-Parts 1–10 work locally. Render/PostgreSQL deployment, scheduled
-backups and restoration remain Part 11. See [the plan](doc/PLAN.md),
+The Free Render preview is live at [career-assistant-jgpm.onrender.com](https://career-assistant-jgpm.onrender.com),
+with Render PostgreSQL, R2 originals and verified daily backups. Final Part 11
+acceptance items are recorded in the deployment status. See [the plan](doc/PLAN.md),
 [requirements](doc/MVP_SPEC.md), and [Part 9 validation](doc/PART9_VALIDATION.md).
 The subsequent clarity/summary extension is tracked in
 [CLARITY_SUMMARY.md](doc/CLARITY_SUMMARY.md). Chat evidence is in
@@ -180,9 +181,8 @@ that can be removed and uploaded again. Retry queued originals from the CLI with
 make storage-cleanup
 ```
 
-Backups with seven-day retention are an agreed Part 11 requirement and are not
-scheduled by the local application. Keep appropriate independent copies until
-that operational work is implemented. Detailed payloads and limits are in
+The hosted workspace has daily independent backups with seven-day pruning;
+the local application does not schedule backups. Detailed payloads and limits are in
 [the backend API](doc/BACKEND_API.md) and [persistence notes](doc/PERSISTENCE.md).
 
 ## Mock preview
@@ -291,11 +291,15 @@ owner configuration. It does not migrate the database.
 
 The [deployment runbook](doc/DEPLOYMENT.md) explains private storage, network access,
 release/recovery commands and quotas. [Part 11 status](doc/PART11_VALIDATION.md)
-separates local evidence from hosted acceptance. The free Render database has been
-created in Frankfurt and expires on **2 December 2026 at 17:45 Madrid time**;
-see [resource details](doc/PART11_RENDER_PREVIEW.json). The web app is not deployed.
-Render/GitHub authentication works. R2 endpoints and access keys in the private
-operations file are still placeholders and must be replaced.
-The daily backup schedule is restored, with `BACKUPS_ENABLED=true` required before
-jobs execute. Configure credentials and database access and verify a manual run
-before enabling scheduled jobs; no cloud backup is running yet.
+records local and deployed checks. The preview is live; use your existing local
+login. The free database expires on **2 December 2026 at 17:45 Madrid time**; see
+[resource details](doc/PART11_RENDER_PREVIEW.json).
+
+Daily backups are enabled at 03:17 UTC (04:17 Madrid during this preview), with
+seven-day pruning. The [first GitHub-hosted run](https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41488898644)
+and a real restoration drill passed. Public SQL access stays blocked between
+maintenance runs; the workflow temporarily admits only its own runner.
+
+R2 dashboard setup remains: add seven-day expiry for the `career-backups/` prefix
+and separate bucket-scoped credentials. The supplied key works for both buckets
+but cannot configure lifecycle rules.

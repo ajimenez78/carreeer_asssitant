@@ -1,12 +1,12 @@
 {
   "cpu_limit": "0.1",
   "startup_seconds": [
-    19.927,
-    18.332
+    19.737,
+    19.037
   ],
-  "runtime_memory": "113.7MiB / 512MiB",
+  "runtime_memory": "114.1MiB / 512MiB",
   "runtime_check": "Python-only non-root runtime; no test mount or .env",
-  "image_id": "sha256:b7a99809b39cfbc4020ab6a9655cbd6057cfa0b48afe04386ab5e8ba0cb1bcbd",
+  "image_id": "sha256:ab6bbb5afa57c909e7eb38f3add194550f70fa2b0938fe3361b3d2e4846d063c",
   "passed": true,
   "checks": [
     "packaged migrations repeat safely",

@@ -1,0 +1,12 @@
+{
+  "url": "https://career-assistant-jgpm.onrender.com",
+  "authenticated_api_and_original_downloads": true,
+  "untrusted_origin_rejected": true,
+  "bilingual_ui_and_language_persistence": true,
+  "floating_assistant_available_in_all_steps": true,
+  "unsent_chat_draft_survives_minimize_and_navigation": true,
+  "no_automatic_ai_calls": true,
+  "saved_workspace_unchanged": true,
+  "secure_httponly_strict_cookies_and_revocation": true,
+  "passed": true
+}

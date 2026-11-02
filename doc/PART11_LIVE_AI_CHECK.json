@@ -1,0 +1,42 @@
+{
+  "synthetic_data_only": true,
+  "real_workspace_modified": false,
+  "prior_successful_model_calls": 2,
+  "prior_call_usage_recorded": false,
+  "checks": [
+    "real password login and secure cookie",
+    "deployed upload, extraction and original download",
+    "live background extraction and fact review",
+    "live proposal generation and explicit save",
+    "assessment invalidates on changed save and regenerates only on explicit request",
+    "live Spanish chat, unaccepted proposal separation and idempotent retry",
+    "deployed source removal and cloud original deletion"
+  ],
+  "recorded_model_calls": [
+    {
+      "task": "assessment after save",
+      "elapsed_seconds": 3.416,
+      "model": "gpt-6-luna",
+      "input_tokens": 1524,
+      "output_tokens": 202,
+      "estimated_cost_usd": "0.00016016"
+    },
+    {
+      "task": "Spanish chat",
+      "elapsed_seconds": 2.928,
+      "model": "gpt-6-luna",
+      "input_tokens": 1677,
+      "output_tokens": 92,
+      "estimated_cost_usd": "0.0002137"
+    }
+  ],
+  "recorded_calls_estimated_cost_usd": "0.00037386",
+  "model_calls_total": 4,
+  "passed": true,
+  "cleanup": {
+    "temporary_free_service_removed": true,
+    "temporary_schema_and_originals_removed": true,
+    "public_database_access_closed": true,
+    "main_app_healthy": true
+  }
+}
