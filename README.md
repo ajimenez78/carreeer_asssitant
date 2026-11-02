@@ -148,8 +148,8 @@ proposals. The API uses an HttpOnly cookie with twelve-hour sessions; logout
 revokes the session on the server. Health remains public.
 
 See [doc/BACKEND_API.md](doc/BACKEND_API.md) for payloads, supported formats,
-processing limits, failure/retry behavior, and deletion effects. Editing screens
-arrive in Part 8 and real frontend integration in Part 9.
+processing limits, failure/retry behavior, and deletion effects. The Part 8 editing
+screens use mocks; real frontend integration remains Part 9.
 
 ## Frontend development
 
@@ -161,15 +161,36 @@ make frontend-dev
 ```
 
 Open <http://127.0.0.1:3000>. Stop with Ctrl+C. Override the port with
-`make frontend-dev FRONTEND_PORT=3002`. Run `make dev` in another terminal for
-the backend at <http://127.0.0.1:8000>; add `make db-up` when a database is needed.
-The Part 4 entry page explains the workflow and makes no API requests. Editing,
-saving, and uploading arrive in later parts.
+`make frontend-dev FRONTEND_PORT=3002`. No backend, database, credentials, or
+OpenAI access is needed for the Part 8 preview.
+
+The workspace covers description → optional documents/links/pasted background →
+fact review → clarification → structured review/save. Incomplete drafts, explicit
+unknowns, mandatory/preferred/excluded criteria, and later refinement are supported.
+Source reviews and answers save independently; suggested criteria require explicit
+review and save. Changing context marks pending suggestions stale and preserves
+edited criteria for review. Errors retain typed input.
+
+Use **Interface language / Idioma de la interfaz** in the header to switch between
+English and Spanish. The choice is remembered in this browser, and switching keeps
+unsaved work intact. Your descriptions, facts, answers, and criteria keep their
+original text. Assistance defaults to the interface language; its separate selector
+can override that choice for new requests.
+
+All requests currently use a local mock adapter through the Part 7 API client
+contract. Saved work reopens from this browser's local storage, including after a
+reload. Markdown and pasted text supply preview text; PDF/Word extraction, public
+page retrieval, background suggestions, and job suggestions use deterministic
+fixtures. Originals are not retained, and this preview provides no real login,
+document processing, backups, or AI inference. The visible preview notice explains
+the simulation. Use synthetic content. Delete the definition in Review & save to
+clear its saved mock data.
 
 The optional public API setting is documented in
 [frontend/.env.example](frontend/.env.example). To override it, create
 `frontend/.env.local` with `NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:8000/api`.
-It defaults to same-origin `/api` for the combined production application.
+It defaults to same-origin `/api` for the combined production application. This
+setting is reserved for Part 9 and does not enable real requests in the mock preview.
 Next.js embeds `NEXT_PUBLIC_*` values at build time; rebuild after changing them.
 Keep the existing root `.env` for backend secrets. Never copy it into `frontend/`,
 prefix secrets with `NEXT_PUBLIC_`, or expose secrets through Next.js configuration.
@@ -179,14 +200,25 @@ Check and test the frontend independently:
 
 ```bash
 make frontend-check
+make frontend-test
 make frontend-browser-install
 make frontend-e2e
 ```
 
-These run ESLint, TypeScript checks, a production build, and Chromium smoke tests
-at desktop/mobile sizes. Browser tests start and stop their own Next.js server
+These run ESLint, TypeScript checks, a production build, rendered-component and
+mock-client tests, and complete Chromium workflows at desktop/mobile sizes.
+Browser tests start and stop their own Next.js server
 on port 3001; leave that port free. Browser binaries use the same ignored cache
 as the backend tests. No provider credentials, database, or backend are needed.
+
+If a Next.js preview is already running, test against it without stopping it:
+`PLAYWRIGHT_BASE_URL=http://127.0.0.1:3000 make frontend-e2e`. Tests use isolated
+browser contexts and do not change work saved in your own browser.
+
+With the backend's Python dependencies installed, also run `make frontend-contract`.
+It runs frontend component/client tests, then validates 15 synthetic request/response
+payloads against the existing Part 7 Pydantic schemas. It opens no database or HTTP
+connection. [Part 8 validation](doc/PART8_VALIDATION.md) records coverage and mock limits.
 
 The build generates `frontend/out/`, ready for a static web server. Preview it:
 

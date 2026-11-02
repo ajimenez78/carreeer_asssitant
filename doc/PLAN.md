@@ -1,6 +1,6 @@
 # Career assistant MVP plan
 
-Status: Parts 1–7 are implemented and verified locally as of 2026-11-01. The user explicitly approved Part 7 on 2026-11-01; earlier approvals are recorded below. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 evidence and payloads are in [PART7_VALIDATION.md](PART7_VALIDATION.md) and [BACKEND_API.md](BACKEND_API.md). Part 8 is next; Parts 8–11 have not started.
+Status: Parts 1–8 are implemented and verified locally; Part 8 was completed on 2026-11-02. The user explicitly approved Part 7 on 2026-11-01 and requested Part 8 on 2026-11-02; earlier approvals are recorded below. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 evidence and payloads are in [PART7_VALIDATION.md](PART7_VALIDATION.md) and [BACKEND_API.md](BACKEND_API.md). Part 8 evidence and mock limitations are in [PART8_VALIDATION.md](PART8_VALIDATION.md). Part 9 is next; Parts 9–11 have not started.
 
 ## Scope and working rules
 
@@ -69,7 +69,7 @@ Dependency: Part 1 approved.
 | Documents | Text-based PDF, legacy `.doc`, `.docx`, and Markdown; five files at 10 MB each; no scanned-PDF OCR initially. |
 | Links | Read public pages; provide upload/paste fallback; no authenticated scraping or LinkedIn account connection. |
 | Data handling | Retain sources until removed; review extracted background before AI use; direct OpenAI calls receive the necessary reviewed text; daily backups retained for seven days. |
-| Usability | English UI, English/Spanish content, small clarification rounds with skips and explicit unknowns. |
+| Usability | English/Spanish UI and content, a persistent interface-language switcher, small clarification rounds with skips and explicit unknowns. The user extended the original English-only UI default on 2026-11-02. |
 | Operations | Start on Railway Free and Neon Free; target $0 hosting within ongoing allowances, with metered OpenAI calls billed separately. Measure the web service, backups, storage, and transfer together. Paid upgrades require an explicit user decision. |
 
 Validation:
@@ -219,19 +219,24 @@ Payloads, limits, evidence, diagnosed issues, and recovery semantics are in `BAC
 
 Dependency: agreed API contract, backend behavior, and frontend scaffold available.
 
-- [ ] Build the description, document/link input, background review, clarification, and structured definition editing screens.
-- [ ] Support incomplete drafts, explicit unknowns, save/reopen/refine actions, and clear mandatory/preferred criteria.
-- [ ] Use contract-compatible mocked requests for all workflow operations; do not connect this stage to the live backend.
-- [ ] Implement loading, empty, validation, upload-error, and AI-error states while preserving typed input.
-- [ ] Provide responsive layout, labeled controls, keyboard navigation, and visible feedback for saving and unsaved changes.
+- [x] Build the description, document/link input, background review, clarification, and structured definition editing screens.
+- [x] Support incomplete drafts, explicit unknowns, save/reopen/refine actions, and clear mandatory/preferred criteria.
+- [x] Use contract-compatible mocked requests for all workflow operations; do not connect this stage to the live backend.
+- [x] Implement loading, empty, validation, upload-error, and AI-error states while preserving typed input.
+- [x] Provide responsive layout, labeled controls, keyboard navigation, and visible feedback for saving and unsaved changes.
+- [x] Add English/Spanish interface translations and a persistent switcher, preserving saved content and pending edits; keep catalogs extensible for more locales. Requested on 2026-11-02 after the initial Part 8 delivery.
 
 Validation:
 
-- [ ] Run component and browser tests of the full mocked flow, including skipping questions, correcting extracted facts, saving, reloading, and refinement.
-- [ ] Test representative failures and verify that recovery preserves user input.
-- [ ] Run linting, type checks, and a production build; review usability at desktop and mobile widths.
+- [x] Run component and browser tests of the full mocked flow, including skipping questions, correcting extracted facts, saving, reloading, and refinement.
+- [x] Test representative failures and verify that recovery preserves user input.
+- [x] Run linting, type checks, and a production build; review usability at desktop and mobile widths.
 
-Success: the agreed user journey is usable and tested entirely with API-compatible mocks.
+Success: achieved. The agreed user journey is usable and tested entirely with API-compatible mocks. The user authorized Part 8 on 2026-11-02. Real frontend/backend integration remains Part 9.
+
+Validation recorded on 2026-11-02: ESLint, TypeScript, and the static production build pass; 10 rendered-component/client tests and 16 desktop/mobile Chromium tests pass. Fifteen synthetic mock payloads validate against existing Part 7 Pydantic schemas without starting the backend or database. A plain-static-server browser smoke passes save/reload at desktop/mobile widths. Screenshots were reviewed; failure recovery, stale proposals, answer states, source/definition deletion, keyboard access, and visible feedback are covered. See [PART8_VALIDATION.md](PART8_VALIDATION.md) for scope, diagnosed tooling/UI issues, and simulation limitations. No dependencies were added, no personal source documents were loaded, and no live API, inference, or hosted provisioning occurred. Parts 9–11 were not started.
+
+Language extension (2026-11-02): the user requested a bilingual interface because the original scope included only English UI and English/Spanish content. The header now switches English/Spanish immediately and remembers the choice, while preserving typed input and stored content. Form controls, navigation, feedback, errors, prompts, document language, and page metadata are translated through extensible catalogs. Assistance defaults to the selected UI language with an independent override. The expanded suite passes 12 component/client/catalog tests and 22 desktop/mobile browser tests; the 15-payload contract check, lint, TypeScript, and production build pass. The existing preview remains running; browser checks can target it through `PLAYWRIGHT_BASE_URL` without launching another dev server.
 
 ## Part 9: Integrate frontend and backend
 

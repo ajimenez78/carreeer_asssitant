@@ -2,7 +2,7 @@
 
 Part 7 implements the private API for one owner and one current definition.
 The generated request/response schemas are at `/openapi.json` and `/docs`.
-Frontend editing and integration remain Parts 8–9; chat remains Part 10.
+Frontend editing uses mocks in Part 8; real integration remains Part 9 and chat Part 10.
 
 ## Access and initialization
 

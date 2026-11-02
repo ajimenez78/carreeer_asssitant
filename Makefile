@@ -7,7 +7,7 @@ export NEXT_TELEMETRY_DISABLED ?= 1
 export UV_CACHE_DIR ?= $(CURDIR)/.cache/uv
 export PLAYWRIGHT_BROWSERS_PATH ?= $(CURDIR)/.cache/ms-playwright
 
-.PHONY: setup dev up down db-up db-down db-init db-migrate owner storage-cleanup integration ai-smoke ai-evaluate test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-browser-install frontend-e2e frontend-preview
+.PHONY: setup dev up down db-up db-down db-init db-migrate owner storage-cleanup integration ai-smoke ai-evaluate test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-test frontend-contract frontend-browser-install frontend-e2e frontend-preview
 
 setup:
 	$(UV) sync --project backend --locked
@@ -71,6 +71,12 @@ frontend-dev:
 
 frontend-check:
 	$(NPM) --prefix frontend run check
+
+frontend-test:
+	$(NPM) --prefix frontend test
+
+frontend-contract: frontend-test
+	$(UV) run --project backend --locked python frontend/tests/validate_contract.py
 
 frontend-browser-install:
 	cd frontend && $(NPM) exec playwright install chromium
