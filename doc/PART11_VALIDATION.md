@@ -11,7 +11,8 @@ The app and PostgreSQL 18 use Render Free in Frankfurt. The database expires on
 **2 December 2026 at 17:45 Madrid time**, as explicitly accepted by the user.
 Original documents and backups use separate private R2 buckets. No paid Render
 resource was created. The deployed source is `9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244`,
-with deployment `dep-dbkc9lks728c73cohtng`. Automatic web deploys are off.
+with current deployment `dep-dbkcr8d9fdbs73c20he0` after the verified rollback.
+Automatic web deploys are off.
 [Resource IDs, URL, usage and configuration](PART11_RENDER_PREVIEW.json).
 
 The user explicitly approved transferring the existing local workspace, owner
@@ -34,6 +35,9 @@ Existing login credentials remain valid; no owner password was reset.
 | GitHub-hosted backup | [Run 41488898644](https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41488898644) passed export, upload/readback, pruning and temporary-access cleanup. 216,255-byte archive with two originals; 21.525-second backup operation. |
 | Database network boundary | GitHub removes its own temporary rule. With public access closed, the app still reads SQL through Render's private network. Operator verification sessions were revoked. |
 | Hosted restart persistence | Render restart returned 200; health, identical saved workspace and the existing signed session passed afterward. Verification session revoked and maintenance access closed. [Restart report](PART11_RESTART_CHECK.json). |
+| Hosted redeploy and rollback | Deployed documentation/test commit `a72b01d`, then rolled back to release `9ee1e93`. Existing session, saved workspace and both original downloads stayed identical after each operation. [Rollout report](PART11_ROLLOUT_CHECK.json). |
+| Hosted SQL/original recovery | Restored the verified archive into a disposable database on the existing Free Render instance and temporary originals in the private backup R2 bucket. All nine business/owner tables and both originals matched; transient sessions excluded from live comparison. Recovery database and objects removed. [Hosted recovery report](PART11_HOSTED_RECOVERY_CHECK.json). |
+| Automatic Free idle recovery | After 17 minutes without application requests, the first authenticated read returned 200 in 32.920 seconds. Startup-complete log at 18:11:38 UTC confirms the wake-up. Saved workspace and session survived; no saved writes or AI calls issued. [Idle recovery report](PART11_IDLE_RECOVERY_CHECK.json). |
 
 The deployed read check uses a short-lived operator-created session, not a reset
 owner password. It performs reads, one invalid-origin request and logout; it does
@@ -77,6 +81,14 @@ The backend now chooses an explicit available CA bundle while keeping
 Measured application usage: PostgreSQL 8,599,231 bytes, originals 184,269 bytes,
 and two backup archives totaling 432,510 bytes. These application measurements fit
 the intended allowances; other workloads in the user's accounts were not audited.
+Render resource samples recorded a maximum 140,034,050 bytes of web memory and
+67,227,650 bytes of database disk usage, including provider/system overhead.
+The reported bandwidth sample is 1.2003765 MB. These are sampled resource metrics,
+not a monthly account billing total. GitHub billing usage returned 404 and reported
+that the existing token lacks the `user` scope. R2 S3 keys do not grant account
+metadata access. No credentials were broadened. [Usage report](PART11_USAGE_CHECK.json).
+The first GitHub backup run lasted 65 seconds and its timing endpoint reported
+zero billable Ubuntu milliseconds; this does not audit other account usage.
 
 ## Remaining acceptance and provider setup
 
@@ -87,11 +99,13 @@ the intended allowances; other workloads in the user's accounts were not audited
 - The supplied document and backup access keys are identical. Functional checks
   passed; create separate bucket-scoped credentials and a read-only originals
   credential for CI to finish the intended credential isolation.
-- Finish actual sleep/wake observation, redeploy/rollback checks and account-wide
-  quota/notification verification. SQL/original recovery was proven from the real
-  cloud archive into disposable local resources; a hosted recovery drill remains.
-- Record Render's built image digest if exposed; the local tested image digest
-  is in the local release report and is not claimed to be Render's image digest.
+- Finish account-wide quota/notification verification. Account-wide usage needs
+  the relevant provider dashboard access;
+  the available Render API exposes resource metrics rather than billing totals.
+
+Render's public deployment response does not expose an image digest. The tested
+local image digest is recorded separately; the hosted release is identified by its
+full Git SHA and Render deployment ID.
 
 The operational procedure is [DEPLOYMENT.md](DEPLOYMENT.md). The original abandoned
 Neon setup remains historical in [NEON_SETUP.md](NEON_SETUP.md).

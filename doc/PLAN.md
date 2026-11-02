@@ -350,7 +350,7 @@ backup scheduling and storage rather than paid Render cron jobs.
 - [x] Provide separate release/owner/backup/restore commands compatible with Render Free, which lacks paid pre-deploy/one-off/shell capabilities. Keep migrations outside web startup.
 - [x] Restore the explicitly approved local workspace into Render/R2 at migration `0005`, preserving every row, both originals and owner credentials.
 - [x] Deploy tested source `9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244` on the Free web service; record deployment ID/HTTPS URL and the separately identified local image digest.
-- [ ] Record the Render-built image digest if the provider exposes it.
+- [x] Check Render's deployment metadata for an image digest: the available API does not expose one. Record hosted Git SHA/deployment ID and the distinct tested local image digest.
 - [x] Implement daily SQL/original archive creation with a consistent snapshot and manifest, checksum verification/readback, seven-day retention, and restoration into empty replacement resources. Test restoration with disposable PostgreSQL data.
 - [x] Prepare an external GitHub Actions schedule and private S3-compatible backup configuration. Keep it disabled until secrets and the target bucket are configured; never publish backup artifacts in this public repository.
 - [x] Enable daily GitHub backups with seven-day pruning; encrypted credentials configured, real backup downloaded/restored and every row/file verified. First GitHub-hosted run `41488898644` passed, including temporary IP cleanup.
@@ -358,9 +358,9 @@ backup scheduling and storage rather than paid Render cron jobs.
 - [x] Run deployed health/privacy/authentication, the bilingual browser flow with persistent floating chat, and hosted synthetic live OpenAI extraction/review/save/reassessment/chat through the public service endpoints. The live AI flow used API calls; the read/navigation flow used Chromium.
 - [x] Verify deployed HTTPS, origin rejection, secure session cookie/revocation, SQL access after public firewall closure and original downloads.
 - [x] Verify hosted persistence across a controlled Render restart: saved workspace and existing session survived, and the operator session was revoked afterward.
-- [ ] Verify hosted persistence across redeploy and image rollback.
-- [ ] Verify automatic Render Free sleep/wake behavior and first-request recovery without duplicate writes; avoid keepalive traffic.
-- [ ] Exercise image rollback and separate database/document recovery against disposable hosted resources.
+- [x] Verify hosted persistence across redeploy and image rollback: existing session, saved workspace and both originals passed after each change. The service is back on the verified `9ee1e93` release.
+- [x] Observe automatic Render Free sleep/wake without keepalive traffic: first authenticated read after 17 idle minutes returned 200 in 32.920 seconds, with a new startup log. Workspace/session stayed intact; no saved writes or AI calls were issued. Hosted AI retry idempotence was verified separately in the synthetic live check.
+- [x] Exercise image rollback and separate SQL/original recovery against disposable hosted resources. Temporary Render database and R2 backup-bucket originals were removed after comparison; the live workspace was preserved.
 - [ ] Measure Render hours/bandwidth/build minutes, Render PostgreSQL storage/compute/transfer, GitHub Actions usage, R2 operations/storage, and model usage against ongoing allowances. Report any free-tier mismatch before a paid change.
 - [x] Record the deployed revision/URL, evidence and operational limits in README and this plan.
 - [ ] Resolve the remaining provider/acceptance items before marking Part 11 complete.
@@ -370,9 +370,11 @@ Local evidence and remaining access requirements are recorded in
 [DEPLOYMENT.md](DEPLOYMENT.md). The cloud preview is usable; the unchecked items
 remain part of final acceptance.
 
-Success: pending. The private MVP must be live on Render with Render PostgreSQL persistence,
-working daily backups/restoration with seven-day retention, measured usage, and
-deployed acceptance checks before Part 11 is marked complete.
+Success: functional cloud checks pass and the preview is usable. Final Part 11
+acceptance remains pending for R2 lifecycle expiry, separate credentials and
+account-wide allowance/failure-notification confirmation. The live private MVP has
+Render PostgreSQL persistence, daily backups with seven-day pruning, verified
+local/hosted recovery and recorded resource usage.
 
 ## MVP completion
 

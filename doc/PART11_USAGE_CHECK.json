@@ -1,0 +1,37 @@
+{
+  "render_resource_metrics": {
+    "web_memory": {
+      "http_status": 200,
+      "unit": "bytes",
+      "samples": 36,
+      "maximum": 140034050,
+      "first_sample_utc": "2026-11-02T17:17:00Z",
+      "last_sample_utc": "2026-11-02T17:52:00Z"
+    },
+    "web_bandwidth": {
+      "http_status": 200,
+      "unit": "mb",
+      "samples": 1,
+      "maximum": 1.2003765,
+      "sum": 1.2003765,
+      "first_sample_utc": "2026-11-02T17:00:00Z",
+      "last_sample_utc": "2026-11-02T17:00:00Z"
+    },
+    "database_disk": {
+      "http_status": 200,
+      "unit": "bytes",
+      "samples": 61,
+      "maximum": 67227650,
+      "first_sample_utc": "2026-11-02T16:52:00Z",
+      "last_sample_utc": "2026-11-02T17:52:00Z"
+    }
+  },
+  "account_wide_allowances_verified": false,
+  "github_billing_usage": "unavailable: current token lacks user scope (HTTP 404)",
+  "r2_account_usage": "unavailable: supplied S3 credentials do not grant account metadata access",
+  "github_first_backup_run": {
+    "run_id": 41488898644,
+    "duration_ms": 65000,
+    "billable_ubuntu_ms": 0
+  }
+}

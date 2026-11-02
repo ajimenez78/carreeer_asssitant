@@ -1,0 +1,20 @@
+{
+  "service_id": "srv-dbkc9l4s728c73cohshg",
+  "url": "https://career-assistant-jgpm.onrender.com",
+  "checked_at_utc": "2026-11-02T17:50:20.215746+00:00",
+  "rollback_target_id": "dep-dbkc9lks728c73cohtng",
+  "redeploy": {
+    "id": "dep-dbkcqo3l550s73bnbav0",
+    "commit": "a72b01de1f2e26ccc327a947ad8812a678dc0788",
+    "status": "live",
+    "workspace_session_and_originals_preserved": true
+  },
+  "rollback": {
+    "id": "dep-dbkcr8d9fdbs73c20he0",
+    "commit": "9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244",
+    "status": "live",
+    "workspace_session_and_originals_preserved": true
+  },
+  "verification_session_revoked": true,
+  "passed": true
+}

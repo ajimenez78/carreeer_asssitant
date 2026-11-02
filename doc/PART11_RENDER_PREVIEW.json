@@ -20,7 +20,7 @@
   "web_service_id": "srv-dbkc9l4s728c73cohshg",
   "web_service_url": "https://career-assistant-jgpm.onrender.com",
   "web_service_plan": "free",
-  "deploy_id": "dep-dbkc9lks728c73cohtng",
+  "deploy_id": "dep-dbkcr8d9fdbs73c20he0",
   "deployed_commit": "9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244",
   "github_first_successful_run": "https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41488898644",
   "last_verified_backup": {
@@ -43,5 +43,11 @@
     }
   },
   "r2_lifecycle_backstop": "pending dashboard setup: scoped S3 credentials return AccessDenied",
-  "separate_document_and_backup_credentials": false
+  "separate_document_and_backup_credentials": false,
+  "initial_deploy_id": "dep-dbkc9lks728c73cohtng",
+  "manual_redeploy_and_rollback_verified": true,
+  "render_image_digest": "not exposed by available public deployment API; local digest recorded separately",
+  "idle_recovery_verified": true,
+  "idle_first_request_seconds": 32.92,
+  "hosted_backup_restore_verified": true
 }

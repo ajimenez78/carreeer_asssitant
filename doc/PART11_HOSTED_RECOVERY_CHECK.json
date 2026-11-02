@@ -1,0 +1,13 @@
+{
+  "live_workspace_modified": false,
+  "recovery_target": "temporary database in the existing Free Render PostgreSQL instance and temporary objects in the private backup R2 bucket",
+  "role_can_create_disposable_database": true,
+  "all_business_and_owner_rows_identical": true,
+  "tables_compared_excluding_transient_sessions": 9,
+  "originals_identical": 2,
+  "archive_manifest_verified": true,
+  "revision": "0005",
+  "passed": true,
+  "temporary_r2_originals_removed": true,
+  "temporary_database_removed": true
+}

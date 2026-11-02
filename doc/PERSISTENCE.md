@@ -107,8 +107,10 @@ manifest paths, copy originals, restore the dump transactionally, check foreign
 keys and reviewed context, then drain pending deletions. Validate before swapping
 runtime configuration. Retain successful daily copies for seven days; prune older copies
 only after a successful backup. Source deletions are immediate in live context;
-backup copies expire under this policy. Local backup/restore tests now pass;
-hosted scheduling and the real Neon/R2 restoration drill remain pending. Evidence
+backup copies expire under this policy. Local tests, daily GitHub scheduling and
+real Render/R2 backup/restoration drills pass. The hosted drill used a disposable
+database and temporary originals in the private backup bucket, then removed both.
+The additional R2 lifecycle expiry backstop remains pending. Evidence
 and setup are in [PART11_VALIDATION.md](PART11_VALIDATION.md) and
 [DEPLOYMENT.md](DEPLOYMENT.md).
 

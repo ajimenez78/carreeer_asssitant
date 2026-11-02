@@ -294,6 +294,8 @@ release/recovery commands and quotas. [Part 11 status](doc/PART11_VALIDATION.md)
 records local and deployed checks. The preview is live; use your existing local
 login. The free database expires on **2 December 2026 at 17:45 Madrid time**; see
 [resource details](doc/PART11_RENDER_PREVIEW.json).
+The Free web service sleeps when idle. Its first authenticated request after
+17 idle minutes took 32.9 seconds and preserved the workspace/session.
 
 Daily backups are enabled at 03:17 UTC (04:17 Madrid during this preview), with
 seven-day pruning. The [first GitHub-hosted run](https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41488898644)

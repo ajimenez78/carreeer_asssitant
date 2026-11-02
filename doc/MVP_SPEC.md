@@ -1,12 +1,12 @@
 # MVP requirements and architecture
 
-Status: Part 2 baseline approved on 2026-11-01, with English/Spanish UI and system-assessed clarity/summary requirements added on 2026-11-02. Parts 1–9 work locally; validation of the new clarity/summary extension is tracked separately in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md). Part 10 chat is validated in [PART10_VALIDATION.md](PART10_VALIDATION.md); cloud provisioning remains Part 11.
+Status: Part 2 baseline approved on 2026-11-01, with English/Spanish UI and system-assessed clarity/summary requirements added on 2026-11-02. Parts 1–10 work locally; validation of the clarity/summary extension is tracked separately in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md). Part 10 chat is validated in [PART10_VALIDATION.md](PART10_VALIDATION.md). The Part 11 cloud preview and verified daily backups are live; remaining provider setup is recorded below.
 
 The user replaced Railway with Render on 2026-11-02 and chose free external backup scheduling/storage. The user subsequently selected Render PostgreSQL instead of Neon. Use private R2 for originals and separate backups. The user explicitly selected the Free 30-day PostgreSQL preview on 2026-11-02, accepting its expiration. Current requirements supersede the historical Railway/Neon choices. Part 11 preparation and access requirements are in [PART11_VALIDATION.md](PART11_VALIDATION.md).
 
 ## Confirmed baseline
 
-- The user re-enabled Cloudflare backups on 2026-11-02, superseding the temporary deferral. The preview again requires daily SQL/original backups with seven-day retention, a separate private backup bucket, and verified restoration. Provisioning and schedule activation await credentials and database access.
+- The user re-enabled Cloudflare backups on 2026-11-02, superseding the temporary deferral. Daily SQL/original backups with seven-day pruning are active in a separate private R2 bucket. Real local and hosted restoration passed. Separate bucket credentials and the additional lifecycle expiry backstop remain pending; see `PART11_VALIDATION.md`.
 - Deliver the job-definition MVP first, including later refinement through chat. Keep job discovery and the other career workflows for later phases.
 - Use Next.js, Python/FastAPI, Render hosting/PostgreSQL and private R2 document storage, and the direct OpenAI API. Test the complete application locally before the Part 11 deployment.
 - Support incomplete descriptions, optional background documents and links, clarification, compensation/work–life preferences, saving, and later refinement.

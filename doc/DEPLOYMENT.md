@@ -149,11 +149,33 @@ complete credential isolation. R2 denied lifecycle management for this key;
 configure the seven-day prefix expiry below through the R2 dashboard. Worker
 pruning already runs after each verified backup.
 
+In Cloudflare, open **R2 → backup bucket → Settings → Object Lifecycle Rules →
+Add rule**. Enable object deletion after seven days for prefix `career-backups/`
+and save. Apply this to the backup bucket; originals remain until explicitly
+deleted. Cloudflare's default seven-day multipart-upload cleanup is a different
+rule and does not expire completed backup archives.
+[Cloudflare lifecycle setup](https://developers.cloudflare.com/r2/buckets/object-lifecycles/).
+
+Create bucket-scoped R2 tokens with these permissions, keeping the existing token
+valid until the replacements have been verified:
+
+| Use | Permission and bucket | Private destination |
+| --- | --- | --- |
+| Web documents | Object Read & Write; originals bucket only | Operations `CAREER_S3_ACCESS_KEY` / `CAREER_S3_SECRET_KEY`, then the web service's matching settings. |
+| Backup document reads | Object Read only; originals bucket only | GitHub `DOCUMENT_BACKUP_ACCESS_KEY` / `DOCUMENT_BACKUP_SECRET_KEY`. |
+| Backup archive writes/pruning | Object Read & Write; backup bucket only | Operations `CAREER_BACKUP_ACCESS_KEY` / `CAREER_BACKUP_SECRET_KEY`, then GitHub `BACKUP_ACCESS_KEY` / `BACKUP_SECRET_KEY`. |
+
+R2 tokens are created under **R2 → Account Details → API Tokens → Manage**.
+Select the intended bucket when assigning object permissions. Lifecycle management
+belongs in the dashboard; application credentials need only object access.
+[Cloudflare R2 token setup](https://developers.cloudflare.com/r2/api/tokens/).
+
 Create a dedicated private R2 Standard bucket. Configure a seven-day object lifecycle
 expiry on the dedicated `career-backups/` prefix as a backstop if the scheduler stops.
 Use bucket-scoped write/list/delete credentials on the backup runner, separate from
-the web service credentials. Only originals credentials are supplied to the web
-app; backup bucket credentials stay on the operations runner.
+the web service credentials. Supply originals-only credentials to the web app;
+keep backup bucket credentials on the operations runner. The current shared-key
+limitation described above still needs replacement credentials.
 
 External operations settings:
 
@@ -236,13 +258,14 @@ external Render PostgreSQL/R2 resources and stable session secret. It does not r
 For an incompatible schema, stop writes and restore SQL/originals into replacement
 resources first. Never blindly downgrade or delete persistent resources during cleanup.
 
-Hosted acceptance is still required: health/assets; unauthenticated rejection;
+Run hosted acceptance for each release: health/assets; unauthenticated rejection;
 secure HttpOnly session; exact-origin writes; bilingual saved-draft → document/link
 → reviewed background → clarification/summary → reviewed save → reload → structured
 refinement → floating chat → reviewed chat save; bounded live synthetic inference;
 restart/redeploy and rollback persistence; private original retrieval; backup/restore;
 and real sleep/wake behavior. Use synthetic data in disposable branches/environments.
-Do not replace existing user work with a smoke-test definition.
+Do not replace existing user work with a smoke-test definition. Completed checks
+for this preview are in [PART11_VALIDATION.md](PART11_VALIDATION.md).
 
 Render Free supplies 512 MB / 0.1 CPU and 750 workspace instance-hours/month, sleeps
 after 15 idle minutes, and may take about a minute to wake. It has no durable local

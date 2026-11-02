@@ -1,0 +1,64 @@
+{
+  "url": "https://career-assistant-jgpm.onrender.com",
+  "controlled_idle_seconds": 1020,
+  "automatic_ai_calls": 0,
+  "writes_to_saved_workspace": 0,
+  "idle_started_utc": "2026-11-02T17:54:12.611191+00:00",
+  "recent_control_events": [
+    {
+      "type": "deploy_ended",
+      "timestamp": "2026-11-02T17:52:03.376601Z"
+    },
+    {
+      "type": "deploy_started",
+      "timestamp": "2026-11-02T17:51:30.292137Z"
+    },
+    {
+      "type": "deploy_ended",
+      "timestamp": "2026-11-02T17:51:19.347815Z"
+    },
+    {
+      "type": "build_ended",
+      "timestamp": "2026-11-02T17:50:46.070969Z"
+    },
+    {
+      "type": "build_started",
+      "timestamp": "2026-11-02T17:50:25.480409Z"
+    },
+    {
+      "type": "deploy_started",
+      "timestamp": "2026-11-02T17:50:25.461482Z"
+    },
+    {
+      "type": "server_restarted",
+      "timestamp": "2026-11-02T17:46:49.366266Z"
+    },
+    {
+      "type": "deploy_ended",
+      "timestamp": "2026-11-02T17:16:16.114276Z"
+    },
+    {
+      "type": "build_ended",
+      "timestamp": "2026-11-02T17:15:42.638644Z"
+    },
+    {
+      "type": "build_started",
+      "timestamp": "2026-11-02T17:13:58.868714Z"
+    }
+  ],
+  "first_request_seconds": 32.92,
+  "first_request_status": 200,
+  "saved_workspace_unchanged": true,
+  "existing_session_survived": true,
+  "zero_instances_observed": false,
+  "verification_session_revoked": true,
+  "first_request_recovery_passed": true,
+  "startup_log_evidence": [
+    {
+      "timestamp": "2026-11-02T18:11:38.639180202Z",
+      "message": "INFO:     Application startup complete."
+    }
+  ],
+  "automatic_wake_confirmed_by_startup_log": true,
+  "instance_count_metrics_note": "Render returned no instance-count series; automatic wake confirmed by startup log instead."
+}
