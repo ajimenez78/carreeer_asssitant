@@ -1,4 +1,4 @@
-import type { AnswerState, BackgroundProposal, ClarificationProposal, Cleanup, Definition, Language, Question, SaveDefinition, SourceInput, SourceView } from "./contracts";
+import type { AnswerState, BackgroundProposal, ChatHistory, ChatTurn, ClarificationProposal, Cleanup, Definition, Language, Question, SaveDefinition, SourceInput, SourceView } from "./contracts";
 
 export type Transport = (path: string, init: RequestInit) => Promise<Response>;
 export class ApiError extends Error {
@@ -31,6 +31,8 @@ export async function requestApi<T>(transport: Transport, path: string, method =
 export function createClient(transport: Transport) {
   const request = <T>(path: string, method = "GET", body?: unknown, signal?: AbortSignal) => requestApi<T>(transport, `/job-definition${path}`, method, body, signal);
   return {
+    chat: () => request<ChatHistory>("/chat"),
+    sendChat: (message: string, language: Language, request_id: string, signal?: AbortSignal) => request<ChatTurn>("/chat", "POST", { message, language, request_id }, signal),
     read: () => request<Definition>(""),
     save: (data: SaveDefinition) => request<Definition>("", "PUT", data),
     remove: () => request<Cleanup>("", "DELETE"),

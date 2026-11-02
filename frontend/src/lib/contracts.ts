@@ -24,3 +24,7 @@ export type BackgroundProposal = { source_id: string; proposal: { facts: { conte
 export type SourceInput = { kind: "text"; display_name: string; text: string } | { kind: "url"; display_name: string; url: string };
 export type Cleanup = { cleanup_pending: boolean; pending_originals: number };
 export type Language = "English" | "Spanish";
+
+export type ReviewProposal = Pick<ClarificationProposal, "proposal" | "proposal_context">;
+export type ChatTurn = ReviewProposal & { id: string; message: string; language: Language; created_at: string; reply: string; in_scope: boolean; questions: string[]; has_changes: boolean; usage: Usage };
+export type ChatHistory = { turns: ChatTurn[]; context: string };

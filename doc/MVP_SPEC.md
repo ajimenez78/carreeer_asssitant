@@ -1,6 +1,6 @@
 # MVP requirements and architecture
 
-Status: Part 2 baseline approved on 2026-11-01, with English/Spanish UI and system-assessed clarity/summary requirements added on 2026-11-02. Parts 1–9 work locally; validation of the new clarity/summary extension is tracked separately in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md). Chat remains Part 10 and cloud provisioning remains Part 11.
+Status: Part 2 baseline approved on 2026-11-01, with English/Spanish UI and system-assessed clarity/summary requirements added on 2026-11-02. Parts 1–9 work locally; validation of the new clarity/summary extension is tracked separately in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md). Part 10 chat is validated in [PART10_VALIDATION.md](PART10_VALIDATION.md); cloud provisioning remains Part 11.
 
 ## Confirmed baseline
 
@@ -25,7 +25,8 @@ Status: Part 2 baseline approved on 2026-11-01, with English/Spanish UI and syst
 | Links | Save provenance and attempt extraction from public HTTP(S) pages. For inaccessible LinkedIn or other restricted pages, offer document upload or pasted text. No authenticated scraping or LinkedIn account connection in this MVP. |
 | Sources and deletion | Retain sources and extracted text until removed by the owner. Source deletion removes the original, extracted text, and source-derived background facts, and clears derived clarification/chat context so old snippets cannot re-enter AI prompts. Explain that effect before deletion; independently accepted job preferences remain. Allow deletion of the complete definition with its sources, answers, and conversation. Backup copies expire under the agreed retention policy. |
 | Languages | English and Spanish UI with a persistent switcher and extensible translation catalogs, requested on 2026-11-02. Accept English and Spanish descriptions/documents and clarify in the user's chosen language. Switching UI language preserves all user content and pending edits. |
-| Saving | Explicit save/apply actions with visible unsaved state for definition edits. Create/save the initial draft before adding sources or requesting AI assistance. Source actions and submitted clarification answers/chat messages persist when the user performs those actions, independently of saving definition edits. AI suggestions are proposals until reviewed and applied; an AI or network failure preserves the existing draft and typed input. |
+| Assistant availability | Persistent floating chatbot throughout all workflow steps and future phases; no numbered Chat step. Minimize/reopen and navigation preserve conversation and composer text. The first Send can create a role draft from that message, without saving unrelated editor changes. Chat uses saved context while pending edits remain in the editor; those edits must be resolved before reviewing chat proposals. Requested on 2026-11-02; see [ASSISTANT_DOCK.md](ASSISTANT_DOCK.md). |
+| Saving | Explicit save/apply actions with visible unsaved state for definition edits. Create/save the initial draft before adding sources or requesting structured AI assistance. A first chat message may explicitly start the draft as part of Send. Source actions and submitted clarification answers/chat messages persist when the user performs those actions, independently of saving definition edits. AI suggestions are proposals until reviewed and applied; an AI or network failure preserves the existing draft and typed input. |
 
 The salary target and the period of the example's two-day office limit are data the application should clarify. They are not hard-coded assumptions about future users or prerequisites for scaffolding.
 
@@ -37,7 +38,7 @@ The salary target and the period of the example's two-day office limit are data 
 4. Request a clarity assessment and answer a small batch of targeted questions when needed. A skipped answer remains unknown; a conflicting answer produces a reviewable correction. The system decides whether the definition is sufficiently clear. Stop at any time, including while a request is running, and resume explicitly later.
 5. Review an editable definition covering role/seniority, responsibilities and scope, technical interests, business/team context, compensation, location, remote/hybrid arrangement, hours/travel, and learning/work–life preferences.
 6. Save accepted edits and supporting context. Use the Summary view to read the saved definition in natural language and see assessed clarity or an invitation to assess the changed context. Reopen and refine the same definition later, including after application restarts.
-7. In Part 10, discuss changes in chat. Display proposed changes to the definition, apply only reviewed changes, and keep structured editing and chat consistent.
+7. Discuss changes in the persistent floating assistant alongside any step, including starting a draft from the first message. Preserve conversation and pending input across navigation/minimizing. Display proposed changes to the definition, apply only reviewed changes, and keep structured editing and chat consistent. Later phases retain the same assistant entry point.
 
 ## Acceptance criteria and design walkthroughs
 
@@ -100,7 +101,7 @@ The user explicitly selected the combined application option on 2026-11-01: sepa
 - Test the combined production image locally before release. Identify releases by Git revision and record the deployed image digest. Verify health and the real browser workflow after deployment.
 - Keep application rollback and database recovery distinct. Prefer backward-compatible schema changes; rolling back an image does not undo a migration. Retain the approved daily database/document backups for seven days.
 
-Current implementation: Parts 1–9 are complete locally, including the private backend, bilingual frontend, real HTTP/session/CORS integration, and the combined Next.js-static-export/Python image. Explicit mock mode remains isolated to development/tests. Local deterministic/live browser flows and image replacement are recorded in [PART9_VALIDATION.md](PART9_VALIDATION.md), [PART9_AI_WORKFLOW.json](PART9_AI_WORKFLOW.json), and [PART9_RELEASE_CHECK.json](PART9_RELEASE_CHECK.json). The release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Chat remains Part 10; hosted deployment and backup restoration remain Part 11.
+Current implementation: Parts 1–10 are complete locally, including the private backend, bilingual frontend, real HTTP/session/CORS integration, and the combined Next.js-static-export/Python image. Explicit mock mode remains isolated to development/tests. Local deterministic/live browser flows and image replacement are recorded in [PART9_VALIDATION.md](PART9_VALIDATION.md), [PART9_AI_WORKFLOW.json](PART9_AI_WORKFLOW.json), and [PART9_RELEASE_CHECK.json](PART9_RELEASE_CHECK.json). The release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Persistent bilingual refinement chat uses the same proposal review/save flow; see [PART10_VALIDATION.md](PART10_VALIDATION.md). Hosted deployment and backup restoration remain Part 11.
 
 ### Persistence and recovery details
 

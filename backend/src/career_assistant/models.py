@@ -223,3 +223,23 @@ class DocumentDeletion(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class ChatTurn(Base):
+    __tablename__ = "chat_turns"
+    __table_args__ = (
+        CheckConstraint(
+            "length(btrim(message)) BETWEEN 1 AND 4000", name="message_length"
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(primary_key=True)
+    definition_id: Mapped[UUID] = mapped_column(
+        ForeignKey("job_definitions.id", ondelete="CASCADE"), index=True
+    )
+    message: Mapped[str] = mapped_column(Text)
+    language: Mapped[str] = mapped_column(Text)
+    response: Mapped[dict] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )

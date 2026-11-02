@@ -3,7 +3,7 @@
 Part 5 design review, 2026-11-01. This implements the approved single-owner,
 single-current-definition lifecycle. Parts 6–7 subsequently implemented AI,
 authentication, extraction and API handlers; see [BACKEND_API.md](BACKEND_API.md).
-Conversation storage remains in Part 10.
+Part 10 adds persistent conversation storage through migration `0005`.
 
 ## Schema and workflow review
 
@@ -15,6 +15,7 @@ Conversation storage remains in Part 10.
 | `sources` | Definition foreign key, UUID, kind (file/URL/text), display name, original URL or object key as appropriate, media type/size, extraction state/text, review timestamp. File slots 1–5, unique per definition, enforce five files; each is at most 10 MiB. |
 | `background_facts` | Source foreign key, editable fact text, timestamps. Facts are reviewed through their source and never automatically become preferences. |
 | `clarifications` | Definition foreign key, round UUID, position 1–3, question, answer state (unanswered/answered/skipped/unknown), nullable answer, timestamps. Unique round/position limits each round to three questions. |
+| `chat_turns` | Request UUID, definition foreign key, 1–4,000 character message, assistance language, UTC timestamp, and validated response JSONB including reply, reviewable proposal, context token, and usage. Message/response commit together; UUID retries reuse the saved result. |
 | `document_deletions` | Durable queue of object UUIDs to remove after the metadata transaction commits. No foreign key to a deleted source or definition. |
 
 All foreign keys cascade on parent deletion. UUIDs identify domain records;
@@ -113,9 +114,9 @@ remain Part 11, rather than being claimed by these persistence tests.
 
 Future offers and matches can reference the stable definition UUID; skill plans,
 applications, interviews, and career progress can reference that owner and their
-relevant offer/process. No tables for those workflows are created now. Part 10
-adds conversation records attached to the current definition, with the same
-source-deletion invalidation rule.
+relevant offer/process. No tables for those workflows are created now. Conversation
+records belong to the current definition, with the same source-context invalidation
+rule; they are not definition revision history.
 
 ## Part 7 additions
 
@@ -131,3 +132,20 @@ unconfirmed/failed source metadata stays in the database dump without promising
 missing original bytes. Restore preserves those recoverable source states.
 The consistent write/cleanup pause and seven-day retention contract still apply;
 actual backup/restore implementation remains Part 11.
+
+## Part 10 additions
+
+Migration `0005` only adds `chat_turns` and its foreign-key index. Existing accepted
+criteria, sources, assessments, credentials and sessions remain unchanged. A source
+extraction/review/deletion clears derived chat and clarifications in the same
+transaction. Whole-definition deletion cascades chat. Successful in-scope messages
+invalidate the saved assessment/control version, and conversation identity/content
+participates in proposal tokens. This prevents stale chat or structured proposals
+from applying after changes. The request UUID prevents duplicate committed turns.
+
+The existing local `0004` database was privately backed up, restored into an isolated
+clone, migrated and compared before applying `0005` locally. Every original table's
+rows were compared canonically in memory and remained unchanged; the new chat table
+was empty. The private dump is retained under ignored `.data/backups/`; it is not
+a replacement for Part 11's scheduled independent backups. See
+[Part 10 validation](PART10_VALIDATION.md).

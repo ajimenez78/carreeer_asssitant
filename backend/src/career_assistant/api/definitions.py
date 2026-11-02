@@ -17,6 +17,8 @@ from starlette.datastructures import UploadFile
 from career_assistant.ai import AIClient, OpenAIClient
 from career_assistant.api.schemas import (
     BackgroundView,
+    ChatTurnView,
+    ChatView,
     ClarificationView,
     CleanupView,
     DefinitionView,
@@ -30,7 +32,7 @@ from career_assistant.documents import (
     validate_file,
 )
 from career_assistant.errors import AppError
-from career_assistant.models import DocumentDeletion
+from career_assistant.models import ChatTurn, DocumentDeletion
 from career_assistant.persistence import (
     DefinitionData,
     DefinitionRepository,
@@ -40,13 +42,17 @@ from career_assistant.storage import cleanup_documents, document_store
 from career_assistant.workflow import (
     Answer,
     Assistance,
+    ChatInput,
     ClarificationControl,
     SaveDefinition,
     SourceInput,
     SourceReview,
     ai_context,
+    chat_turn_view,
+    chat_turns,
     context_token,
     definition_view,
+    discuss,
     extract_background,
     propose,
     question_view,
@@ -448,3 +454,85 @@ def answer_question(question_id: UUID, data: Answer, request: Request):
             question_id, data.state, data.answer
         )
         return question_view(row)
+
+
+@router.get("/chat", response_model=ChatView)
+def read_chat(request: Request):
+    with sessions(request).begin() as session:
+        return {
+            "turns": [chat_turn_view(row) for row in chat_turns(session)],
+            "context": context_token(ai_context(session)),
+        }
+
+
+def existing_turn(session, data):
+    definition = DefinitionRepository(session).require_current()
+    row = session.get(ChatTurn, data.request_id)
+    if row is not None:
+        if (
+            row.definition_id != definition.id
+            or row.message != data.message
+            or row.language != data.language
+        ):
+            raise AppError(
+                "chat_request_conflict",
+                "Use a new request for a different message.",
+                409,
+            )
+        return chat_turn_view(row)
+    return None
+
+
+@router.post("/chat", response_model=ChatTurnView)
+def send_chat(
+    data: ChatInput, request: Request, client: Annotated[AIClient, Depends(ai_for)]
+):
+    with sessions(request).begin() as session:
+        previous = existing_turn(session, data)
+        if previous is not None:
+            return previous
+        context = ai_context(session)
+        if context["clarification_paused"]:
+            raise AppError(
+                "clarification_paused",
+                "Clarification is stopped. Resume it before requesting another round.",
+                409,
+            )
+    token = context_token(context)
+    result, preferences, conflicts = discuss(
+        client, context, data.message, data.language
+    )
+    with sessions(request).begin() as session:
+        repo = DefinitionRepository(session)
+        previous = existing_turn(session, data)
+        if previous is not None:
+            return previous
+        if context_token(ai_context(session)) != token:
+            raise AppError(
+                "stale_proposal",
+                "The definition or context changed. Generate a new proposal.",
+                409,
+            )
+        has_changes = {p["key"]: p for p in preferences} != {
+            p["key"]: p for p in context["accepted_preferences"]
+        }
+        row = repo.add_chat_turn(
+            identity=data.request_id,
+            message=data.message,
+            language=data.language,
+            response={
+                "reply": result.value.reply,
+                "in_scope": result.value.in_scope,
+                "questions": result.value.questions,
+                "proposal": {"preferences": preferences, "conflicts": conflicts},
+                "has_changes": has_changes,
+                "proposal_context": "",
+                "usage": usage_view(result),
+            },
+        )
+        row.response = {
+            **row.response,
+            "proposal_context": context_token(ai_context(session)),
+        }
+        session.flush()
+        return chat_turn_view(row)

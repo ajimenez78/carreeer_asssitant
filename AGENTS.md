@@ -3,6 +3,8 @@
 ## General description
 This career assistant helps the user clarify the role they are looking for, select interesting offers, close skill gaps, prepare for interviews, and continue growing after starting a job.
 
+The assistant must remain available as a standard floating chatbot throughout all workflow steps and future product phases, rather than as a numbered step. Preserve conversation and typed input when minimizing or changing steps. Chat proposals still require review and explicit saving.
+
 ## Business requierements
 
 ### 1. Job definition

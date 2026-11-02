@@ -1,11 +1,11 @@
-import type { BackgroundProposal, ClarificationProposal, Definition, Language, Preference, SaveDefinition, SourceInput, SourceMetadata, SourceView } from "./contracts";
+import type { BackgroundProposal, ChatTurn, ClarificationProposal, Definition, Language, Preference, SaveDefinition, SourceInput, SourceMetadata, SourceView } from "./contracts";
 import type { Transport } from "./client";
 import { validateDefinition } from "./preferences";
 
 export const MOCK_STORAGE_KEY = "career-assistant:mock:v1";
 export const MOCK_FAILURE_KEY = "career-assistant:mock-failure";
 export const MOCK_AI_DELAY_KEY = "career-assistant:mock-ai-delay";
-type Snapshot = { definition: Definition | null; sources: SourceView[]; control_version?: number };
+type Snapshot = { definition: Definition | null; sources: SourceView[]; control_version?: number; chat?: ChatTurn[] };
 type Storage = Pick<globalThis.Storage, "getItem" | "setItem" | "removeItem">;
 const usage = { model: "mock", input_tokens: 0, output_tokens: 0, estimated_cost_usd: "0" };
 const cleanup = { cleanup_pending: false, pending_originals: 0 };
@@ -46,7 +46,7 @@ function assessSaved(d: Definition, language: Language) {
 }
 async function fingerprint(snapshot: Snapshot) {
   const d = snapshot.definition;
-  const bytes = new TextEncoder().encode(JSON.stringify({ description: d?.description, preferences: d?.preferences, questions: d?.clarifications, sources: snapshot.sources, paused: d?.clarification_paused, version: snapshot.control_version ?? 0 }));
+  const bytes = new TextEncoder().encode(JSON.stringify({ description: d?.description, preferences: d?.preferences, questions: d?.clarifications, sources: snapshot.sources, paused: d?.clarification_paused, version: snapshot.control_version ?? 0, conversation: (snapshot.chat ?? []).map(turn => ({ id: turn.id, message: turn.message, reply: turn.reply, proposal: turn.proposal, questions: turn.questions })) }));
   const digest = await crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(digest), b => b.toString(16).padStart(2, "0")).join("");
 }
@@ -66,7 +66,7 @@ export function createMockTransport(storage: Storage, failures?: Storage, delay 
       if (init.signal?.aborted) abort(); else init.signal?.addEventListener("abort", abort, { once: true });
     });
     if (!clarification) await waitForRequest(wait);
-    const operation = route === "/clarification-control" ? "control" : route.endsWith("/facts") || route === "/clarifications" ? "ai"
+    const operation = route === "/clarification-control" ? "control" : route.endsWith("/facts") || route === "/clarifications" || route === "/chat" && method === "POST" ? "ai"
       : route === "/sources" ? "upload" : route.includes("clarifications/") ? "answer"
       : route.includes("sources/") && method === "PATCH" ? "source-review"
       : method === "PUT" ? "save" : "read";
@@ -105,7 +105,7 @@ export function createMockTransport(storage: Storage, failures?: Storage, delay 
         snapshot.control_version = (snapshot.control_version ?? 0) + 1;
         persist(); return json(d);
       }
-      if (!route && method === "DELETE") { snapshot.definition = null; snapshot.sources = []; persist(); return json(cleanup); }
+      if (!route && method === "DELETE") { snapshot.definition = null; snapshot.sources = []; snapshot.chat = []; persist(); return json(cleanup); }
       if (route === "/sources" && method === "POST") {
         let input: SourceInput | undefined;
         const file = init.body instanceof FormData ? init.body.get("file") as File : null;
@@ -132,7 +132,7 @@ export function createMockTransport(storage: Storage, failures?: Storage, delay 
           extraction_error: blocked || scanned ? { code: "extraction_failed", message: blocked ? "This page could not be retrieved. Upload a document or paste its text instead." : "No readable text was found. Upload a text-based document or paste the text; scanned-document OCR is not available." } : null,
           reviewed_at: null, created_at: new Date().toISOString(), extracted_text: blocked || scanned ? null : text, facts: [],
         };
-        snapshot.sources.push(source); d.clarifications = []; invalidate(); persist(); return json(source, 201);
+        snapshot.sources.push(source); d.clarifications = []; snapshot.chat = []; invalidate(); persist(); return json(source, 201);
       }
       if (route.startsWith("/sources/")) {
         const [, , id, action] = route.split("/");
@@ -140,10 +140,10 @@ export function createMockTransport(storage: Storage, failures?: Storage, delay 
         if (!source) return fail(404, "not_found", "This source no longer exists.");
         if (method === "GET" && !action) return json(source);
         if (method === "DELETE" && !action) {
-          snapshot.sources = snapshot.sources.filter(s => s.id !== id); d.clarifications = []; invalidate(); persist(); return json(cleanup);
+          snapshot.sources = snapshot.sources.filter(s => s.id !== id); d.clarifications = []; snapshot.chat = []; invalidate(); persist(); return json(cleanup);
         }
         if (method === "POST" && action === "retry") {
-          source.reviewed_at = null; source.facts = []; d.clarifications = []; invalidate();
+          source.reviewed_at = null; source.facts = []; d.clarifications = []; snapshot.chat = []; invalidate();
           if (source.extraction_state === "pending") { source.extraction_state = "ready"; source.extracted_text = "Worked on distributed systems."; }
           persist(); return json(source);
         }
@@ -152,12 +152,38 @@ export function createMockTransport(storage: Storage, failures?: Storage, delay 
           const facts = body.facts as string[];
           if (facts.length > 100 || facts.some(f => !f.trim() || f.length > 2000)) return fail(422, "validation", "Use at most 100 facts, each 1–2,000 characters.");
           source.facts = facts.map(content => ({ id: crypto.randomUUID(), source_id: id, content: content.trim() }));
-          source.reviewed_at = new Date().toISOString(); d.clarifications = []; invalidate(); persist(); return json(source);
+          source.reviewed_at = new Date().toISOString(); d.clarifications = []; snapshot.chat = []; invalidate(); persist(); return json(source);
         }
         if (method === "POST" && action === "facts") {
           const facts = (source.extracted_text ?? "").split(/\n/).map(s => s.trim()).filter(Boolean).slice(0, 20).map(s => ({ content: s.slice(0, 2000), evidence: s.slice(0, 2000) }));
           return json({ source_id: id, proposal: { facts, unknowns: [] }, usage } satisfies BackgroundProposal);
         }
+      }
+      if (route === "/chat" && method === "GET") return json({ turns: snapshot.chat ?? [], context: await fingerprint(snapshot) });
+      if (route === "/chat" && method === "POST") {
+        const previous = snapshot.chat?.find(turn => turn.id === body.request_id);
+        if (previous) return previous.message === body.message && previous.language === body.language ? json(previous) : fail(409, "chat_request_conflict", "Use a new request for a different message.");
+        if (d.clarification_paused) return fail(409, "clarification_paused", "Clarification is stopped. Resume it before requesting another round.");
+        if (!body.message?.trim() || body.message.length > 4000) return fail(422, "validation", "Enter a message of 1–4,000 characters.");
+        const es = body.language === "Spanish";
+        const inScope = !/find.*job|search|interview|weather|buscar.*ofertas|entrevista/i.test(body.message);
+        const days = body.message.match(/\b([0-7])\s*(days?|d[ií]as?)\b/i)?.[1];
+        const period = /week|semana/i.test(body.message) ? "week" : /month|mes/i.test(body.message) ? "month" : null;
+        const onsite = d.preferences.find(p => p.key === "onsite_limit");
+        const preferences = [...d.preferences];
+        const changes = inScope && days !== undefined && period !== null;
+        if (changes) {
+          const updated: Preference = { key: onsite?.key ?? "onsite_limit", category: "work_arrangement", priority: "mandatory", value: { days: Number(days), period }, note: onsite?.note ?? "If hybrid" };
+          const index = preferences.findIndex(p => p.key === updated.key);
+          if (index === -1) preferences.push(updated); else preferences[index] = updated;
+        }
+        const turn: ChatTurn = { id: body.request_id, message: body.message.trim(), language: body.language, created_at: new Date().toISOString(), in_scope: inScope,
+          reply: !inScope ? es ? "Puedo ayudarte a definir el puesto que buscas." : "I can help define the role you are looking for." : changes ? es ? "Revisa el cambio propuesto para los días presenciales antes de guardarlo." : "Review the proposed office-day change before saving it." : es ? "¿Qué quieres cambiar y con qué límites?" : "What would you like to change, and what limits matter?",
+          questions: inScope && !changes ? [es ? "¿Qué periodo cubre el límite de días?" : "What period covers the day limit?"] : [], proposal: { preferences, conflicts: changes && onsite ? [es ? "Revisa el cambio al límite guardado." : "Review the change to the saved limit."] : [] }, has_changes: changes, proposal_context: "", usage };
+        snapshot.chat = [...(snapshot.chat ?? []), turn];
+        if (inScope) invalidate();
+        turn.proposal_context = await fingerprint(snapshot);
+        persist(); return json(turn);
       }
       if (route === "/clarifications" && method === "POST") {
         if (d.clarification_paused) return fail(409, "clarification_paused", "Clarification is stopped. Resume it before requesting another round.");

@@ -102,3 +102,22 @@ class BackgroundView(Representation):
     source_id: UUID
     proposal: ExtractedBackground
     usage: UsageView
+
+
+class ChatTurnView(Representation):
+    id: UUID
+    message: str
+    language: Literal["English", "Spanish"]
+    created_at: datetime
+    reply: str
+    in_scope: bool
+    questions: list[str]
+    proposal: ProposedChanges
+    has_changes: bool
+    proposal_context: str
+    usage: UsageView
+
+
+class ChatView(Representation):
+    turns: list[ChatTurnView]
+    context: str

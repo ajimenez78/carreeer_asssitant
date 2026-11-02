@@ -1,6 +1,6 @@
 # Career assistant MVP plan
 
-Status: Parts 1–9 are implemented and verified locally; Parts 8–9 were completed on 2026-11-02. The user explicitly approved Part 7 on 2026-11-01 and Parts 8–9 on 2026-11-02; earlier approvals are recorded below. The user subsequently requested system-assessed clarity, stoppable iteration, and a natural-language summary; this structured-workflow extension is tracked below and in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md), separately from historical Part 9 evidence. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 evidence and payloads are in [PART7_VALIDATION.md](PART7_VALIDATION.md) and [BACKEND_API.md](BACKEND_API.md). Part 8 evidence and mock limitations are in [PART8_VALIDATION.md](PART8_VALIDATION.md). Part 9 evidence is in [PART9_VALIDATION.md](PART9_VALIDATION.md); the release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Part 10 is next; Parts 10–11 have not started.
+Status: Parts 1–10 are implemented and verified locally; Parts 8–9 were completed on 2026-11-02. The user explicitly approved Part 7 on 2026-11-01 and Parts 8–9 on 2026-11-02; earlier approvals are recorded below. The user subsequently requested system-assessed clarity, stoppable iteration, and a natural-language summary; this structured-workflow extension is tracked below and in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md), separately from historical Part 9 evidence. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 evidence and payloads are in [PART7_VALIDATION.md](PART7_VALIDATION.md) and [BACKEND_API.md](BACKEND_API.md). Part 8 evidence and mock limitations are in [PART8_VALIDATION.md](PART8_VALIDATION.md). Part 9 evidence is in [PART9_VALIDATION.md](PART9_VALIDATION.md); the release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Part 10 chat was authorized and completed on 2026-11-02; see [PART10_VALIDATION.md](PART10_VALIDATION.md). Part 11 has not started.
 
 ## Scope and working rules
 
@@ -30,7 +30,7 @@ Part 2 defaults approved on 2026-11-01; detailed saving, source, and review beha
 4. Explicitly request a system clarity assessment and focused clarification questions about meaningful gaps or ambiguities. Allow skipped questions and explicitly unknown values; stop the process at any time and resume explicitly.
 5. Review and edit a structured definition covering role, seniority, responsibilities, technical interests, company context, compensation, location, work arrangement, and work–life balance. Distinguish mandatory constraints from preferences.
 6. Save the definition and read a natural-language summary of saved criteria, assessed clarity, and remaining gaps. The system controls readiness; stopping remains a separate choice. Reopen and refine without losing previously accepted information. Changed context clears the assessment until the next explicit request.
-7. In Part 10, use open chat to discuss preferences and review proposed changes through the same editing and saving flow.
+7. Use the persistent floating assistant alongside any step to discuss preferences, keeping the same conversation when minimizing or navigating. The first message can start a saved draft; pending editor changes stay separate. Review proposed changes through the same editing and saving flow. Keep this assistant entry point throughout later product phases.
 
 The supplied ideal-job example is the reference acceptance scenario: preserve Staff scope, architecture and system design, collaboration across teams, learning, international scope, and an AI-engineering preference. Remote is preferred; hybrid is acceptable near Madrid with a two-day on-site limit whose period the application must clarify. Clarify “good compensation” rather than inventing a salary, and preserve the constraint against a role focused only on frontend work.
 
@@ -286,22 +286,47 @@ Validation:
 
 ## Part 10: Add open-ended assistant chat
 
-Dependency: the integrated structured workflow passes Part 9.
+Dependency: the integrated structured workflow passes Part 9. The user authorized Part 10 on 2026-11-02.
 
-- [ ] Add chat for free-text feedback and clarification within the current ideal-job definition.
-- [ ] Reuse the same model client, clarification logic, preference validation, and persistence operations; avoid a separate agent architecture.
-- [ ] Keep the conversation associated with the current definition and persist the context needed to resume it, according to the agreed retention rules.
-- [ ] Show proposed preference changes for user review before applying them, and explain when additional clarification is needed.
-- [ ] Keep this assistant within job definition; do not implement job search, applications, interviews, or career planning yet.
+- [x] Add chat for free-text feedback and clarification within the current ideal-job definition.
+- [x] Reuse the same model client, clarification logic, preference validation, and persistence operations; avoid a separate agent architecture.
+- [x] Keep the conversation associated with the current definition and persist the context needed to resume it, according to the agreed retention rules.
+- [x] Show proposed preference changes for user review before applying them, and explain when additional clarification is needed.
+- [x] Keep this assistant within job definition; do not implement job search, applications, interviews, or career planning yet.
 
 Validation:
 
-- [ ] Unit-test chat interpretation, ambiguous/conflicting requests, invalid model output, and preservation of accepted preferences after failures.
-- [ ] Run a browser test that changes an existing preference through chat, reviews and saves it, then reloads the updated definition and conversation.
-- [ ] Check that chat and structured editing remain consistent and that unrelated requests do not mutate the definition.
-- [ ] Run the established regression checks after chat integration and update the README.
+- [x] Unit-test chat interpretation, ambiguous/conflicting requests, invalid model output, and preservation of accepted preferences after failures.
+- [x] Run a browser test that changes an existing preference through chat, reviews and saves it, then reloads the updated definition and conversation.
+- [x] Check that chat and structured editing remain consistent and that unrelated requests do not mutate the definition.
+- [x] Run the established regression checks after chat integration and update the README.
 
-Success: users can refine the same persistent definition through both structured interaction and open chat without losing accepted information.
+Success: achieved locally. Users can refine the same persistent definition through both structured interaction and open chat without losing accepted information.
+
+The user requested a persistent chatbot alongside the whole flow on 2026-11-02,
+superseding the initial numbered Chat step. The assistant is now a floating,
+minimizable panel available from every step, with preserved conversation/input,
+first-message draft creation, and chat allowed while editor changes are pending.
+Reviewing proposals still requires resolving those changes first. This common
+assistant surface must remain available as later product phases are implemented;
+its current capabilities remain within job definition. Follow-up evidence is in
+[ASSISTANT_DOCK.md](ASSISTANT_DOCK.md).
+
+Validation on 2026-11-02: backend Ruff and 194 unit/PostgreSQL tests pass with 95%
+statement coverage. The subsequent standard unit run passes all 126 tests,
+including an additional merged-proposal boundary check (195 distinct backend
+tests in total). Frontend lint/type/build, 20 component/client/catalog tests,
+20 schema samples, 32 desktop/mobile mock browser tests, and 12 real-backend
+browser tests pass (the separate live workflow is skipped in routine runs).
+Four bounded synthetic live chat responses pass the task gates after correcting
+incidental wording assumptions in the evaluation harness; estimated total
+$0.00054823. The production image/replacement check verifies chat review/save and
+persistent conversation along with sessions, sources, summary and pause. Local
+migration `0004` → `0005` passed after private backup and isolated restoration;
+all original rows remain unchanged. Evidence and limits are in
+[PART10_VALIDATION.md](PART10_VALIDATION.md), [PART10_AI_EVALUATION.json](PART10_AI_EVALUATION.json),
+and [PART10_RELEASE_CHECK.json](PART10_RELEASE_CHECK.json). No hosted services were
+provisioned; Part 11 remains pending.
 
 ## Part 11: Deploy the tested MVP to Railway and Neon
 

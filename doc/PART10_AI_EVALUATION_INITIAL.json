@@ -1,0 +1,257 @@
+{
+  "synthetic_only": true,
+  "cases": [
+    {
+      "name": "targeted_en",
+      "passed": false,
+      "output": {
+        "reply": "I’ll propose changing only the hybrid office limit to at most one day per week. This is a proposal for review, not an applied update; all other accepted preferences remain unchanged.",
+        "in_scope": true,
+        "preferences": [
+          {
+            "key": "onsite_limit",
+            "category": "work_arrangement",
+            "priority": "mandatory",
+            "value": {
+              "days": 1,
+              "period": "week"
+            },
+            "note": "If hybrid; at most one office day per week"
+          }
+        ],
+        "questions": [],
+        "conflicts": []
+      },
+      "merged_preferences": [
+        {
+          "key": "seniority",
+          "category": "seniority",
+          "priority": "mandatory",
+          "value": "Staff",
+          "note": null
+        },
+        {
+          "key": "onsite_limit",
+          "category": "work_arrangement",
+          "priority": "mandatory",
+          "value": {
+            "days": 1,
+            "period": "week"
+          },
+          "note": "If hybrid; at most one office day per week"
+        },
+        {
+          "key": "hybrid_location",
+          "category": "location",
+          "priority": "mandatory",
+          "value": "Madrid or nearby",
+          "note": "If hybrid"
+        },
+        {
+          "key": "remote",
+          "category": "work_arrangement",
+          "priority": "preferred",
+          "value": true,
+          "note": null
+        },
+        {
+          "key": "frontend_only",
+          "category": "responsibilities",
+          "priority": "excluded",
+          "value": "Frontend-only work",
+          "note": null
+        }
+      ],
+      "model": "gpt-6-luna",
+      "usage": {
+        "input_tokens": 1482,
+        "cached_input_tokens": 0,
+        "output_tokens": 177,
+        "reasoning_tokens": 72
+      },
+      "elapsed_seconds": 5.840546204010025,
+      "estimated_cost_usd": "0.0002367"
+    },
+    {
+      "name": "ambiguous_es",
+      "passed": false,
+      "output": {
+        "reply": "Ahora mismo, si el puesto es híbrido, el límite aceptado es de hasta 2 días presenciales por semana. Para valorar si quieres reducirlo, podemos aclarar primero si buscas una presencia menor como preferencia o si sería un límite obligatorio; después precisaríamos los días y el período. ¿Quieres que sea un límite obligatorio más estricto que el actual, o prefieres dejarlo sin cambios hasta decidirlo?",
+        "in_scope": true,
+        "preferences": [],
+        "questions": [],
+        "conflicts": []
+      },
+      "merged_preferences": [
+        {
+          "key": "seniority",
+          "category": "seniority",
+          "priority": "mandatory",
+          "value": "Staff",
+          "note": null
+        },
+        {
+          "key": "onsite_limit",
+          "category": "work_arrangement",
+          "priority": "mandatory",
+          "value": {
+            "days": 2,
+            "period": "week"
+          },
+          "note": "If hybrid"
+        },
+        {
+          "key": "hybrid_location",
+          "category": "location",
+          "priority": "mandatory",
+          "value": "Madrid or nearby",
+          "note": "If hybrid"
+        },
+        {
+          "key": "remote",
+          "category": "work_arrangement",
+          "priority": "preferred",
+          "value": true,
+          "note": null
+        },
+        {
+          "key": "frontend_only",
+          "category": "responsibilities",
+          "priority": "excluded",
+          "value": "Frontend-only work",
+          "note": null
+        }
+      ],
+      "model": "gpt-6-luna",
+      "usage": {
+        "input_tokens": 1491,
+        "cached_input_tokens": 1171,
+        "output_tokens": 219,
+        "reasoning_tokens": 105
+      },
+      "elapsed_seconds": 4.120711349998601,
+      "estimated_cost_usd": "0.00015321"
+    },
+    {
+      "name": "outside_scope_en",
+      "passed": true,
+      "output": {
+        "reply": "I can help define your ideal job, but I can’t find listings or prepare you for interviews. Tell me what you’d like to clarify or change about your desired role, responsibilities, or work arrangement.",
+        "in_scope": false,
+        "preferences": [],
+        "questions": [],
+        "conflicts": []
+      },
+      "merged_preferences": [
+        {
+          "key": "seniority",
+          "category": "seniority",
+          "priority": "mandatory",
+          "value": "Staff",
+          "note": null
+        },
+        {
+          "key": "onsite_limit",
+          "category": "work_arrangement",
+          "priority": "mandatory",
+          "value": {
+            "days": 2,
+            "period": "week"
+          },
+          "note": "If hybrid"
+        },
+        {
+          "key": "hybrid_location",
+          "category": "location",
+          "priority": "mandatory",
+          "value": "Madrid or nearby",
+          "note": "If hybrid"
+        },
+        {
+          "key": "remote",
+          "category": "work_arrangement",
+          "priority": "preferred",
+          "value": true,
+          "note": null
+        },
+        {
+          "key": "frontend_only",
+          "category": "responsibilities",
+          "priority": "excluded",
+          "value": "Frontend-only work",
+          "note": null
+        }
+      ],
+      "model": "gpt-6-luna",
+      "usage": {
+        "input_tokens": 1477,
+        "cached_input_tokens": 1171,
+        "output_tokens": 67,
+        "reasoning_tokens": 0
+      },
+      "elapsed_seconds": 2.567954171972815,
+      "estimated_cost_usd": "0.00007581"
+    },
+    {
+      "name": "unaccepted_history_en",
+      "passed": false,
+      "output": {
+        "reply": "Your currently accepted office-day limit is at most 2 days per week when the role is hybrid. The earlier suggestion of 1 day per week was only a proposal and was not accepted.",
+        "in_scope": true,
+        "preferences": [],
+        "questions": [],
+        "conflicts": []
+      },
+      "merged_preferences": [
+        {
+          "key": "seniority",
+          "category": "seniority",
+          "priority": "mandatory",
+          "value": "Staff",
+          "note": null
+        },
+        {
+          "key": "onsite_limit",
+          "category": "work_arrangement",
+          "priority": "mandatory",
+          "value": {
+            "days": 2,
+            "period": "week"
+          },
+          "note": "If hybrid"
+        },
+        {
+          "key": "hybrid_location",
+          "category": "location",
+          "priority": "mandatory",
+          "value": "Madrid or nearby",
+          "note": "If hybrid"
+        },
+        {
+          "key": "remote",
+          "category": "work_arrangement",
+          "priority": "preferred",
+          "value": true,
+          "note": null
+        },
+        {
+          "key": "frontend_only",
+          "category": "responsibilities",
+          "priority": "excluded",
+          "value": "Frontend-only work",
+          "note": null
+        }
+      ],
+      "model": "gpt-6-luna",
+      "usage": {
+        "input_tokens": 1559,
+        "cached_input_tokens": 1171,
+        "output_tokens": 64,
+        "reasoning_tokens": 0
+      },
+      "elapsed_seconds": 2.156721509003546,
+      "estimated_cost_usd": "0.00008251"
+    }
+  ],
+  "passed": false
+}

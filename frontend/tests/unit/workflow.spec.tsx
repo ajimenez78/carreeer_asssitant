@@ -82,7 +82,15 @@ test("mocked workflow uses Part 7 request and response envelopes", async () => {
   expect(routes).toContainEqual({ path: "/job-definition/sources", method: "POST", multipart: true });
   const reopened = await createClient(createMockTransport(storage, undefined, 0)).read();
   expect(reopened.preferences).toEqual(saved.preferences);
+  const chatInput = { request_id: crypto.randomUUID(), message: "At most 1 day per week in the office", language: "Spanish" as const };
+  samples.push({ schema: "ChatInput", value: chatInput });
+  const turn = await api.sendChat(chatInput.message, chatInput.language, chatInput.request_id);
+  samples.push({ schema: "ChatTurnView", value: turn });
+  samples.push({ schema: "ChatView", value: await api.chat() });
+  expect((await api.read()).preferences).toEqual(saved.preferences);
+  expect((await api.chat()).turns).toHaveLength(1);
   samples.push({ schema: "CleanupView", value: await api.removeSource(source.id) });
+  expect((await api.chat()).turns).toEqual([]);
   expect((await api.read()).clarifications).toEqual([]);
   expect((await api.read()).preferences).toEqual(saved.preferences);
   samples.push({ schema: "CleanupView", value: await api.remove() });
@@ -205,4 +213,20 @@ test("source mutations remove derived summary prose and preserve saved preferenc
   await api.clarify("English"); await api.removeSource(source.id);
   const current = await api.read();
   expect(current.assessment).toBeNull(); expect(current.preferences).toEqual([]);
+});
+
+
+test("chat proposals require the same explicit save and cannot erase omitted criteria", async () => {
+  const { api } = setup();
+  await api.save({ ...draft, preferences: [{ key: "seniority", category: "seniority", priority: "mandatory", value: "Staff", note: null }] });
+  const id = crypto.randomUUID();
+  const turn = await api.sendChat("At most 1 day per week", "English", id);
+  expect(turn.has_changes).toBe(true);
+  expect((await api.read()).preferences).toHaveLength(1);
+  expect(await api.sendChat("At most 1 day per week", "English", id)).toEqual(turn);
+  expect((await api.chat()).turns).toHaveLength(1);
+  await api.save({ ...draft, preferences: turn.proposal.preferences, proposal_context: turn.proposal_context });
+  expect((await api.read()).preferences.find(p => p.key === "seniority")?.value).toBe("Staff");
+  expect((await api.read()).preferences.find(p => p.key === "onsite_limit")?.value).toEqual({ days: 1, period: "week" });
+  await expect(api.save({ ...draft, preferences: turn.proposal.preferences, proposal_context: turn.proposal_context })).rejects.toMatchObject({ status: 409 });
 });

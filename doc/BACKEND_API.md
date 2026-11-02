@@ -2,7 +2,7 @@
 
 Part 7 implements the private API for one owner and one current definition.
 The generated request/response schemas are at `/openapi.json` and `/docs`.
-Part 9 connects the bilingual frontend to this API and serves its static export from the same Python service. Mocks are an explicit development/test option; chat remains Part 10.
+Part 9 connects the bilingual frontend to this API and serves its static export from the same Python service. Mocks are an explicit development/test option; Part 10 adds persistent refinement chat.
 The subsequent clarity/summary extension adds system readiness, a persisted
 assessment, and independent clarification stop/resume control. Its validation
 record is [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md).
@@ -211,8 +211,8 @@ its live text/facts and clears all derived clarification/answer context. Accepte
 job preferences remain independent; the assessment/summary is invalidated and
 readiness returns to `draft`. `DELETE /api/job-definition` deletes the
 definition, all sources/facts/preferences/answers, and queues its originals;
-the configured owner and login remain. Part 10 will apply this invalidation rule
-to chat records when they exist.
+the configured owner and login remain. Conversation records are also removed
+on source-context invalidation or complete-definition deletion.
 
 Metadata deletion and the original-deletion queue commit together. The API then
 attempts original cleanup and returns `cleanup_pending` and `pending_originals`.
@@ -228,3 +228,44 @@ proposal/conflict), 413 (size), 415 (format), 422 (validation), 429 (login throt
 paths/types, not rejected passwords or personal source text. No provider response,
 SQL parameters, or credentials are exposed in errors. Source extraction failures
 are also retained in the source's safe `extraction_error` for reload and recovery.
+
+## Part 10 chat
+
+Migration `0005` adds `chat_turns`, attached to the current definition with cascading
+deletion. No existing rows are rewritten. All routes below require the owner
+session and the existing origin controls; responses are private/no-store.
+
+- `GET /api/job-definition/chat` returns `{turns, context}`. Each turn includes
+  `id`, `message`, `language`, `created_at`, `reply`, `in_scope`, `questions`,
+  `proposal: {preferences, conflicts}`, `has_changes`, `proposal_context`, and `usage`.
+  `context` is the current SHA-256 saved-context token, for distinguishing historical
+  proposals. Loading history does not call AI.
+- `POST /api/job-definition/chat` takes `{request_id: UUID, message, language}`;
+  trimmed message length is 1–4,000 characters, language is English or Spanish.
+  It returns the persisted turn. The same UUID/message/language replays the saved
+  response without another model generation; reusing a UUID for different input
+  returns `409 chat_request_conflict`. Overlapping retries can both generate, but
+  commit only one turn; this does not promise provider-level exactly-once billing.
+- Review chat proposals through the existing `PUT /api/job-definition`, sending
+  `description`, the complete reviewed `preferences`, and `proposal_context`.
+  Omitted accepted criteria are merged back before the proposal reaches the UI.
+  No chat call writes accepted preferences. Removing a criterion remains an
+  explicit operation in the shared editor.
+
+Both structured clarification and chat reuse preference instructions, the model
+client, local domain validation, and proposal merging. The retained conversation
+is included in AI context with earlier changes labelled as unaccepted proposals.
+Only reviewed background is included. In-scope chat invalidates the old clarity
+assessment; readiness is reassessed only through the explicit clarification call.
+Unrelated requests return a scope explanation and cannot carry preference changes.
+
+Messages and validated replies commit atomically after generation; a failed or
+obsolete call commits neither and preserves accepted data. A persisted stop,
+rapid stop/resume, concurrent message, structured edit, or source-context change
+invalidates in-flight context. Paused chat returns `409 clarification_paused`;
+obsolete results and saves return `409 stale_proposal`. Source extraction/review/
+deletion clears conversation and derived clarifications, preventing removed source
+snippets from returning through history. Accepted preferences remain independent.
+Complete-definition deletion cascades chat records. Backups expire under Part 11's
+seven-day policy. History is retained without silent truncation; existing provider
+input/output/timeout caps apply and oversized context remains a recoverable error.

@@ -2,14 +2,14 @@ UV ?= uv
 BACKEND_PORT ?= 8000
 FRONTEND_PORT ?= 3000
 FRONTEND_API_BASE_URL ?= http://127.0.0.1:$(BACKEND_PORT)/api
-RELEASE_IMAGE ?= career-assistant:part9
+RELEASE_IMAGE ?= career-assistant:part10
 NPM ?= npm
 export npm_config_cache ?= $(CURDIR)/.cache/npm
 export NEXT_TELEMETRY_DISABLED ?= 1
 export UV_CACHE_DIR ?= $(CURDIR)/.cache/uv
 export PLAYWRIGHT_BROWSERS_PATH ?= $(CURDIR)/.cache/ms-playwright
 
-.PHONY: setup dev up down db-up db-down db-init db-migrate owner storage-cleanup integration workflow-live clarity-live release-image release-check ai-smoke ai-evaluate test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-test frontend-contract frontend-browser-install frontend-e2e frontend-preview
+.PHONY: setup dev up down db-up db-down db-init db-migrate owner storage-cleanup integration workflow-live clarity-live chat-live release-image release-check ai-smoke ai-evaluate test browser-install e2e lint check frontend-setup frontend-dev frontend-check frontend-test frontend-contract frontend-browser-install frontend-e2e frontend-preview
 
 setup:
 	$(UV) sync --project backend --locked
@@ -64,6 +64,9 @@ workflow-live: frontend-check db-up
 
 clarity-live:
 	$(UV) run --project backend --locked python backend/tests/clarity_live_check.py
+
+chat-live:
+	$(UV) run --project backend --locked python backend/tests/chat_live_check.py
 
 release-image:
 	docker build -f backend/Dockerfile -t $(RELEASE_IMAGE) .

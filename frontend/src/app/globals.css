@@ -123,3 +123,39 @@ blockquote { font-size: .85rem; border-left: 2px solid #a4bba5; padding-left: .8
   .actions > button { flex: 1 1 auto; }
   h2 { font-size: 1.5rem; }
 }
+
+.chat-history { display: grid; gap: 1.5rem; margin-block: 1.5rem; }
+.chat-turn { border-block-end: 1px solid var(--line, #ddd); padding-block-end: 1.5rem; overflow-wrap: anywhere; }
+.chat-turn h3 { font-size: .85rem; margin-block: 1rem .4rem; }
+.chat-prose { white-space: pre-wrap; }
+
+.assistant-dock { position: fixed; inset: auto 1.5rem 1.25rem auto; z-index: 5; display: flex; flex-direction: column; align-items: flex-end; gap: .75rem; max-width: calc(100vw - 2rem); }
+.assistant-launcher { display: flex; align-items: center; gap: .6rem; box-shadow: 0 .25rem 1rem #172e3226; border-radius: 2rem; }
+.assistant-panel { width: 26rem; max-width: 100%; height: min(42rem, calc(100dvh - 7rem)); display: flex; flex-direction: column; background: var(--paper); border: 1px solid var(--line); border-radius: .8rem; box-shadow: 0 .75rem 3rem #172e322b; overflow: hidden; }
+.assistant-panel[hidden] { display: none; }
+.assistant-panel-heading { padding: 1rem; background: #edf2e9; display: flex; justify-content: space-between; gap: 1rem; align-items: center; border-bottom: 1px solid var(--line); }
+.assistant-panel-heading p { font-size: .75rem; color: var(--muted); margin: .25rem 0 0; }
+.assistant-panel-heading button { font-size: 1.3rem; padding: .35rem .7rem; }
+.assistant-panel-content { padding: 1rem; display: flex; flex-direction: column; flex: 1; min-height: 0; overflow: hidden; }
+.assistant-panel-heading { flex-shrink: 0; }
+.assistant-panel-content > .hint, .assistant-panel-content > .empty { flex-shrink: 0; margin-top: 0; }
+.assistant-conversation { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.assistant-conversation > :not(.chat-history) { flex-shrink: 0; }
+.assistant-panel .chat-history { margin-block: .5rem; gap: 1rem; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+.assistant-panel .chat-prose { font-size: .9rem; }
+.assistant-panel .proposal-callout { margin-block: .8rem; padding: .8rem; }
+.assistant-panel .language-control { margin-block: .75rem; display: flex; align-items: center; gap: .75rem; max-width: none; font-size: .75rem; }
+.assistant-panel .language-control select { width: auto; margin: 0; padding: .35rem .5rem; font-size: .8rem; }
+.assistant-panel label[for="chat-message"] { margin-bottom: .25rem; }
+.assistant-panel textarea { margin-top: 0; }
+.workspace { padding-bottom: 6rem; }
+@media (max-width: 600px) {
+  .assistant-dock { right: .75rem; bottom: .75rem; max-width: calc(100vw - 1.5rem); }
+  .assistant-panel { width: calc(100vw - 1.5rem); height: min(42rem, calc(100dvh - 6rem)); }
+}
+
+@media (max-height: 600px) {
+  .assistant-panel-content { overflow-y: auto; overscroll-behavior: contain; }
+  .assistant-conversation { flex: none; }
+  .assistant-panel .chat-history { flex: none; max-height: 25dvh; }
+}

@@ -35,10 +35,10 @@ def docker(*args, check=True):
 
 def main():
     suffix = uuid4().hex
-    name, volume = f"career-part9-{suffix}", f"career-part9-docs-{suffix}"
-    image = os.environ.get("CAREER_RELEASE_IMAGE", "career-assistant:part9")
+    name, volume = f"career-release-{suffix}", f"career-release-docs-{suffix}"
+    image = os.environ.get("CAREER_RELEASE_IMAGE", "career-assistant:part10")
     report_path = Path(
-        os.environ.get("CAREER_RELEASE_REPORT", "doc/PART9_RELEASE_CHECK.json")
+        os.environ.get("CAREER_RELEASE_REPORT", "doc/PART10_RELEASE_CHECK.json")
     )
     url = database_url(Settings()).set(database=f"career_release_{suffix}")
     ensure_local_database(url)
@@ -218,6 +218,41 @@ def main():
                     page.get_by_role(
                         "button", name="Request clarification & suggestions", exact=True
                     ).click()
+                    navigation.get_by_role("button", name="04 Review & save").click()
+                    page.get_by_role(
+                        "button", name="Discard suggestions", exact=True
+                    ).click()
+                    page.get_by_role(
+                        "button", name="Chat with assistant", exact=True
+                    ).click()
+                    page.get_by_label("Your message", exact=True).fill(
+                        "Change hybrid to at most 1 day per week."
+                    )
+                    page.get_by_role("button", name="Send message", exact=True).click()
+                    expect(page.get_by_role("status")).to_contain_text(
+                        "Chat reply saved"
+                    )
+                    page.get_by_role(
+                        "button", name="Review chat suggestions", exact=True
+                    ).click()
+                    page.get_by_role(
+                        "button", name="Apply reviewed suggestions & save"
+                    ).click()
+                    expect(page.get_by_role("status")).to_contain_text(
+                        "Definition saved"
+                    )
+                    chat_before = page.request.get(
+                        origin + "/api/job-definition/chat"
+                    ).json()
+                    assert len(chat_before["turns"]) == 1
+                    record = page.request.get(origin + "/api/job-definition").json()
+                    assert next(
+                        p for p in record["preferences"] if p["key"] == "onsite_limit"
+                    )["value"] == {"days": 1, "period": "week"}
+                    navigation.get_by_role("button", name="03 Clarify").click()
+                    page.get_by_role(
+                        "button", name="Request clarification & suggestions", exact=True
+                    ).click()
                     navigation.get_by_role("button", name="05 Summary").click()
                     summary = page.get_by_role(
                         "article", name="Saved role summary", exact=True
@@ -254,6 +289,16 @@ def main():
                     expect(summary).to_have_text(summary_text)
                     after = page.request.get(origin + "/api/job-definition").json()
                     assert after == before
+                    chat_after = page.request.get(
+                        origin + "/api/job-definition/chat"
+                    ).json()
+                    assert chat_after["turns"] == chat_before["turns"]
+                    page.get_by_role(
+                        "button", name="Chat with assistant", exact=True
+                    ).click()
+                    expect(page.get_by_label("Saved conversation")).to_contain_text(
+                        "Change hybrid to at most 1 day per week."
+                    )
                     sid = next(s["id"] for s in after["sources"] if s["kind"] == "file")
                     original = page.request.get(
                         origin + f"/api/job-definition/sources/{sid}/original"
@@ -285,6 +330,7 @@ def main():
                         "same-origin HttpOnly sessions",
                         "real Markdown extraction",
                         "save/reload/refine",
+                        "reviewed chat refinement and conversation survive replacement",
                         "production replacement preserves SQL, session and originals",
                         "natural-language summary and pause survive replacement",
                         "private files excluded",

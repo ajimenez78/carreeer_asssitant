@@ -5,13 +5,15 @@ preferences, add background documents or public links, review extracted facts,
 answer focused questions, and explicitly save or refine your current definition.
 The interface supports English and Spanish with a remembered language switcher.
 The system assesses clarity and provides a natural-language summary; clarification
-can be stopped at any time and resumed explicitly.
+can be stopped at any time and resumed explicitly. Chat refines the same definition
+through proposals that you review and save.
 
-Parts 1–9 work locally. Chat remains Part 10; Railway/Neon deployment, scheduled
+Parts 1–10 work locally. Railway/Neon deployment, scheduled
 backups and restoration remain Part 11. See [the plan](doc/PLAN.md),
 [requirements](doc/MVP_SPEC.md), and [Part 9 validation](doc/PART9_VALIDATION.md).
 The subsequent clarity/summary extension is tracked in
-[CLARITY_SUMMARY.md](doc/CLARITY_SUMMARY.md).
+[CLARITY_SUMMARY.md](doc/CLARITY_SUMMARY.md). Chat evidence is in
+[Part 10 validation](doc/PART10_VALIDATION.md).
 
 ## Prerequisites
 
@@ -112,6 +114,9 @@ manually selected `ready` definitions become unassessed `draft` definitions;
 their accepted preferences and sources remain. Request an assessment to have
 the system determine clarity under the new workflow.
 
+Migration `0005` adds conversation storage without changing existing records.
+Run `make db-migrate` before starting the updated backend.
+
 ## Workspace and data handling
 
 Save an initial description before adding sources or requesting suggestions.
@@ -135,6 +140,23 @@ Use **Stop clarification / Detener aclaración** even while a request is running
 The stopped state persists after reopening and does not mark the definition
 ready or discard edits. Resume explicitly before requesting another round.
 
+Use **Chat with assistant / Hablar con el asistente** at the bottom right from any
+step. The floating panel can be minimized without losing conversation or typed
+input; Escape minimizes it and returns keyboard focus to its launcher. The first
+message can start a saved role draft. Existing description/criteria edits stay in
+the editor until you save them. You can keep chatting with pending edits or
+suggestions; chat uses saved context, and those edits must be saved/discarded before
+reviewing a new chat proposal. Messages and replies persist together after a
+successful request; failures retain typed input.
+Use **Review chat suggestions** to open the same **Review & save** editor, edit
+or remove suggestions, and explicitly apply them. Reopening Chat restores the
+conversation without calling AI. The assistant is independent of the numbered
+steps and remains the common entry point for later product phases. Old proposals
+remain historical after context
+changes. Chat stays within job definition and respects the stop/resume control.
+The assistant uses the saved criteria, reviewed background, and retained conversation;
+unaccepted proposals remain separate from accepted preferences.
+
 Use **Interface language / Idioma de la interfaz** in the header. Switching keeps
 user content and unsaved edits intact. Assistance defaults to the selected UI
 language, with an independent selector for new requests. Existing documents,
@@ -147,8 +169,8 @@ restricted pages offer upload/paste fallback. Only explicitly accepted facts
 become background context. Historical skills do not become desired job criteria
 automatically. No personal example files are used by routine tests.
 
-Removing a source removes its text/facts and clears derived questions/answers
-and the clarity assessment/summary;
+Removing a source removes its text/facts and clears derived questions/answers,
+conversation, and the clarity assessment/summary;
 accepted job criteria remain. Whole-definition deletion removes its associated
 live records. Original-file deletion is queued durably; the UI reports pending
 cleanup and can retry. A failed original upload leaves a visible reserved source
@@ -212,8 +234,8 @@ replacement with external persistence:
 make release-check
 ```
 
-This builds `career-assistant:part9`, uses a disposable database and Docker volume,
-and records [the release check](doc/PART9_RELEASE_CHECK.json). Its first container
+This builds `career-assistant:part10`, uses a disposable database and Docker volume,
+and records [the release check](doc/PART10_RELEASE_CHECK.json). Its first container
 mounts a read-only test launcher with fake AI; the replacement runs the unchanged
 production command without that mount. All test resources are removed afterward.
 
@@ -227,6 +249,13 @@ make workflow-live
 Results are in [the live workflow report](doc/PART9_AI_WORKFLOW.json). Additional
 provider-only diagnostics remain available as `make ai-smoke` and `make ai-evaluate`.
 They require the backend key and incur inference charges; ordinary tests do not.
+
+Run the separate paid synthetic chat quality check with `make chat-live`. It uses
+four bounded calls through the existing model client and writes
+[PART10_AI_EVALUATION.json](doc/PART10_AI_EVALUATION.json). It does not load personal
+sources or change saved data. Chat keeps the existing 20,000 input/2,000 output
+token caps and 60-second timeout. Oversized context is rejected without truncation;
+manual editing remains available.
 
 ## Deployment
 

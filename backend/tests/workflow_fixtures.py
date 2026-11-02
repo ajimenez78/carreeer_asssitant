@@ -3,7 +3,7 @@
 from career_assistant.ai import AIError, AIResult, Usage
 from career_assistant.documents import SourceProcessor
 from career_assistant.errors import AppError
-from career_assistant.workflow import ExtractedBackground
+from career_assistant.workflow import ChatProposal, ExtractedBackground
 
 PASSWORD = "synthetic-browser-password"
 BACKGROUND = "Historical Python experience. Education not provided."
@@ -22,7 +22,28 @@ class WorkflowAI:
             raise AIError(
                 "ai_unavailable", "The AI service is unavailable. Retry later."
             )
-        if response_type == ExtractedBackground:
+        if response_type == ChatProposal:
+            unrelated = "interview" in data["current_message"].lower()
+            value = {
+                "reply": "I can help define your role."
+                if unrelated
+                else "Review the proposed hybrid limit before saving.",
+                "in_scope": not unrelated,
+                "preferences": []
+                if unrelated
+                else [
+                    criterion(
+                        "onsite_limit",
+                        "work_arrangement",
+                        {"days": 1, "period": "week"},
+                        "mandatory",
+                        "If hybrid",
+                    )
+                ],
+                "questions": [],
+                "conflicts": [],
+            }
+        elif response_type == ExtractedBackground:
             value = {
                 "facts": [
                     {

@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from career_assistant.models import (
     BackgroundFact,
+    ChatTurn,
     Clarification,
     DocumentDeletion,
     JobDefinition,
@@ -157,6 +158,21 @@ class DefinitionRepository:
         definition.state = "ready" if assessment["sufficient"] else "draft"
         self.session.flush()
         return definition
+
+    def add_chat_turn(self, *, identity, message, language, response) -> ChatTurn:
+        definition = self.require_current()
+        row = ChatTurn(
+            id=identity,
+            definition_id=definition.id,
+            message=message,
+            language=language,
+            response=response,
+        )
+        self.session.add(row)
+        if response["in_scope"]:
+            self._invalidate_assessment(definition)
+        self.session.flush()
+        return row
 
     def _invalidate_assessment(self, definition: JobDefinition) -> None:
         definition.assessment = None
@@ -317,4 +333,7 @@ class DefinitionRepository:
         self._invalidate_assessment(self.require_current())
         self.session.execute(
             delete(Clarification).where(Clarification.definition_id == definition_id)
+        )
+        self.session.execute(
+            delete(ChatTurn).where(ChatTurn.definition_id == definition_id)
         )

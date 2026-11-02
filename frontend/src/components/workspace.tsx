@@ -5,13 +5,15 @@ import { locales } from "../lib/i18n/catalogs";
 
 import { useEffect, useRef, useState } from "react";
 import { ApiError } from "../lib/client";
-import type { ClarificationProposal, Definition, Language, Preference } from "../lib/contracts";
+import type { ChatHistory, ReviewProposal, Definition, Language, Preference } from "../lib/contracts";
 import { api, MOCK_MODE } from "../lib/runtime-client";
 import { useSession } from "./session-gate";
 import { newPreference, validateDefinition } from "../lib/preferences";
 import { Background, type Run } from "./background";
 import { PreferenceEditor } from "./preference-editor";
 import { QuestionCard } from "./question-card";
+import { Chat } from "./chat";
+import { AssistantDock } from "./assistant-dock";
 import { SummaryView } from "./summary-view";
 
 const steps = ["Describe", "Background", "Clarify", "Review & save", "Summary"];
@@ -22,10 +24,12 @@ export function Workspace() {
   const [definition, setDefinition] = useState<Definition | null>(null);
   const [description, setDescription] = useState("");
   const [preferences, setPreferences] = useState<Preference[]>([]);
+  const [chatOpen, setChatOpen] = useState(false);
   const [step, setStep] = useState(0);
   const [assistanceOverride, setAssistanceOverride] = useState<Language | null>(null);
   const language: Language = assistanceOverride ?? locales[locale].assistanceLanguage;
-  const [proposal, setProposal] = useState<ClarificationProposal | null>(null);
+  const [proposal, setProposal] = useState<ReviewProposal | null>(null);
+  const [conversation, setConversation] = useState<ChatHistory | null>(null);
   const [staleContext, setStaleContext] = useState<string | null>(null);
   const stale = proposal !== null && staleContext === proposal.proposal_context;
   const [busy, setBusy] = useState(true);
@@ -55,6 +59,7 @@ export function Workspace() {
       ? { ...d, clarification_paused: control.paused }
       : d;
     setDefinition(current); setDescription(current?.description ?? ""); setPreferences(current?.preferences ?? []); setProposal(null); setStaleContext(null);
+    setConversation(null);
     if (!d) setLocalStop(false);
   }
   async function load() {
@@ -87,7 +92,8 @@ export function Workspace() {
     catch (e) { if (operation.current === currentOperation) { ++feedback.current; setError(e instanceof Error ? e.message : "The request failed. Try again."); setMessage("Request failed. Your input has been preserved."); } return false; }
     finally { if (operation.current === currentOperation) setBusy(false); }
   };
-  const contextChanged = () => {
+  const contextChanged = (clearChat = false) => {
+    setConversation(c => c ? { ...c, context: "", turns: clearChat ? [] : c.turns } : c);
     setDefinition(d => d ? { ...d, assessment: null, state: "draft" } : d);
     if (proposal) setStaleContext(proposal.proposal_context);
   };
@@ -101,6 +107,7 @@ export function Workspace() {
     try {
       const result = await api.clarify(language, controller.signal);
       if (operation.current !== currentOperation || controller.signal.aborted) return;
+      setConversation(c => c ? { ...c, context: "" } : c);
       setProposal(result); setStaleContext(null); setPreferences(result.proposal.preferences);
       setDefinition(d => d ? { ...d, assessment: result.assessment, state: result.state, clarifications: [...d.clarifications, ...result.clarifications] } : d);
       if (feedback.current === currentFeedback) setMessage("Your saved definition has been assessed. Review its summary and any suggested criteria.");
@@ -126,6 +133,7 @@ export function Workspace() {
     setPausePending(true); setError(""); setMessage(stop ? "Saving your choice to stop clarification…" : "Resuming clarification…");
     try {
       const result = await api.controlClarification(stop);
+      setConversation(c => c ? { ...c, context: "" } : c);
       acknowledgedControl.current = { generation, definitionId, paused: result.clarification_paused };
       setDefinition(d => d?.id === definitionId ? { ...d, clarification_paused: result.clarification_paused } : d);
       if (proposal) setStaleContext(proposal.proposal_context);
@@ -147,6 +155,17 @@ export function Workspace() {
       try { open(await api.save(data), acknowledgedAtStart); } catch (e) { if (e instanceof ApiError && e.status === 409 && proposal) setStaleContext(proposal.proposal_context); throw e; }
     }, "Definition saved.");
   }
+  function startChat(d: Definition) {
+    setDefinition(d);
+    setDescription(current => current.trim() ? current : d.description);
+    setConversation(null);
+  }
+  function reviewChat(turn: ChatHistory["turns"][number]) {
+    if (unsaved) return;
+    setProposal(turn); setPreferences(turn.proposal.preferences); setStaleContext(null);
+    setStep(3); setChatOpen(false); setMessage("Review these suggestions before applying");
+    requestAnimationFrame(() => document.getElementById("review-title")?.focus());
+  }
   function discardProposal() { setPreferences(definition?.preferences ?? []); setProposal(null); setStaleContext(null); setMessage("Suggestions discarded. Saved criteria are restored."); }
   return <div className="workspace">
     <div className="workspace-heading"><div><p className="eyebrow">{t("Your next chapter")}</p><h1>{t("Clarify the role you’re looking for.")}</h1><p className="lead">{t("Explore the work you’re looking for and how it fits your life.")}</p></div><span className="workspace-tag">{t("Personal workspace")}</span></div>
@@ -164,23 +183,32 @@ export function Workspace() {
         <aside className="sidebar"><nav aria-label={t("Definition steps")}><ol>{steps.map((name, i) => <li key={name}><button type="button" aria-current={step === i ? "step" : undefined} onClick={() => setStep(i)}><span className="step-number">0{i + 1}</span>{t(name)}<span aria-hidden="true" className="step-arrow">↗</span></button></li>)}</ol></nav><div className="sidebar-note"><strong>{t("A direction, not a deadline.")}</strong><p>{t("You can leave things unknown and come back when your priorities change.")}</p></div><div className="save-summary"><span className="badge">{t(assessmentLabel)}</span>{paused && <span className="badge">{t("Clarification stopped")}</span>}<p>{unsaved ? t("Unsaved changes") : definition ? t("All definition changes saved") : t("No saved definition yet")}</p>{definition && <button type="button" className="text-button" onClick={() => { if (!unsaved || window.confirm(t("Discard unsaved definition edits and reopen the saved definition?"))) void run(load, "Saved definition reopened."); }}>{t("Reopen saved definition")}</button>}</div></aside>
         <div className="editor-content">
           <section hidden={step !== 0} aria-labelledby="describe-title"><p className="section-kicker">{t("01 / Your direction")}</p><h2 id="describe-title">{t("Start with what matters.")}</h2><p className="section-intro">{t("A rough idea is enough. Include the responsibilities you enjoy, compensation, where you want to work, and the balance you need.")}</p><label htmlFor="description">{t("The role you’re looking for")}<textarea id="description" rows={10} maxLength={20000} value={description} onChange={e => setDescription(e.target.value)} placeholder={t("I’m looking for a role where I can…")} aria-describedby="description-help" /></label><p id="description-help" className="hint">{t("English or Spanish is welcome.")} {description.length.toLocaleString(locale)}{t("/20,000 characters. Save your first draft before adding background or asking for suggestions.")}</p><div className="actions"><button className="primary" type="button" disabled={stale} onClick={() => void save()}>{proposal ? t("Save reviewed definition") : t("Save draft")}</button><button type="button" disabled={!definition} onClick={() => setStep(1)}>{t("Continue to background")} <span aria-hidden="true">→</span></button></div></section>
-          <section hidden={step !== 1} aria-label={t("Background")}>{definition ? <Background api={api} definition={definition} run={run} language={language} onCleanup={result => setCleanupPending(result.cleanup_pending)} onAdded={s => { setDefinition(d => d ? { ...d, sources: [...d.sources, s], clarifications: [] } : d); contextChanged(); }} onReviewed={s => { setDefinition(d => d ? { ...d, sources: d.sources.map(old => old.id === s.id ? s : old), clarifications: [] } : d); contextChanged(); }} onRemoved={id => { setDefinition(d => d ? { ...d, sources: d.sources.filter(s => s.id !== id), clarifications: [] } : d); contextChanged(); }} /> : <div className="empty"><h2>{t("Save a starting point first.")}</h2><p>{t("A description is all you need. Background sources are optional.")}</p><button onClick={() => setStep(0)}>{t("Go to description")}</button></div>}</section>
+          <section hidden={step !== 1} aria-label={t("Background")}>{definition ? <Background api={api} definition={definition} run={run} language={language} onCleanup={result => setCleanupPending(result.cleanup_pending)} onAdded={s => { setDefinition(d => d ? { ...d, sources: [...d.sources, s], clarifications: [] } : d); contextChanged(true); }} onReviewed={s => { setDefinition(d => d ? { ...d, sources: d.sources.map(old => old.id === s.id ? s : old), clarifications: [] } : d); contextChanged(true); }} onRemoved={id => { setDefinition(d => d ? { ...d, sources: d.sources.filter(s => s.id !== id), clarifications: [] } : d); contextChanged(true); }} /> : <div className="empty"><h2>{t("Save a starting point first.")}</h2><p>{t("A description is all you need. Background sources are optional.")}</p><button onClick={() => setStep(0)}>{t("Go to description")}</button></div>}</section>
           <section hidden={step !== 2} aria-labelledby="clarify-title"><p className="section-kicker">{t("03 / A little clarity")}</p><h2 id="clarify-title">{t("Make the unknowns useful.")}</h2><p className="section-intro">{t("Review focused questions and suggested criteria. Only accepted background is used; historical skills stay separate from desired work.")}</p>
             <div className="clarity-status"><strong>{t(assessmentLabel)}</strong><p>{definition?.assessment ? definition.assessment.explanation : t("Request an assessment to see whether your saved definition is clear enough and what would help clarify it.")}</p>{definition?.assessment && <p className="hint">{definition.assessment.sufficient ? t("Your saved role is sufficiently clear. You can review suggestions or refine it when your preferences change.") : t("Answer the useful questions, review suggested criteria, and save the changes you accept. Then request another assessment. You may skip questions or leave values unknown.")}</p>}<button type="button" className="text-button" onClick={() => setStep(4)}>{t("View role summary")}</button></div>
             <label className="language-control">{t("Assistance language")}<select value={language} onChange={e => setAssistanceOverride(e.target.value as Language)}><option value="English">{t("English")}</option><option value="Spanish">{t("Spanish")}</option></select></label><button className="primary" type="button" disabled={Boolean(assessmentBlocked)} onClick={() => void assess()}>{t("Request clarification & suggestions")}</button><p className="hint">{assessmentBlocked ? t(assessmentBlocked) : t("Up to three questions per round. Suggestions remain unapplied until you review and save them.")}</p>
             {proposal && <div className="proposal-callout"><strong>{t("Suggestions awaiting review")}</strong><p>{t("Questions save now; proposed criteria are still unsaved.")}</p><button type="button" onClick={() => setStep(3)}>{t("Review suggested criteria")}</button></div>}
             {definition?.clarifications.length ? definition.clarifications.map(q => <QuestionCard key={q.id} question={q} api={api} run={run} onSaved={updated => { setDefinition(d => d ? { ...d, clarifications: d.clarifications.map(old => old.id === updated.id ? updated : old) } : d); contextChanged(); }} />) : <p className="empty">{t("No clarification questions yet. You can also edit your criteria directly in Review & save.")}</p>}
           </section>
-          <section hidden={step !== 3} aria-labelledby="review-title"><p className="section-kicker">{t("04 / Review & save")}</p><h2 id="review-title">{t("Bring the role you’re looking for into focus.")}</h2><p className="section-intro">{t("Mandatory criteria are firm constraints. Preferred criteria are flexible; excluded criteria describe work you want to avoid. Blank or unknown values are valid.")}</p>
+          <section hidden={step !== 3} aria-labelledby="review-title"><p className="section-kicker">{t("04 / Review & save")}</p><h2 id="review-title" tabIndex={-1}>{t("Bring the role you’re looking for into focus.")}</h2><p className="section-intro">{t("Mandatory criteria are firm constraints. Preferred criteria are flexible; excluded criteria describe work you want to avoid. Blank or unknown values are valid.")}</p>
             {proposal && <div className="proposal-callout"><strong>{stale ? t("The suggestion context has changed") : t("Review these suggestions before applying")}</strong><p>{stale ? t("Your edited criteria are still here. Request fresh suggestions after discarding this set, or explicitly keep the current criteria as manual edits.") : t("Edit or remove any proposed criterion. Saving applies the complete reviewed definition.")}</p>{proposal.proposal.conflicts.map((conflict, i) => <p className="inline-error" key={i}>{conflict}</p>)}<div className="actions"><button type="button" onClick={discardProposal}>{t("Discard suggestions")}</button>{stale && <button type="button" onClick={() => { setProposal(null); setStaleContext(null); setMessage("Criteria kept as unsaved manual edits. Review them before saving."); }}>{t("Keep as manual edits")}</button>}</div></div>}
             <div className="criteria-list">{preferences.length === 0 && <p className="empty">{t("No criteria yet. Add one yourself, or request clarification to explore what matters.")}</p>}{preferences.map((p, i) => <PreferenceEditor key={i} index={i} preference={p} onChange={updated => setPreferences(current => current.map((old, n) => n === i ? updated : old))} onRemove={() => setPreferences(current => current.filter((_, n) => n !== i))} />)}</div>
             <button type="button" disabled={preferences.length >= 100} onClick={() => setPreferences(current => [...current, newPreference(current)])}>{t("+ Add criterion")}</button>
             <div className="save-panel"><p><strong>{t("System assessment:")}</strong> {t(assessmentLabel)}</p><p className="hint">{t("The system assesses your saved definition. Saving changes may require a fresh assessment; you can stop clarification without losing your work.")}</p><p className="unsaved-indicator">{unsaved ? t("Unsaved changes") : t("No unsaved definition changes")}</p><button className="primary" type="button" disabled={stale} onClick={() => void save()}>{proposal ? t("Apply reviewed suggestions & save") : t("Save definition")}</button></div>
-            {definition && <details className="delete-section"><summary>{t("Delete this definition")}</summary><p>{t("This removes the definition, sources, background facts, and clarification answers. Original files are queued for deletion. Backup copies expire within seven days.")}</p>{!confirmDelete ? <button type="button" className="danger" onClick={() => setConfirmDelete(true)}>{t("Delete definition and sources")}</button> : <div className="confirmation"><p>{t("Delete all current work? This cannot be undone.")}</p><div className="actions"><button type="button" className="danger" onClick={() => void run(async () => { const cleanup = await api.remove(); open(null); setCleanupPending(cleanup.cleanup_pending); setConfirmDelete(false); setStep(0); }, "Definition and its sources deleted.")}>{t("Confirm delete definition")}</button><button type="button" onClick={() => setConfirmDelete(false)}>{t("Cancel deletion")}</button></div></div>}</details>}
+            {definition && <details className="delete-section"><summary>{t("Delete this definition")}</summary><p>{t("This removes the definition, sources, background facts, clarification answers, and conversation. Original files are queued for deletion. Backup copies expire within seven days.")}</p>{!confirmDelete ? <button type="button" className="danger" onClick={() => setConfirmDelete(true)}>{t("Delete definition and sources")}</button> : <div className="confirmation"><p>{t("Delete all current work? This cannot be undone.")}</p><div className="actions"><button type="button" className="danger" onClick={() => void run(async () => { const cleanup = await api.remove(); open(null); setCleanupPending(cleanup.cleanup_pending); setConfirmDelete(false); setStep(0); }, "Definition and its sources deleted.")}>{t("Confirm delete definition")}</button><button type="button" onClick={() => setConfirmDelete(false)}>{t("Cancel deletion")}</button></div></div>}</details>}
           </section>
           <section hidden={step !== 4} aria-labelledby="summary-title"><SummaryView definition={definition} unsaved={unsaved} blockedReason={assessmentBlocked} onAssess={() => void assess()} /></section>
         </div>
       </div>
     </fieldset>
+    <AssistantDock open={chatOpen} onOpenChange={setChatOpen}>
+      <Chat api={api} definitionId={definition?.id ?? null} active={chatOpen} history={conversation} onHistory={setConversation} language={language} setLanguage={setAssistanceOverride} run={run}
+        disabled={busy || !loaded} error={error} unsaved={unsaved}
+        blockedReason={paused ? "Clarification is stopped. Resume when you want to continue." : pausePending ? "Wait for the clarification control to finish." : null}
+        onStart={startChat} onResponse={() => {
+          setDefinition(d => d ? { ...d, assessment: null, state: "draft" } : d);
+          if (proposal) setStaleContext(proposal.proposal_context);
+        }} onReview={reviewChat} />
+    </AssistantDock>
   </div>;
 }
