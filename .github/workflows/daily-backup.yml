@@ -19,6 +19,17 @@ jobs:
           persist-credentials: false
       - name: Build private operations image without credentials
         run: docker build -f backend/operations.Dockerfile -t career-operations .
+      - name: Allow this runner temporary database access
+        id: access
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_POSTGRES_ID: ${{ vars.RENDER_POSTGRES_ID }}
+        run: |
+          mkdir -p .cache
+          docker run --rm --user "$(id -u):$(id -g)" \
+            --mount "type=bind,source=$PWD/.cache,target=/maintenance" \
+            -e RENDER_API_KEY -e RENDER_POSTGRES_ID \
+            career-operations python -m career_assistant.render_access open /maintenance/backup-access.json
       - name: Back up SQL and originals to independent private storage
         env:
           DATABASE_DIRECT_URL: ${{ secrets.BACKUP_DATABASE_DIRECT_URL }}
@@ -40,3 +51,12 @@ jobs:
             -e CAREER_S3_SECRET_KEY -e CAREER_BACKUP_ENDPOINT \
             -e CAREER_BACKUP_BUCKET -e CAREER_BACKUP_ACCESS_KEY \
             -e CAREER_BACKUP_SECRET_KEY career-operations
+      - name: Remove temporary database access
+        if: always() && steps.access.outcome != 'skipped'
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" \
+            --mount "type=bind,source=$PWD/.cache,target=/maintenance" \
+            -e RENDER_API_KEY \
+            career-operations python -m career_assistant.render_access close /maintenance/backup-access.json

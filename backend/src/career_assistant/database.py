@@ -1,6 +1,7 @@
 """Connection and explicit migration helpers; importing this opens no connections."""
 
 import re
+import ssl
 from pathlib import Path
 
 import psycopg
@@ -36,7 +37,15 @@ def database_url(settings: Settings, *, direct: bool = False) -> URL:
         if "sslmode" not in url.query:
             url = url.update_query_dict({"sslmode": "require"})
     elif url.host and url.host.endswith("-postgres.render.com"):
-        url = url.update_query_dict({"sslmode": "verify-full", "sslrootcert": "system"})
+        root = url.query.get("sslrootcert", "system")
+        if root == "system":
+            # Binary Psycopg's libpq can have different OpenSSL trust paths.
+            root = ssl.get_default_verify_paths().cafile
+            if root is None and Path("/etc/ssl/certs/ca-certificates.crt").is_file():
+                root = "/etc/ssl/certs/ca-certificates.crt"
+        url = url.update_query_dict(
+            {"sslmode": "verify-full", "sslrootcert": root or "system"}
+        )
     return url.set(drivername="postgresql+psycopg")
 
 

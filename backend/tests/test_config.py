@@ -1,3 +1,5 @@
+from pathlib import Path
+
 from career_assistant.config import Settings
 from career_assistant.database import database_url
 from career_assistant.storage import S3DocumentStore, document_store
@@ -37,7 +39,7 @@ def test_render_and_s3_environment_wire_private_persistence(tmp_path):
     assert migration.host == "dpg-test-a.frankfurt-postgres.render.com"
     assert runtime.query["sslmode"] == "require"
     assert migration.query["sslmode"] == "verify-full"
-    assert migration.query["sslrootcert"] == "system"
+    assert Path(migration.query["sslrootcert"]).is_file()
     store = document_store(settings)
     assert isinstance(store, S3DocumentStore)
     assert store.bucket == "assets"

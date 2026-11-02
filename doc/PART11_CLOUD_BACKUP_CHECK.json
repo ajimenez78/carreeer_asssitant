@@ -1,0 +1,12 @@
+{
+  "event": "cloud_backup_restore_verified",
+  "backup_key": "career-backups/20261102T170639Z-55c110150f6e4d2cbe0b85e6d73807a0.zip",
+  "archive_bytes": 216255,
+  "original_files": 2,
+  "revision": "0005",
+  "all_database_rows_restored_identically": true,
+  "all_originals_restored_identically": true,
+  "owner_credentials_preserved": true,
+  "replacement_target": "disposable local PostgreSQL",
+  "live_workspace_changed": false
+}

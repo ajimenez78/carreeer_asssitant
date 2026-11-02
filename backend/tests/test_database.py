@@ -33,6 +33,16 @@ def test_local_url_escapes_password_without_changing_it():
     assert database_url(settings, direct=True) == database_url(settings)
 
 
+def test_render_external_connections_preserve_an_explicit_ca_bundle():
+    settings = Settings(
+        _env_file=None,
+        database_url="postgresql://owner:secret@dpg-test-a.frankfurt-postgres.render.com/db?sslmode=require&sslrootcert=/private/trusted-ca.pem",
+    )
+    url = database_url(settings)
+    assert url.query["sslmode"] == "verify-full"
+    assert url.query["sslrootcert"] == "/private/trusted-ca.pem"
+
+
 @pytest.mark.parametrize("host", ["remote.invalid", None])
 def test_database_creation_refuses_remote_or_implicit_connections(host):
     with pytest.raises(ValueError, match="restricted to local"):
