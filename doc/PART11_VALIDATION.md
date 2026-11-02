@@ -4,13 +4,17 @@ Status on 2026-11-02: authorized and prepared locally; cloud release pending.
 The user re-enabled Cloudflare backups on 2026-11-02, superseding the temporary
 deferral. The daily schedule and `BACKUPS_ENABLED` guard are restored. Private
 backup credentials, database access and a hosted backup/restore drill are again
-required; actual cloud scheduling remains unconfigured.
+required. The restored workflow is published on GitHub (`4719c55`), and its
+syntax/schema validation passes. `BACKUPS_ENABLED=false` is configured until real
+R2 credentials and a successful backup/restore check are available. No backup
+has run.
 The user subsequently replaced Neon with Render PostgreSQL. The abandoned CLI
 setup is historical in [NEON_SETUP.md](NEON_SETUP.md); no Neon sign-in is needed.
 The user replaced Railway with Render and selected free external backup scheduling
 and private storage. The Free PostgreSQL 18 database is now provisioned in Frankfurt
 (resource `dpg-dbkbsfc9v7es73cafmag-a`). It was created on 2 November 2026 at
-17:45 Madrid time and expires on 2 December 2026 at 17:45 Madrid time. No paid
+17:45 Madrid time and expires on 2 December 2026 at 17:45 Madrid time. Its latest
+provider status is `available`. No paid
 plan or web service has been provisioned; no cloud backup has run. Details are in
 [PART11_RENDER_PREVIEW.json](PART11_RENDER_PREVIEW.json).
 
