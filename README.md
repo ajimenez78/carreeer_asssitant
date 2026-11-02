@@ -8,7 +8,7 @@ The system assesses clarity and provides a natural-language summary; clarificati
 can be stopped at any time and resumed explicitly. Chat refines the same definition
 through proposals that you review and save.
 
-Parts 1–10 work locally. Railway/Neon deployment, scheduled
+Parts 1–10 work locally. Render/PostgreSQL deployment, scheduled
 backups and restoration remain Part 11. See [the plan](doc/PLAN.md),
 [requirements](doc/MVP_SPEC.md), and [Part 9 validation](doc/PART9_VALIDATION.md).
 The subsequent clarity/summary extension is tracked in
@@ -231,11 +231,11 @@ Validate the combined image, packaged migrations, browser workflow and applicati
 replacement with external persistence:
 
 ```bash
-make release-check
+CAREER_RELEASE_CPUS=0.1 make release-check
 ```
 
-This builds `career-assistant:part10`, uses a disposable database and Docker volume,
-and records [the release check](doc/PART10_RELEASE_CHECK.json). Its first container
+This builds `career-assistant:part11`, uses a disposable database and Docker volume,
+and records [the release check](doc/PART11_LOCAL_RELEASE_CHECK.json). Its first container
 mounts a read-only test launcher with fake AI; the replacement runs the unchanged
 production command without that mount. All test resources are removed afterward.
 
@@ -259,8 +259,43 @@ manual editing remains available.
 
 ## Deployment
 
-No cloud resources have been provisioned. [The Part 11 deployment procedure](doc/DEPLOYMENT.md)
-records configuration, separate migrations, authentication, smoke checks and
-rollback. Railway/Neon account availability, ongoing free allowances, private
-object storage, independent backups and restoration must be verified in Part 11.
-Any paid hosting upgrade requires your explicit choice.
+Use **Render for the app and PostgreSQL**, with private Cloudflare R2 Standard
+storage for uploaded documents and a separate private R2 bucket for daily backups
+retained seven days. You re-enabled backups on 2026-11-02.
+Neon is no longer used. The root commands `npm run build` and `npm start` build
+and start the combined frontend/API locally. Settings load `.env`, then `.env.local`.
+
+`render.yaml` declares a Free web service and Free PostgreSQL 18 database in
+Frankfurt. **The Free database expires after 30 days.** This configuration is a
+preview, not an ongoing free hosting solution. You explicitly selected this free
+30-day preview on 2026-11-02. No paid upgrade is authorized.
+[Render database limits](https://render.com/docs/free).
+
+The blueprint supplies the internal database URL automatically. Runtime database
+traffic requires TLS on Render's private network; external operations use the
+full public hostname with certificate verification. Uploaded files use the
+backend-only `CAREER_S3_*` settings for the private R2 bucket.
+
+Migrations and owner setup run separately before deployment:
+
+```bash
+make operations-image
+# Use a private ignored operations file with the external Render database URL.
+docker run --rm --env-file .env.operations.local career-assistant-operations:part11 python -m career_assistant.operations release
+docker run -it --rm --env-file .env.operations.local career-assistant-operations:part11 python -m career_assistant.db_cli owner
+```
+
+For a schema upgrade, create a verified backup first and pass its key to
+`release --backup-key`. Render startup validates security, migration head and
+owner configuration. It does not migrate the database.
+
+The [deployment runbook](doc/DEPLOYMENT.md) explains private storage, network access,
+release/recovery commands and quotas. [Part 11 status](doc/PART11_VALIDATION.md)
+separates local evidence from hosted acceptance. The free Render database has been
+created in Frankfurt and expires on **2 December 2026 at 17:45 Madrid time**;
+see [resource details](doc/PART11_RENDER_PREVIEW.json). The web app is not deployed.
+Render/GitHub authentication works. R2 endpoints and access keys in the private
+operations file are still placeholders and must be replaced.
+The daily backup schedule is restored, with `BACKUPS_ENABLED=true` required before
+jobs execute. Configure credentials and database access and verify a manual run
+before enabling scheduled jobs; no cloud backup is running yet.

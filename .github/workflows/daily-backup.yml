@@ -1,0 +1,42 @@
+name: Daily private backup
+on:
+  schedule:
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: career-assistant-maintenance
+  cancel-in-progress: false
+jobs:
+  backup:
+    if: vars.BACKUPS_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Build private operations image without credentials
+        run: docker build -f backend/operations.Dockerfile -t career-operations .
+      - name: Back up SQL and originals to independent private storage
+        env:
+          DATABASE_DIRECT_URL: ${{ secrets.BACKUP_DATABASE_DIRECT_URL }}
+          CAREER_DOCUMENT_BACKEND: s3
+          CAREER_S3_ENDPOINT: ${{ secrets.DOCUMENT_STORAGE_ENDPOINT }}
+          CAREER_S3_REGION: auto
+          CAREER_S3_BUCKET: ${{ secrets.DOCUMENT_STORAGE_BUCKET }}
+          CAREER_S3_ACCESS_KEY: ${{ secrets.DOCUMENT_BACKUP_ACCESS_KEY }}
+          CAREER_S3_SECRET_KEY: ${{ secrets.DOCUMENT_BACKUP_SECRET_KEY }}
+          CAREER_BACKUP_ENDPOINT: ${{ secrets.BACKUP_ENDPOINT }}
+          CAREER_BACKUP_BUCKET: ${{ secrets.BACKUP_BUCKET }}
+          CAREER_BACKUP_ACCESS_KEY: ${{ secrets.BACKUP_ACCESS_KEY }}
+          CAREER_BACKUP_SECRET_KEY: ${{ secrets.BACKUP_SECRET_KEY }}
+        run: |
+          docker run --rm --memory=512m --cpus=1 \
+            -e DATABASE_DIRECT_URL -e CAREER_DOCUMENT_BACKEND \
+            -e CAREER_S3_ENDPOINT -e CAREER_S3_REGION \
+            -e CAREER_S3_BUCKET -e CAREER_S3_ACCESS_KEY \
+            -e CAREER_S3_SECRET_KEY -e CAREER_BACKUP_ENDPOINT \
+            -e CAREER_BACKUP_BUCKET -e CAREER_BACKUP_ACCESS_KEY \
+            -e CAREER_BACKUP_SECRET_KEY career-operations

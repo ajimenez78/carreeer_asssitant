@@ -53,15 +53,15 @@ is already implemented.
 
 `DocumentStore` exposes put/get/delete by an opaque UUID. User filenames never
 become paths. Local originals live in `.data/documents/` in a private directory;
-Neon originals use `documents/<UUID>` in a preconfigured private bucket. Raw
+Private R2 originals use `documents/<UUID>` in a preconfigured private bucket. Raw
 extracted text, corrected facts, provenance, and preferences live in PostgreSQL.
 Neither originals nor personal text belong in the image or logs.
 
-The Neon adapter uses its HTTPS S3 endpoint, explicit Neon-issued credentials,
+The S3 adapter uses its HTTPS endpoint and explicit bucket-scoped R2 credentials,
 SigV4, path-style addressing, and bounded timeouts. It neither provisions a
 bucket nor uses an AWS account. Tests use a stubbed S3 client. Real account,
 endpoint, bucket privacy, and provider behavior are verified in Part 11.
-See [Neon S3 compatibility](https://neon.com/docs/storage/s3-compatibility).
+See [R2 S3 compatibility](https://developers.cloudflare.com/r2/api/s3/api/).
 
 Database and object storage do not share a transaction. Deletion therefore
 removes live context and records a cleanup entry atomically; a separate cleanup
@@ -69,8 +69,7 @@ operation removes private bytes and acknowledges the entry. Missing objects
 count as success; failures leave the queue available for retry. Never run cleanup
 before the metadata transaction commits. Part 7 must report pending cleanup
 accurately and trigger retries; Part 11 adds scheduled operational retries.
-Neon describes deletion as a branch-local soft delete, so physical provider
-retention/other branches must also be checked during deployment.
+Provider lifecycle and retained backup copies must also be checked during deployment.
 
 Upload coordination in Part 7 must avoid orphan objects: reserve the source/key
 in a committed transaction, write the object, then update extraction state;
@@ -79,8 +78,8 @@ successful upload before both metadata and bytes are durable.
 
 ## Initialization, migration, and recovery contract
 
-Keep PostgreSQL 18 for local/Neon parity; Neon currently supports this major
-([version policy](https://neon.com/docs/postgresql/postgres-version-support)).
+Keep PostgreSQL 18 for local/Render parity; Render supports this major
+([Render Postgres](https://render.com/docs/postgresql-creating-connecting)).
 Local initialization creates a missing database through the local `postgres`
 maintenance database and applies Alembic to head. Repeating it preserves data.
 Hosted migrations use an already provisioned database and the direct TLS URL;
@@ -94,21 +93,24 @@ unassessed draft; accepted preferences, sources, answers, and credentials remain
 The next explicit assessment determines readiness. Validation for this extension
 is recorded separately in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md).
 
-The Part 11 backup format will pair a custom-format `pg_dump` with a UTF-8 JSON
+The Part 11 backup implementation pairs a custom-format `pg_dump` with a UTF-8 JSON
 manifest and originals under `documents/<UUID>`. The manifest records format
-version, UTC capture time, Alembic revision, database-dump SHA-256, and each live
-source ID, object UUID, relative path, size, and SHA-256. Obtain a consistent
-database snapshot and source manifest while writes/cleanup are paused; copy and
-verify every referenced original before marking the backup successful. Include
-the deletion queue in the dump; never resurrect deleted sources from loose files.
+version, UTC capture time, database identity hash, Alembic revision, database-dump
+SHA-256, and each confirmed original's object UUID, relative path, size, and SHA-256.
+Source IDs and provenance remain in the SQL dump. A consistent PostgreSQL snapshot
+and coordinated row locks keep writes/cleanup from changing the captured context;
+every referenced original is copied and verified before publication. The deletion
+queue stays in the dump; loose files do not resurrect deleted sources.
 
 Restore into a disposable empty database/private directory: verify hashes and
-manifest paths, restore the dump, restore referenced originals, check foreign
+manifest paths, copy originals, restore the dump transactionally, check foreign
 keys and reviewed context, then drain pending deletions. Validate before swapping
-runtime configuration. Retain seven successful daily copies; prune older copies
+runtime configuration. Retain successful daily copies for seven days; prune older copies
 only after a successful backup. Source deletions are immediate in live context;
-backup copies expire under this policy. Backup jobs and actual restore exercises
-remain Part 11, rather than being claimed by these persistence tests.
+backup copies expire under this policy. Local backup/restore tests now pass;
+hosted scheduling and the real Neon/R2 restoration drill remain pending. Evidence
+and setup are in [PART11_VALIDATION.md](PART11_VALIDATION.md) and
+[DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Later phases
 
@@ -131,7 +133,7 @@ The backup manifest must include confirmed originals (`original_stored=true`);
 unconfirmed/failed source metadata stays in the database dump without promising
 missing original bytes. Restore preserves those recoverable source states.
 The consistent write/cleanup pause and seven-day retention contract still apply;
-actual backup/restore implementation remains Part 11.
+the implementation and its local restoration evidence are recorded in Part 11.
 
 ## Part 10 additions
 

@@ -1,0 +1,57 @@
+# One combined frontend/API web service with managed Render PostgreSQL.
+# The Free database expires after 30 days: preview only, not ongoing free hosting.
+# User selected the Free 30-day preview on 2026-11-02. No paid upgrade is authorized.
+# Free has no pre-deploy command: migrate and initialize the owner separately.
+services:
+  - type: web
+    name: career-assistant
+    runtime: docker
+    plan: free
+    region: frankfurt
+    numInstances: 1
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    dockerCommand: python -m career_assistant.operations serve
+    autoDeployTrigger: 'off'
+    healthCheckPath: /api/health
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: career-assistant-db
+          property: connectionString
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: CAREER_SESSION_SECRET
+        generateValue: true
+      - key: CAREER_SESSION_SECURE
+        value: 'true'
+      - key: CAREER_DOCUMENT_BACKEND
+        value: s3
+      - key: CAREER_S3_ENDPOINT
+        sync: false
+      - key: CAREER_S3_REGION
+        value: auto
+      - key: CAREER_S3_BUCKET
+        sync: false
+      - key: CAREER_S3_ACCESS_KEY
+        sync: false
+      - key: CAREER_S3_SECRET_KEY
+        sync: false
+      - key: CAREER_AI_MODEL
+        value: gpt-6-luna
+      - key: CAREER_AI_REASONING_EFFORT
+        value: low
+      - key: CAREER_AI_TIMEOUT_SECONDS
+        value: '60'
+      - key: CAREER_AI_MAX_INPUT_TOKENS
+        value: '20000'
+      - key: CAREER_AI_MAX_OUTPUT_TOKENS
+        value: '2000'
+databases:
+  - name: career-assistant-db
+    plan: free
+    region: frankfurt
+    postgresMajorVersion: '18'
+    databaseName: career
+    user: career
+    ipAllowList: [] # Private-network access only until operations access is configured.

@@ -9,7 +9,7 @@ from botocore.stub import Stubber
 from career_assistant.config import Settings
 from career_assistant.storage import (
     LocalDocumentStore,
-    NeonDocumentStore,
+    S3DocumentStore,
     document_store,
 )
 
@@ -30,21 +30,21 @@ def test_local_originals_are_private_and_deletion_is_idempotent(tmp_path):
         store.get(key)
 
 
-def neon_settings(**overrides):
+def s3_settings(**overrides):
     values = dict(
-        document_backend="neon",
-        neon_storage_endpoint="https://storage.example.invalid",
-        neon_storage_bucket="private-documents",
-        neon_storage_access_key="synthetic-key",
-        neon_storage_secret_key="synthetic-secret",
+        document_backend="s3",
+        s3_endpoint="https://storage.example.invalid",
+        s3_bucket="private-documents",
+        s3_access_key="synthetic-key",
+        s3_secret_key="synthetic-secret",
     )
     values.update(overrides)
     return Settings(_env_file=None, **values)
 
 
-def test_neon_client_uses_only_supported_private_object_operations():
-    store = document_store(neon_settings())
-    assert isinstance(store, NeonDocumentStore)
+def test_s3_client_uses_only_supported_private_object_operations():
+    store = document_store(s3_settings())
+    assert isinstance(store, S3DocumentStore)
     assert store.client.meta.config.s3["addressing_style"] == "path"
     assert store.client.meta.config.signature_version == "s3v4"
     assert store.client.meta.endpoint_url == "https://storage.example.invalid"
@@ -69,8 +69,8 @@ def test_neon_client_uses_only_supported_private_object_operations():
         stub.assert_no_pending_responses()
 
 
-def test_neon_missing_objects_and_provider_failure():
-    store = document_store(neon_settings())
+def test_s3_missing_objects_and_provider_failure():
+    store = document_store(s3_settings())
     key = uuid4()
     params = {"Bucket": "private-documents", "Key": f"documents/{key}"}
     with Stubber(store.client) as stub:
@@ -85,11 +85,11 @@ def test_neon_missing_objects_and_provider_failure():
 @pytest.mark.parametrize(
     "overrides",
     [
-        {"neon_storage_access_key": None},
-        {"neon_storage_endpoint": "http://storage.example.invalid"},
-        {"neon_storage_endpoint": "https://user:password@storage.example.invalid"},
+        {"s3_access_key": None},
+        {"s3_endpoint": "http://storage.example.invalid"},
+        {"s3_endpoint": "https://user:password@storage.example.invalid"},
     ],
 )
-def test_incomplete_or_insecure_neon_configuration_is_rejected(overrides):
+def test_incomplete_or_insecure_s3_configuration_is_rejected(overrides):
     with pytest.raises(ValueError):
-        document_store(neon_settings(**overrides))
+        document_store(s3_settings(**overrides))

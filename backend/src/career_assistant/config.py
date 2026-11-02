@@ -1,13 +1,16 @@
 from pathlib import Path
 from typing import Literal
 
-from pydantic import Field, SecretStr
+from pydantic import AliasChoices, Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
-        env_prefix="CAREER_", env_file=".env", extra="ignore", populate_by_name=True
+        env_prefix="CAREER_",
+        env_file=(".env", ".env.local"),
+        extra="ignore",
+        populate_by_name=True,
     )
 
     app_name: str = "Career assistant"
@@ -24,17 +27,36 @@ class Settings(BaseSettings):
         default=None, validation_alias="DATABASE_URL"
     )
     database_direct_url: SecretStr | None = Field(
-        default=None, validation_alias="DATABASE_DIRECT_URL"
+        default=None,
+        validation_alias=AliasChoices("DATABASE_DIRECT_URL", "DATABASE_URL_UNPOOLED"),
     )
     postgres_password: SecretStr = SecretStr("local-development-only")
     postgres_host: str = "127.0.0.1"
-    document_backend: Literal["local", "neon"] = "local"
+    document_backend: Literal["local", "s3"] = "local"
     document_directory: Path = Path(".data/documents")
-    neon_storage_endpoint: str | None = None
-    neon_storage_region: str = "eu-central-1"
-    neon_storage_bucket: str | None = None
-    neon_storage_access_key: SecretStr | None = None
-    neon_storage_secret_key: SecretStr | None = None
+    s3_endpoint: str | None = Field(
+        default=None,
+        validation_alias=AliasChoices("CAREER_S3_ENDPOINT", "AWS_ENDPOINT_URL_S3"),
+    )
+    s3_region: str = Field(
+        default="auto",
+        validation_alias=AliasChoices("CAREER_S3_REGION", "AWS_REGION"),
+    )
+    s3_bucket: str | None = None
+    s3_access_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("CAREER_S3_ACCESS_KEY", "AWS_ACCESS_KEY_ID"),
+    )
+    s3_secret_key: SecretStr | None = Field(
+        default=None,
+        validation_alias=AliasChoices("CAREER_S3_SECRET_KEY", "AWS_SECRET_ACCESS_KEY"),
+    )
+    backup_endpoint: str | None = None
+    backup_region: str = "auto"
+    backup_bucket: str | None = None
+    backup_access_key: SecretStr | None = None
+    backup_secret_key: SecretStr | None = None
+    backup_prefix: str = "career-backups/"
     openai_api_key: SecretStr | None = Field(
         default=None, validation_alias="OPENAI_API_KEY"
     )

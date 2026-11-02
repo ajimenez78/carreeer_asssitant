@@ -735,7 +735,7 @@ def test_invalid_storage_configuration_retains_recoverable_source(api):
     client, ai, store, app = api
     save(client)
     app.state.store = None
-    app.state.settings.document_backend = "neon"
+    app.state.settings.document_backend = "s3"
     response = client.post(ROOT + "/sources", files={"file": ("a.md", b"Synthetic")})
     assert response.status_code == 503
     sid = response.json()["error"]["fields"]["source_id"]

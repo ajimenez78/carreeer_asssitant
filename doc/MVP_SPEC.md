@@ -2,10 +2,13 @@
 
 Status: Part 2 baseline approved on 2026-11-01, with English/Spanish UI and system-assessed clarity/summary requirements added on 2026-11-02. Parts 1–9 work locally; validation of the new clarity/summary extension is tracked separately in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md). Part 10 chat is validated in [PART10_VALIDATION.md](PART10_VALIDATION.md); cloud provisioning remains Part 11.
 
+The user replaced Railway with Render on 2026-11-02 and chose free external backup scheduling/storage. The user subsequently selected Render PostgreSQL instead of Neon. Use private R2 for originals and separate backups. The user explicitly selected the Free 30-day PostgreSQL preview on 2026-11-02, accepting its expiration. Current requirements supersede the historical Railway/Neon choices. Part 11 preparation and access requirements are in [PART11_VALIDATION.md](PART11_VALIDATION.md).
+
 ## Confirmed baseline
 
+- The user re-enabled Cloudflare backups on 2026-11-02, superseding the temporary deferral. The preview again requires daily SQL/original backups with seven-day retention, a separate private backup bucket, and verified restoration. Provisioning and schedule activation await credentials and database access.
 - Deliver the job-definition MVP first, including later refinement through chat. Keep job discovery and the other career workflows for later phases.
-- Use Next.js, Python/FastAPI, Railway hosting, Neon PostgreSQL/document storage, and the direct OpenAI API. Test the complete application locally before the Part 11 deployment.
+- Use Next.js, Python/FastAPI, Render hosting/PostgreSQL and private R2 document storage, and the direct OpenAI API. Test the complete application locally before the Part 11 deployment.
 - Support incomplete descriptions, optional background documents and links, clarification, compensation/work–life preferences, saving, and later refinement.
 - Initially serve one private user. Public registration and multiple-user product flows are outside this initial scope.
 - Keep planning and source examples in `doc/`. The execution checklist is [PLAN.md](PLAN.md).
@@ -14,7 +17,7 @@ Status: Part 2 baseline approved on 2026-11-01, with English/Spanish UI and syst
 
 | Area | Agreed behavior |
 | --- | --- |
-| Access | One configured owner login over HTTPS on Railway; no public registration. Use a maintained authentication/session library and protect API and source-file access. Local development defaults to localhost. |
+| Access | One configured owner login over HTTPS on Render; no public registration. Use a maintained authentication/session library and protect API and source-file access. Local development defaults to localhost. |
 | Definitions | One current definition, updated in place. Incomplete drafts can be saved; no revision-history UI. Use a stable identifier so later phases can reference it. |
 | Completion | A nonempty initial description is enough to save. The system assesses sufficient clarity from saved context and explains remaining gaps. Optional unknowns and skipped questions do not themselves prevent readiness. The user may stop and revisit clarification at any time; stopping does not mark the definition ready. This replaces owner-selected readiness at the user's request on 2026-11-02. |
 | Clarification | Ask at most three focused questions per explicit round when further clarification is useful. Allow skip and “not sure.” Explain conflicts and ask before replacing accepted information. Persist a separate stop/resume choice, with a stop control available during a request. |
@@ -72,21 +75,21 @@ Nonfunctional targets and implementation limits:
 
 ## Selected architecture
 
-The user selected Railway + Neon + OpenAI on 2026-11-01. FastAPI, SQLAlchemy/Psycopg, Alembic, and the initial API below are the technical baseline for the approved flow. Earlier AWS/Lightsail/Lambda and Bedrock proposals are superseded; AWS credentials are no longer an MVP prerequisite.
+The current selection is Render + PostgreSQL + private R2 + OpenAI, updated on 2026-11-02. The earlier Railway selection is superseded. FastAPI, SQLAlchemy/Psycopg, Alembic, and the initial API below are the technical baseline for the approved flow. Earlier AWS/Lightsail/Lambda and Bedrock proposals are superseded; AWS credentials are no longer an MVP prerequisite.
 
 | Component | Decision and rationale |
 | --- | --- |
 | Frontend | Next.js with TypeScript and static export. Keep `frontend/` separate for development; compile it in a Node.js Docker build stage and copy the generated assets into the Python runtime image. FastAPI serves them alongside `/api` on one production origin. Use a fixed editor route and avoid features requiring a runtime Next.js server. [Next.js static export](https://nextjs.org/docs/app/guides/static-exports). |
-| API | FastAPI with Pydantic validation and generated OpenAPI schemas. Keep handlers, job-definition logic, and provider/storage adapters in one small backend. [Railway FastAPI deployment](https://railway.com/guides/fastapi), [FastAPI](https://fastapi.tiangolo.com/). |
-| Database | PostgreSQL with SQLAlchemy, Psycopg, and Alembic migrations. Use local PostgreSQL via Docker Compose and managed Neon PostgreSQL in deployment. Select a current stable PostgreSQL major supported by Neon when implementing persistence. |
-| Connections | Configure backend-only `DATABASE_URL` with TLS for Neon runtime access and a separate direct connection for migrations/backups where required. Keep connection counts bounded for this one-user application. [Neon connections](https://neon.com/docs/connect/connection-pooling). |
-| Documents | Local private file storage for development and private Neon Object Storage for deployment, behind one small storage adapter. Keep metadata/extracted facts in PostgreSQL. Production filesystem contents are disposable; uploads must survive deployments. [Neon Object Storage](https://neon.com/docs/storage/overview). |
+| API | FastAPI with Pydantic validation and generated OpenAPI schemas. Keep handlers, job-definition logic, and provider/storage adapters in one small backend. [FastAPI](https://fastapi.tiangolo.com/). |
+| Database | PostgreSQL with SQLAlchemy, Psycopg, and Alembic migrations. Use local PostgreSQL via Docker Compose and managed Render PostgreSQL in deployment. Select a current stable PostgreSQL major supported by Render when implementing persistence. |
+| Connections | Configure backend-only `DATABASE_URL` with TLS for Render runtime access and a separate direct connection for migrations/backups where required. Keep connection counts bounded for this one-user application. [Render connections](https://render.com/docs/postgresql-creating-connecting). |
+| Documents | Local private file storage for development and private R2 object storage for deployment, behind one small storage adapter. Keep metadata/extracted facts in PostgreSQL. Production filesystem contents are disposable; uploads must survive deployments. [R2 S3 compatibility](https://developers.cloudflare.com/r2/api/s3/api/). |
 | Owner access | One configured owner, no public registration. Use a password hash and a maintained session mechanism; validate access on every private API/file operation. Keep session secrets backend-only, secure cookies in production, and origin/CSRF protection on cookie-authenticated writes. |
 | AI | Official OpenAI Python SDK and Responses API, authenticated with backend-only `OPENAI_API_KEY`. Use the standard `https://api.openai.com/v1` endpoint and a fake client for routine tests. [Official Python SDK](https://developers.openai.com/api/reference/python). |
 | Local workflow | Run PostgreSQL via Docker Compose, Python locally or in the backend container, and Next.js development tooling. Test the production image/static export locally before cloud deployment. Use isolated local databases and file directories for tests. |
-| Railway deployment | Start with Free and one web service using the combined application image. Run one Python/Uvicorn process; Node.js is a build dependency, not a second production server. Use a version-controlled multi-stage Docker build, health route, and documented release commands; bind the server to the platform-provided port. Target 0.5 GB RAM and 1 vCPU per service. Enable sleeping/serverless mode, measure wake-up behavior, and choose an available EU region close to Neon. |
-| Neon deployment | Start with Free while measured storage/compute/transfer fit the plan. Prefer Frankfurt because Neon Object Storage is supported there. Verify account availability and limits before provisioning; credentials are not needed for the local scaffold. |
-| Backups | A daily Railway cron job exports PostgreSQL and copies source documents into a separate private Railway storage bucket, retaining seven daily copies. This separates backups from the Neon project and supports the approved seven-day policy. Test restoration of both database and files. |
+| Render deployment | One Free web service using the combined image, Python/Uvicorn only at runtime, `backend/Dockerfile` with repository-root context and `render.yaml`. Free supplies 512 MB / 0.1 CPU and sleeps after 15 idle minutes. Use Frankfurt for both web and database. Free has no pre-deploy commands: migrate/configure the owner separately and fail startup if schema/security prerequisites are missing. Disable automatic deploys until release sequencing is verified. |
+| Render database | PostgreSQL 18 in Frankfurt. Free is a 30-day preview with 1 GB storage and no managed backups; it is not an ongoing free option. The user selected this Free 30-day preview on 2026-11-02; record expiration once provisioned. Paid database upgrades require user approval. |
+| Backups | GitHub Actions exports SQL and original documents daily into an independent private Cloudflare R2 Standard bucket. Retain seven days, verify checksums/readback, and prove restoration into disposable replacement resources. No private backup artifacts in the public application repository. The user selected a free external scheduler/storage option on 2026-11-02. |
 
 Use the latest stable compatible library versions and lockfiles when each part is implemented. No scaffolding, dependency installation, or cloud provisioning is included in Part 2.
 
@@ -96,44 +99,57 @@ The user explicitly selected the combined application option on 2026-11-01: sepa
 
 - Build the frontend with its Node.js toolchain and lockfile; copy only the static export into the final image containing locked Python runtime dependencies and the backend. Include neither development servers nor a runtime Node.js server.
 - Extend the existing backend Dockerfile to use the repository-root build context during Part 9. Exclude `.env`, credentials, personal/example documents, Git data, caches, and test artifacts from the build context and final image.
-- Keep production PostgreSQL in Neon and original uploads in private Neon Object Storage. Locally, PostgreSQL remains a separate Compose service with a named volume. Replacing the application image must not replace or delete persistent data.
+- Keep production PostgreSQL in Render Postgres and original uploads in private R2 object storage. Locally, PostgreSQL remains a separate Compose service with a named volume. Replacing the application image must not replace or delete persistent data.
 - Supply database, storage, session, and OpenAI configuration at runtime. Run Alembic migrations once in a pre-deployment/release step, using the direct database connection where needed; do not run migrations independently in every web-server startup.
 - Test the combined production image locally before release. Identify releases by Git revision and record the deployed image digest. Verify health and the real browser workflow after deployment.
 - Keep application rollback and database recovery distinct. Prefer backward-compatible schema changes; rolling back an image does not undo a migration. Retain the approved daily database/document backups for seven days.
 
-Current implementation: Parts 1–10 are complete locally, including the private backend, bilingual frontend, real HTTP/session/CORS integration, and the combined Next.js-static-export/Python image. Explicit mock mode remains isolated to development/tests. Local deterministic/live browser flows and image replacement are recorded in [PART9_VALIDATION.md](PART9_VALIDATION.md), [PART9_AI_WORKFLOW.json](PART9_AI_WORKFLOW.json), and [PART9_RELEASE_CHECK.json](PART9_RELEASE_CHECK.json). The release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Persistent bilingual refinement chat uses the same proposal review/save flow; see [PART10_VALIDATION.md](PART10_VALIDATION.md). Hosted deployment and backup restoration remain Part 11.
+Current implementation: Parts 1–10 are complete locally, including the private backend, bilingual frontend, real HTTP/session/CORS integration, and the combined Next.js-static-export/Python image. Explicit mock mode remains isolated to development/tests. Local deterministic/live browser flows and image replacement are recorded in [PART9_VALIDATION.md](PART9_VALIDATION.md), [PART9_AI_WORKFLOW.json](PART9_AI_WORKFLOW.json), and [PART9_RELEASE_CHECK.json](PART9_RELEASE_CHECK.json). The release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Persistent bilingual refinement chat uses the same proposal review/save flow; see [PART10_VALIDATION.md](PART10_VALIDATION.md). Hosted deployment remains Part 11; local recovery tooling is validated separately in [PART11_VALIDATION.md](PART11_VALIDATION.md).
 
 ### Persistence and recovery details
 
-- Neon Free currently includes 1 GB PostgreSQL storage, 100 CU-hours/project/month, and 5 GB object storage. These are quotas, not a guarantee that every future workload is free. Monitor compute, data transfer, and stored backups. [Neon pricing](https://neon.com/pricing).
+- Render Free Postgres has 1 GB storage and expires after 30 days. After expiry it is inaccessible; Render deletes it after a further 14-day upgrade grace period. Paid compute starts at $6/month plus storage. The user explicitly accepted the 30-day Free preview rather than selecting a paid database. [Render limits](https://render.com/docs/free), [Render pricing](https://render.com/pricing).
 - Do not equate the free database's instant-restore allowance with seven-day backups. The scheduled logical export and document-copy job explicitly implements that requirement. Storage credentials stay private and the backup job prunes copies older than seven days after a successful backup.
 - Include a consistent source manifest with each database/document backup and verify restoration against disposable test data. Source deletion takes effect in the live application immediately; backup copies expire under the seven-day policy.
-- Railway supports scheduled services and private object-storage buckets. Budget their usage along with the web service; the cron job exits after exporting and does not run as another always-on server. [Railway cron jobs](https://docs.railway.com/cron-jobs), [bucket billing](https://docs.railway.com/storage-buckets/billing).
-- Keep local operation independent of Railway/Neon accounts. Validate adapters locally; exercise the real hosted database, storage, and backup path in Part 11.
-- Include backup-job and bucket usage in the Railway Free budget, and verify those features are available to the actual account before deployment. If the approved seven-day backup policy cannot fit the free setup, report the evidence and options rather than silently omit backups or upgrade the plan.
+- Render cron jobs are paid, so the user chose an external daily GitHub Actions workflow and private R2 storage. Monitor job failures and bucket lifecycle expiry independently. Keep R2 public access disabled. [Render cron pricing](https://render.com/docs/cronjobs), [R2 pricing](https://developers.cloudflare.com/r2/pricing/).
+- Keep local operation independent of Render/R2 accounts. Validate adapters locally; exercise the real hosted database, storage, and backup path in Part 11.
+- Include backup-job and bucket usage in the external free-tier budget, and verify those features are available to the actual account before deployment. If the approved seven-day backup policy cannot fit the free setup, report the evidence and options rather than silently omit backups or upgrade the plan.
 
-### Railway Free operating constraints
+### Render Free operating constraints
 
-- The ongoing Free plan includes $1/month of resource credit, up to 0.5 GB RAM and 1 vCPU per service. A new account's introductory $5 trial is temporary and must not be used to conclude that steady-state usage fits. [Railway pricing](https://railway.com/pricing), [plan details](https://docs.railway.com/pricing/plans).
-- Use the single combined frontend/API service and Neon for durable data. Measure the complete monthly resource footprint, including scheduled backups, storage, and egress; free hosting is a target conditional on measured usage.
-- Enable Railway's sleeping/serverless mode. It sleeps after roughly 5–10 minutes without outbound traffic; database connections, telemetry, or background requests can prevent sleep. Test cold-start recovery and preserve accepted data and submitted actions. [Railway serverless behavior](https://docs.railway.com/deployments/serverless).
-- Measure document-conversion peak memory, especially legacy Word support, within the runtime limits. Keep the approved document formats; report a demonstrated resource mismatch before changing scope.
-- If usage exceeds the ongoing allowance, report the measured bottleneck and alternatives. A paid upgrade is a separate user decision and must not happen automatically.
+Render Free supplies 512 MB / 0.1 CPU, automatic sleep after 15 idle minutes, and
+750 instance-hours per workspace/month. Cold wake-up is documented as roughly one
+minute. Free services have ephemeral disk and no shell, one-off jobs, or paid
+pre-deploy commands. Keep SQL in Render Postgres and originals in private R2 and migrate through the protected
+external operations runner. [Free limits](https://render.com/docs/free),
+[compute specifications](https://render.com/docs/compute-plans).
+
+Monitor workspace bandwidth/build quotas and provider policies on external
+traffic. Test real wake-up behavior and document extraction on the actual account;
+local capped-container measurements are evidence only for the local workload.
+No keepalive pings, paid compute, paid cron jobs, or cloud resources are provisioned.
+A paid upgrade remains an explicit user decision.
 
 ## Monthly cost estimate
 
-Estimate date: 2026-11-01. USD before tax, one private user, light traffic, no separate always-on staging service. AI assumption: one million input tokens plus 200,000 billable output/reasoning tokens per month; this is not measured usage.
+Updated 2026-11-02. Render Free web hosting remains the application target, with
+Render PostgreSQL replacing Neon. The Free database is only a 30-day preview.
+The smallest ongoing database compute plan is `0.1c-256mb` at $6/month, plus
+storage at $0.30/GB/month (about $6.30/month with 1 GB, before taxes/other usage).
+This option is documented for review; it has not been selected or provisioned.
+[Render pricing](https://render.com/pricing),
+[storage billing](https://render.com/articles/how-much-does-cloud-application-hosting-cost-for-small-businesses).
 
-| Item | Monthly estimate or allowance |
-| --- | ---: |
-| Railway Free web service, backup jobs, and bucket usage within the ongoing $1 resource credit | $0 target |
-| Neon Free PostgreSQL and private documents within included quotas | $0 |
-| OpenAI `gpt-6-luna`, 1M input + 0.2M output at Standard rates | $0.20 |
-| Working total if both hosting free tiers fit | $0.20 in metered AI usage |
+GitHub Actions and private R2 Standard buckets target their ongoing free allowances.
+R2 includes 10 GB-month, shared by live originals, retained backups and other account
+usage; seven maximum 512 MiB archives use about 3.5 GiB before live data. Measure
+operations, external database transfer and Render bandwidth/build quotas.
+[R2 pricing](https://developers.cloudflare.com/r2/pricing/).
 
-Railway Free is the selected starting plan. Its ongoing $1/month resource allowance must cover the service, jobs, and storage together; it is not an unlimited always-on server. Neon must also remain within its free compute, storage, and transfer quotas. [Railway pricing](https://railway.com/pricing), [Neon pricing](https://neon.com/pricing).
-
-This is a conditional free-hosting target, not a measured result or a guarantee. OpenAI API usage is billed separately; the $0.20 figure uses the token assumption above. Domain registration, taxes, higher usage, and any later paid provider plan are excluded. Configure usage monitoring and per-call token limits. Optimize and measure first; obtain the user's explicit choice before moving to paid hosting.
+OpenAI metered usage remains separate. The historical monthly assumption of 1M
+input and 0.2M output tokens estimated $0.20 with the evaluated model. Actual
+usage, provider rates, taxes and future paid upgrades are separate considerations.
+The former Railway $1 resource-credit budget no longer applies.
 
 ## OpenAI configuration, access, and model selection
 
@@ -190,3 +206,6 @@ Errors follow `{"error": {"code": "...", "message": "...", "fields": {}}}` with 
 - 2026-11-01: The user explicitly approved Part 7. The private backend implementation and local validation are recorded in `BACKEND_API.md` and `PART7_VALIDATION.md`; Part 8 is next.
 - 2026-11-02: The user extended the language requirement to English/Spanish interfaces with a switcher and support for adding more locales. This supersedes the English-only UI default. The Part 8 frontend implements it with remembered browser preferences and preservation of user content and pending edits.
 - 2026-11-02: The user requested system-assessed clarity with the option to stop iteration at any time, plus a natural-language summary of the current definition. This supersedes manual readiness selection and extends the integrated structured workflow; it does not authorize Part 10 chat or job discovery. See `CLARITY_SUMMARY.md` for acceptance and validation.
+
+- 2026-11-02: Part 10 approved. Part 11 authorized; the user replaced Railway with Render and selected free external backups. Current deployment preparation is tracked in `PART11_VALIDATION.md`.
+- 2026-11-02: The user subsequently selected Render PostgreSQL instead of Neon. App configuration now uses Render SQL and separate private R2 buckets for originals/backups. The 30-day Free database limit conflicts with ongoing free hosting; the user explicitly selected the Free 30-day preview, accepting expiration. No paid resources have been provisioned.

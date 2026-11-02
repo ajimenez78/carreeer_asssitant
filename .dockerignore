@@ -3,6 +3,7 @@
 !backend
 backend/*
 !backend/Dockerfile
+!backend/operations.Dockerfile
 !backend/pyproject.toml
 !backend/uv.lock
 !backend/src

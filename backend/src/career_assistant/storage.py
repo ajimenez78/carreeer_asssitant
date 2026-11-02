@@ -38,8 +38,8 @@ class LocalDocumentStore:
         (self.directory / str(key)).unlink(missing_ok=True)
 
 
-class NeonDocumentStore:
-    """S3 wire protocol only; the caller supplies a client bound to Neon."""
+class S3DocumentStore:
+    """Private originals accessed through the S3 wire protocol."""
 
     def __init__(self, client, bucket: str):
         self.client = client
@@ -74,22 +74,22 @@ def document_store(settings: Settings) -> DocumentStore:
         return LocalDocumentStore(settings.document_directory)
     if not all(
         (
-            settings.neon_storage_endpoint,
-            settings.neon_storage_bucket,
-            settings.neon_storage_access_key,
-            settings.neon_storage_secret_key,
+            settings.s3_endpoint,
+            settings.s3_bucket,
+            settings.s3_access_key,
+            settings.s3_secret_key,
         )
     ):
-        raise ValueError("Neon storage requires an endpoint, bucket, and credentials")
-    endpoint = urlsplit(settings.neon_storage_endpoint)
+        raise ValueError("S3 storage requires an endpoint, bucket, and credentials")
+    endpoint = urlsplit(settings.s3_endpoint)
     if endpoint.scheme != "https" or not endpoint.hostname or endpoint.username:
-        raise ValueError("Neon storage requires an HTTPS endpoint without credentials")
+        raise ValueError("S3 storage requires an HTTPS endpoint without credentials")
     client = boto3.client(
         "s3",
-        endpoint_url=settings.neon_storage_endpoint,
-        region_name=settings.neon_storage_region,
-        aws_access_key_id=settings.neon_storage_access_key.get_secret_value(),
-        aws_secret_access_key=settings.neon_storage_secret_key.get_secret_value(),
+        endpoint_url=settings.s3_endpoint,
+        region_name=settings.s3_region,
+        aws_access_key_id=settings.s3_access_key.get_secret_value(),
+        aws_secret_access_key=settings.s3_secret_key.get_secret_value(),
         config=Config(
             signature_version="s3v4",
             s3={"addressing_style": "path"},
@@ -100,7 +100,7 @@ def document_store(settings: Settings) -> DocumentStore:
             response_checksum_validation="when_required",
         ),
     )
-    return NeonDocumentStore(client, settings.neon_storage_bucket)
+    return S3DocumentStore(client, settings.s3_bucket)
 
 
 def cleanup_documents(sessions: sessionmaker, store: DocumentStore) -> int:

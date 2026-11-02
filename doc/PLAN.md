@@ -1,6 +1,12 @@
 # Career assistant MVP plan
 
-Status: Parts 1–10 are implemented and verified locally; Parts 8–9 were completed on 2026-11-02. The user explicitly approved Part 7 on 2026-11-01 and Parts 8–9 on 2026-11-02; earlier approvals are recorded below. The user subsequently requested system-assessed clarity, stoppable iteration, and a natural-language summary; this structured-workflow extension is tracked below and in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md), separately from historical Part 9 evidence. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 evidence and payloads are in [PART7_VALIDATION.md](PART7_VALIDATION.md) and [BACKEND_API.md](BACKEND_API.md). Part 8 evidence and mock limitations are in [PART8_VALIDATION.md](PART8_VALIDATION.md). Part 9 evidence is in [PART9_VALIDATION.md](PART9_VALIDATION.md); the release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Part 10 chat was authorized and completed on 2026-11-02; see [PART10_VALIDATION.md](PART10_VALIDATION.md). Part 11 has not started.
+Status: Parts 1–10 are implemented and verified locally; Parts 8–9 were completed on 2026-11-02. The user explicitly approved Part 7 on 2026-11-01 and Parts 8–9 on 2026-11-02; earlier approvals are recorded below. The user subsequently requested system-assessed clarity, stoppable iteration, and a natural-language summary; this structured-workflow extension is tracked below and in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md), separately from historical Part 9 evidence. Requirements/architecture are in [MVP_SPEC.md](MVP_SPEC.md), persistence in [PERSISTENCE.md](PERSISTENCE.md), AI evidence in [AI_EVALUATION.md](AI_EVALUATION.md), and setup commands in [README.md](../README.md). Part 7 evidence and payloads are in [PART7_VALIDATION.md](PART7_VALIDATION.md) and [BACKEND_API.md](BACKEND_API.md). Part 8 evidence and mock limitations are in [PART8_VALIDATION.md](PART8_VALIDATION.md). Part 9 evidence is in [PART9_VALIDATION.md](PART9_VALIDATION.md); the release procedure is in [DEPLOYMENT.md](DEPLOYMENT.md). Part 10 chat was authorized and completed on 2026-11-02; see [PART10_VALIDATION.md](PART10_VALIDATION.md). Part 10 is approved; Part 11 is authorized and in progress. Local deployment/recovery preparation is recorded in [PART11_VALIDATION.md](PART11_VALIDATION.md); the Free Render database is provisioned; R2 credentials, web deployment and cloud backup validation remain pending.
+
+On 2026-11-02, the user replaced Railway with Render and subsequently replaced Neon with Render PostgreSQL. Use private R2 buckets for originals and separate backups, with external GitHub Actions scheduling. The user explicitly selected the Free 30-day PostgreSQL preview on 2026-11-02, accepting its expiration. No paid resources are authorized. Earlier Railway/Neon decisions below are historical; the current Part 11 checklist supersedes them.
+
+Current preview scope update, 2026-11-02: the user re-enabled Cloudflare backups, superseding the temporary deferral. The daily workflow schedule and enablement guard are restored. Configure separate private R2 backup storage, credentials and database access, verify backup/restoration, then enable actual runs.
+
+The abandoned Neon CLI setup remains a historical record in [NEON_SETUP.md](NEON_SETUP.md). No Neon sign-in is needed. Current Render configuration and remaining access requirements are in [PART11_VALIDATION.md](PART11_VALIDATION.md).
 
 ## Scope and working rules
 
@@ -10,7 +16,7 @@ Frontend wording, updated at the user's request on 2026-11-02, frames this as cl
 
 Job discovery, offer scoring, notifications, skill development plans, application tracking, interview preparation, and support after starting a job belong to later phases. Consider their relationships in the design without implementing their workflows or unused infrastructure.
 
-- Keep the required Next.js frontend, Python backend, Railway hosting, Neon PostgreSQL/document storage, direct OpenAI API, and relational persistence.
+- Keep the required Next.js frontend, Python backend, Render hosting/PostgreSQL and private R2 document storage, direct OpenAI API, and relational persistence.
 - Follow the agreed Part 2 decisions in `MVP_SPEC.md`. Evaluate model suitability and live inference in Part 6; provision hosted services in Part 11.
 - Follow the eleven parts in order. Complete each part's checks before marking its tasks done, and record relevant decisions or remaining blockers here.
 - Part 1 approval and Part 2 requirement/architecture clarification are complete. Keep future changes consistent with the approved MVP scope.
@@ -18,7 +24,7 @@ Job discovery, offer scoring, notifications, skill development plans, applicatio
 - Verify current stable library versions when adding dependencies, commit lockfiles, and keep the README's setup and test commands current and free of emojis.
 - Prefer simple modules and meaningful tests. Aim for approximately 80% code coverage, prioritizing business logic and user workflows without tests written only to raise coverage.
 - Use synthetic or redacted test fixtures. Keep credentials and personal document contents out of logs, committed fixtures, and test reports.
-- Validate the complete MVP locally before deploying it to Railway and Neon in Part 11.
+- Validate the complete MVP locally before deploying it to Render in Part 11.
 
 ## Agreed user interaction flow
 
@@ -328,38 +334,43 @@ all original rows remain unchanged. Evidence and limits are in
 and [PART10_RELEASE_CHECK.json](PART10_RELEASE_CHECK.json). No hosted services were
 provisioned; Part 11 remains pending.
 
-## Part 11: Deploy the tested MVP to Railway and Neon
+## Part 11: Deploy the tested MVP with Render PostgreSQL
 
-Dependency: Parts 1–10 complete, local acceptance checks passing, and the deployment procedure from Part 9 reviewed. Use the architecture selected in Part 2.
+Dependency: Parts 1–10 approved and locally tested. Authorized on 2026-11-02;
+Render replaces Railway at the user's request. The user selected free external
+backup scheduling and storage rather than paid Render cron jobs.
 
-- [ ] Confirm Railway/Neon accounts, EU deployment locations, environment, resource changes, and estimated recurring usage. Start with Railway Free and Neon Free; verify available features and the ongoing $1/month Railway resource allowance separately from temporary trial credits.
-- [ ] Add version-controlled Railway build/start/health configuration and repeatable deployment commands. Provision Neon PostgreSQL and private document storage with backend-only credentials.
-- [ ] Configure HTTPS and the single-owner access model; keep OpenAI, database, storage, and session secrets out of browser assets, release images, and deployment output.
-- [ ] Verify direct OpenAI inference from Railway and configure the Part 6 model identifiers and usage limits.
-- [ ] Deploy the combined application image from the locally tested revision to one Railway web service. Record its Git revision and deployed image digest; Node.js is used only during the frontend build.
-- [ ] Initialize Neon PostgreSQL independently of the web service and configure private Neon document storage and backend-only runtime connections. Back up existing data before schema changes, then apply Alembic migrations once in a separate pre-deployment/release step before rolling out the web process.
-- [ ] Configure useful logs, health/error monitoring, usage alerts, and the daily database/document backup job with seven-day retention in independent private storage. Do not rely on Neon's free restore window to satisfy this policy.
-- [ ] Enable and verify Railway's sleeping/serverless behavior to reduce idle usage. Avoid background traffic and unnecessary open connections that prevent sleep; verify first-request recovery without duplicate writes.
-- [ ] Document redeployment, application rollback, database recovery, and resource cleanup, distinguishing disposable resources from persistent user data.
-- [ ] Update the README with the deployed URL, release identifier, operational commands, and known limitations.
+- [x] Choose the Render database plan: the user explicitly selected the Free 30-day preview on 2026-11-02; no paid upgrade is authorized.
+- [x] Record the database creation/expiration: created 2 November 2026 at 17:45 Madrid time; expires 2 December 2026 at 17:45 Madrid time. Export any retained workspace before expiration. See `PART11_RENDER_PREVIEW.json`.
+- [x] Confirm Render API/GitHub authentication and create the approved Free PostgreSQL 18 preview in Frankfurt.
+- [ ] Verify actual R2 credentials/buckets and shared free quotas. Current private R2 endpoint/key values are placeholders. No paid upgrade is authorized.
+- [x] Prepare `render.yaml` for one Free Docker web service in Frankfurt: same-origin API, health route, manual deploys, and secure startup preflight. Validate against Render's official schema.
+- [x] Replace Neon with a Render PostgreSQL 18 blueprint entry and private R2 originals; remove Neon app packages/configuration and validate the new TLS/storage behavior locally.
+- [x] Provide separate release/owner/backup/restore commands compatible with Render Free, which lacks paid pre-deploy/one-off/shell capabilities. Keep migrations outside web startup.
+- [ ] Provision Render PostgreSQL and private R2 originals; run the separate migration and configure the owner using backend-only secrets.
+- [ ] Deploy the exact tested revision/image; record the Git revision, image digest, deployment ID and HTTPS URL.
+- [x] Implement daily SQL/original archive creation with a consistent snapshot and manifest, checksum verification/readback, seven-day retention, and restoration into empty replacement resources. Test restoration with disposable PostgreSQL data.
+- [x] Prepare an external GitHub Actions schedule and private S3-compatible backup configuration. Keep it disabled until secrets and the target bucket are configured; never publish backup artifacts in this public repository.
+- [ ] Configure/activate the daily backup schedule, separate private R2 backup bucket, credentials, seven-day retention and hosted backup/restore checks. Re-enabled by the user on 2026-11-02.
+- [ ] Run deployed health/privacy/authentication and live synthetic OpenAI checks, followed by the complete bilingual structured/chat browser flow.
+- [ ] Verify HTTPS, exact-origin controls, secure cookies, private SQL/storage access, and persistence across restarts/redeploys.
+- [ ] Verify automatic Render Free sleep/wake behavior and first-request recovery without duplicate writes; avoid keepalive traffic.
+- [ ] Exercise image rollback and separate database/document recovery against disposable hosted resources.
+- [ ] Measure Render hours/bandwidth/build minutes, Render PostgreSQL storage/compute/transfer, GitHub Actions usage, R2 operations/storage, and model usage against ongoing allowances. Report any free-tier mismatch before a paid change.
+- [ ] Record the deployed revision/URL, evidence, operational limits, and final acceptance in README and this plan.
 
-Validation:
+Local evidence and remaining access requirements are recorded in
+[PART11_VALIDATION.md](PART11_VALIDATION.md). The executable runbook is
+[DEPLOYMENT.md](DEPLOYMENT.md). Local preparation is not a completed cloud release.
 
-- [ ] Run deployed frontend/API health checks and a live OpenAI smoke test.
-- [ ] Run the deployed browser workflow using synthetic data: description → upload/link → clarification → review → save → reload → structured refinement → chat refinement.
-- [ ] Verify HTTPS, authentication/access boundaries, production API/CORS configuration, and restricted database/document-storage access according to the approved design.
-- [ ] Verify that saved definitions, background sources, and conversation context survive an application restart or redeployment.
-- [ ] Verify that application image replacement and rollback preserve external database/document data; document database recovery separately from application rollback.
-- [ ] Measure web-service, backup-job, storage, and egress usage against ongoing free limits, including the 0.5 GB RAM/1 vCPU runtime cap. Record projected monthly usage; if the complete MVP cannot fit, report the limitation and options before any paid upgrade.
-- [ ] Check useful error reporting and exercise application rollback and database backup/recovery against disposable test data without affecting user data.
-- [ ] Record the deployed revision, URLs, validation results, and any remaining operational limitations.
-
-Success: the private MVP is accessible through Railway, persists data and documents in Neon, passes deployed acceptance checks, and has reproducible deployment and recovery.
+Success: pending. The private MVP must be live on Render with Render PostgreSQL persistence,
+working daily backups/restoration with seven-day retention, measured usage, and
+deployed acceptance checks before Part 11 is marked complete.
 
 ## MVP completion
 
 - [ ] All eleven parts have satisfied their checks; approvals and unresolved limitations are recorded accurately.
-- [ ] The supplied scenario and agreed incomplete-input/error scenarios pass locally and on Railway/Neon with synthetic or redacted fixtures.
-- [ ] Local setup, migrations, configuration, start/stop commands, tests, and Railway/Neon deployment/recovery commands are reproducible from the README.
+- [ ] The supplied scenario and agreed incomplete-input/error scenarios pass locally and on Render with synthetic or redacted fixtures.
+- [ ] Local setup, migrations, configuration, start/stop commands, tests, and Render deployment/recovery commands are reproducible from the README.
 - [ ] No later-phase workflow has been implemented merely to anticipate future requirements.
 - [ ] Present the deployed MVP, validation results, operating instructions, and known limitations for review.

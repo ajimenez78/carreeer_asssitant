@@ -1,104 +1,235 @@
-# Railway + Neon release procedure
+# Render PostgreSQL deployment and recovery
 
-Prepared in Part 9; not executed. Deploy only after Parts 9–10 pass and the user
-requests Part 11. Preserve the single combined-image architecture and private owner.
+Part 11 was authorized on 2026-11-02. Render replaces Railway at the user's request.
+The user re-enabled Cloudflare backups on 2026-11-02, superseding the temporary
+deferral. Provision separate private original-document and backup buckets. The
+workflow daily schedule and `BACKUPS_ENABLED` guard are restored; actual runs
+await configured credentials, database access and verification.
+The user selected a free external backup scheduler/storage option. Current setup:
+Render Free web service, Render PostgreSQL, private R2 original storage, GitHub Actions
+scheduling, and a separate private R2 backup bucket. Neon is no longer used.
+The user explicitly selected the Free 30-day PostgreSQL preview on 2026-11-02,
+accepting its expiration. Keep the declared Free plan; no paid upgrade is authorized.
+The free database was created on 2 November 2026 at 17:45 Madrid time and expires
+on 2 December 2026 at 17:45 Madrid time. No web service is deployed yet. Export
+any workspace to retain before expiration. See [PART11_VALIDATION.md](PART11_VALIDATION.md)
+and [resource details](PART11_RENDER_PREVIEW.json).
 
-## Before provisioning
+## Accounts and release prerequisites
 
-Confirm Railway/Neon accounts, an available EU location, Neon PostgreSQL and private
-object-storage availability, and the ongoing Free allowances. Include web runtime,
-backup jobs, seven-day independent backup storage and transfer in the budget;
-introductory credits do not prove ongoing fit. Obtain an explicit user decision
-before a paid upgrade. Actual bucket privacy, backup scheduling/restoration and
-hosting configuration are Part 11 acceptance checks, not claims of this procedure.
+Add the Render integration or configure authenticated Render tooling privately.
+A Cloudflare R2 account/bucket and scoped storage credentials are also needed.
+No Cloudflare integration was found in the available plugin search; use private
+local settings or the provider dashboard for those credentials. Do not paste them
+into chat, source files, build arguments, workflow YAML, or committed artifacts.
 
-Record the tested Git revision and built image identifier. Require a clean release
-checkout and successful `make check`, `make integration`, `make frontend-check`,
-`make frontend-contract`, `make frontend-e2e`, `make e2e`, and `make release-check`.
-The live synthetic workflow is an explicit separate check, not a build/start hook.
+Confirm the actual free plans, existing account usage, and EU placement before
+provisioning. Use Frankfurt for Render web and PostgreSQL; choose an EU jurisdiction for R2
+if available to the account, and use its corresponding S3 endpoint. Keep R2
+Standard storage private: no public development URL or custom public domain.
+[Render compute](https://render.com/docs/compute-plans),
+[Render Postgres](https://render.com/docs/postgresql-creating-connecting),
+[R2 bucket creation/privacy](https://developers.cloudflare.com/r2/buckets/create-buckets/).
 
-## Build and runtime configuration
+Prepare a clean tested release commit. Record its full Git SHA, built image digest,
+Render deployment ID and HTTPS URL. The database is provisioned, but local test
+images are not hosted web release identifiers. Record the exact Git revision
+when deploying the web service.
 
-Keep the Railway service root at the repository root. Use `backend/Dockerfile`
-with the root `.dockerignore`; do not change the service root to `backend/`.
-The Dockerfile fixes frontend API configuration to same-origin `/api` and real mode.
-Runtime secrets are never declared as Docker build arguments or frontend variables.
-[Railway supports a custom Dockerfile path](https://docs.railway.com/builds/dockerfiles)
-through `RAILWAY_DOCKERFILE_PATH=backend/Dockerfile`; version-controlled Railway
-hosting configuration will be added in Part 11.
+## Backend-only configuration
 
-Use one Railway web service, one Uvicorn process, and the default image command.
-It binds `0.0.0.0` and the runtime `PORT`. Set `/api/health` as the deployment
-healthcheck. It is a public liveness check and does not establish database/provider
-readiness; separately test authenticated persistence and inference.
-[Railway healthchecks](https://docs.railway.com/deployments/healthchecks) gate rollout
-but do not continuously monitor the service after activation.
+`render.yaml` declares exactly one `plan: free` Docker web service in Frankfurt,
+using `backend/Dockerfile` with repository-root build context. Render serves the
+static frontend and FastAPI from one origin; Node.js remains build-only. Automatic
+deploys are off to preserve the external migration → rollout sequence. A Free
+PostgreSQL 18 instance is declared and connected via `fromDatabase`. No
+disk, cron job, or paid resource is declared. Database public access starts blocked
+with `ipAllowList: []`. Do not apply this preview blueprint expecting permanent
+free storage. For an explicitly approved paid database, change its plan to
+`0.1c-256mb` and set `diskSizeGB: 1` before applying; estimated database cost is
+$6/month compute plus $0.30/GB/month storage, before taxes and other usage.
+[Compute plans](https://render.com/docs/compute-plans),
+[storage pricing](https://render.com/articles/how-much-does-cloud-application-hosting-cost-for-small-businesses).
 
-Configure these backend runtime variables privately:
+Provide the prompted runtime secrets through Render's protected environment UI:
 
-| Variable | Production value |
+| Setting | Value |
 | --- | --- |
-| `DATABASE_URL` | Neon PostgreSQL runtime URL with verified TLS; pooled URL if appropriate. |
-| `DATABASE_DIRECT_URL` | Direct Neon URL for separate migrations/backups. |
-| `CAREER_SESSION_SECRET` | Stable random secret of at least 32 characters, shared across image replacement. |
+| `DATABASE_URL` | Automatically supplied by the blueprint from Render Postgres over the same-region private network. The backend requires TLS (`sslmode=require`) internally because Render uses self-signed internal certificates. For external operations use the public hostname and `sslmode=verify-full` with trusted roots. |
+| `CAREER_SESSION_SECRET` | Blueprint-generated stable secret, retained across restarts/rollbacks. Do not regenerate it on routine deploys. |
 | `CAREER_SESSION_SECURE` | `true`. |
-| `CAREER_ALLOWED_ORIGINS` | JSON array containing only the actual trusted HTTPS application origin. |
-| `OPENAI_API_KEY` | Backend-only key for the selected account. |
-| `CAREER_AI_MODEL` | Evaluated `gpt-6-luna`, unless a separately evaluated choice is approved. |
-| `CAREER_AI_REASONING_EFFORT` | `low`. |
-| `CAREER_AI_TIMEOUT_SECONDS` | At most 60. |
-| `CAREER_AI_MAX_INPUT_TOKENS` / `CAREER_AI_MAX_OUTPUT_TOKENS` | At most 20,000 / 2,000. |
-| `CAREER_DOCUMENT_BACKEND` | `neon`. |
-| `CAREER_NEON_STORAGE_ENDPOINT`, `CAREER_NEON_STORAGE_REGION`, `CAREER_NEON_STORAGE_BUCKET` | Verified private bucket configuration. |
-| `CAREER_NEON_STORAGE_ACCESS_KEY`, `CAREER_NEON_STORAGE_SECRET_KEY` | Backend-only bucket credentials. |
+| `CAREER_ALLOWED_ORIGINS` | Normally omit: `operations serve` derives the exact HTTPS origin from Render's `RENDER_EXTERNAL_URL`. For custom domains, explicitly set a JSON array containing only trusted HTTPS origins without paths. |
+| `OPENAI_API_KEY` | Existing direct OpenAI backend key, kept private. |
+| `CAREER_DOCUMENT_BACKEND` | `s3`. |
+| `CAREER_S3_ENDPOINT`, `CAREER_S3_REGION`, `CAREER_S3_BUCKET` | Private R2 originals bucket; signing region `auto`. Use the actual jurisdiction endpoint. |
+| `CAREER_S3_ACCESS_KEY`, `CAREER_S3_SECRET_KEY` | Bucket-scoped R2 credentials. Web uploads need read/write/delete access to originals only; use a separate read-only originals credential for backups. |
+| AI settings | Existing `gpt-6-luna`, low reasoning, 60-second timeout, 20,000 input/2,000 output caps. |
 
-`CAREER_FRONTEND_DIRECTORY=/app/frontend` is supplied by the image. Do not store
-production documents inside it or inside any application layer. The browser
-contains public code and locale choice; private data and file operations require
-an authenticated API session. Keep secure, HttpOnly, SameSite=Strict cookies and
-exact-origin write enforcement. Do not solve CORS issues with wildcard credentials.
+The image supplies `CAREER_FRONTEND_DIRECTORY=/app/frontend`. It contains no `.env`,
+private originals, keys, or database files. Database and source credentials are not
+frontend settings. Render's startup command is `python -m career_assistant.operations serve`.
+It checks security configuration, migration head and configured owner before serving;
+it never runs migrations. The public health route remains sanitized `/api/health`.
+[Blueprint reference](https://render.com/docs/blueprint-spec),
+[Render TLS modes](https://render.com/docs/postgresql-creating-connecting),
+[R2 S3 credentials](https://developers.cloudflare.com/r2/api/s3/api/).
 
-## Migration, owner initialization and rollout
+If the existing local workspace should become the hosted workspace, export its
+actual SQL/originals, verify the archive, and restore it into empty replacement
+resources first. Preserve the existing owner hash and accepted data; do not run
+`owner` again unless intentionally changing credentials. Confirm the source document
+store (development directory or Compose volume) before exporting. A missing original
+aborts the backup rather than publishing an incomplete migration artifact.
 
-1. Back up the current database and document manifest/originals to independent
-   private storage before schema changes. Confirm recoverability and the target
-   environment before executing a release command.
-2. Run `python -m career_assistant.db_cli migrate` once as a separate release step,
-   using the direct database URL where configured. It does not run on web startup.
-   Repeating it preserves data and existing credentials.
-3. On first installation only, configure the owner with
-   `python -m career_assistant.db_cli owner` through a protected interactive command
-   connected to the intended database. Do not put passwords in command arguments,
-   deployment logs, or HTTP registration endpoints. Credential changes revoke sessions.
-4. Deploy the exact locally tested revision/image. Record Git revision, image
-   digest, deployment identifier and HTTPS URL. Keep the previous known-good image.
-5. Check health, assets, private-route rejection without a cookie, correct/wrong
-   login behavior, and a complete synthetic save → background → review → clarification
-   → save → reload → refinement flow. Check a live bounded inference separately.
-6. Replace/restart the application and verify the same saved identity, accepted
-   preferences, source provenance and authenticated original downloads survive.
-   Confirm files and SQL are external to the application.
-7. Configure the seven-day daily independent backup/cleanup job, verify restoration
-   against disposable data, and measure combined recurring usage. Verify sleeping
-   and first-request recovery without duplicate writes. These remain Part 11 work.
+## Separate release and owner initialization
 
-A Railway [pre-deploy command](https://docs.railway.com/deployments/pre-deploy-command)
-can provide the separate migration step if available on the chosen account. It runs
-in a separate container with runtime variables, and a nonzero exit stops rollout.
-It cannot rely on web-process startup or local volume state. Otherwise use a
-protected one-off release command; never run migrations independently per replica.
+Render Free does not support the paid pre-deploy command, shell, or one-off jobs.
+Run release/owner commands from a protected local or CI operations runner before
+triggering the web deployment. Keep migration credentials out of the Render build.
+[Render deploy phases](https://render.com/docs/deploys), [Free limitations](https://render.com/docs/free).
 
-## Rollback and recovery
+Create ignored mode-600 `.env.operations.local` with a **direct** `DATABASE_URL`
+and `DATABASE_DIRECT_URL` pointing to the intended Render PostgreSQL database, verified TLS,
+read-scoped R2 original-storage settings, and backup settings below. An empty
+new database needs no prior backup. For an existing schema change, first make a
+completed verified backup of this same database; release rejects missing, foreign,
+older-than-24-hour, or invalid selected backup archives.
 
-If the new image fails smoke checks, select/redeploy the previous recorded image
-with the same external database/document storage and stable session secret.
-Application rollback does not undo schema changes. Prefer backward-compatible
-migrations and prove compatibility before rolling an older image onto a newer schema.
-If incompatible, stop writes and follow a separately tested database/document
-recovery procedure instead of blindly running a downgrade.
+```bash
+make operations-image
+# Empty database initialization, or repeatable migration check at current head:
+docker run --rm --env-file .env.operations.local career-assistant-operations:part11 python -m career_assistant.operations release
+# Before a schema change on an existing database:
+docker run --rm --env-file .env.operations.local career-assistant-operations:part11 python -m career_assistant.operations backup
+# Use the completed key printed in the safe completion record:
+docker run --rm --env-file .env.operations.local career-assistant-operations:part11 python -m career_assistant.operations release --backup-key career-backups/TIMESTAMP-ID.zip
+# First installation only: enter the owner password interactively.
+docker run -it --rm --env-file .env.operations.local career-assistant-operations:part11 python -m career_assistant.db_cli owner
+```
 
-Restore database and originals together from the verified manifest into isolated
-replacement resources first. Verify identity, references, original checksums and
-privacy before switching the application. Retain the old resources until recovery
-is confirmed. Document backup retention, restore evidence and rollback outcomes in
-Part 11; do not delete persistent resources as routine application cleanup.
+External operations and GitHub Actions need database network access. The blueprint
+blocks public database connections by default. Configure an allowlist for the
+trusted runner/operator before migration and backup checks. Standard GitHub-hosted
+runner addresses vary; a schedule cannot work with the private-only default.
+Choose and validate the external access policy before enabling the workflow;
+do not silently open the database to all IPs. Keep verified TLS and separate
+least-privilege credentials. The runner access policy remains a pending cloud acceptance requirement; the
+Free preview database plan is already selected.
+
+Passwords never appear in command arguments. Repeating `release` preserves existing
+owner credentials and data. Deliberately rerunning `owner` changes credentials and
+revokes sessions. Do not overwrite an existing private environment file.
+
+Create the Render service from `render.yaml` and configure the prompted secrets.
+Trigger a manual deployment of the tested commit after release/owner setup.
+For subsequent releases: back up → migrate separately → deploy that commit → smoke
+test. Keep the previous compatible commit/image available for rollback. Initial
+Blueprint creation can trigger a deployment; startup will fail safely if schema
+or owner prerequisites are not ready yet.
+
+## Daily independent backups
+
+Create a dedicated private R2 Standard bucket. Configure a seven-day object lifecycle
+expiry on the dedicated `career-backups/` prefix as a backstop if the scheduler stops.
+Use bucket-scoped write/list/delete credentials on the backup runner, separate from
+the web service credentials. Only originals credentials are supplied to the web
+app; backup bucket credentials stay on the operations runner.
+
+External operations settings:
+
+```text
+CAREER_BACKUP_ENDPOINT=https://ACCOUNT_ID.r2.cloudflarestorage.com
+CAREER_BACKUP_REGION=auto
+CAREER_BACKUP_BUCKET=career-assistant-backups
+CAREER_BACKUP_ACCESS_KEY=<private bucket-scoped access key>
+CAREER_BACKUP_SECRET_KEY=<private secret>
+CAREER_BACKUP_PREFIX=career-backups/
+```
+
+For an EU-jurisdiction bucket, use its actual EU endpoint rather than the example.
+The account's ongoing free allowance is shared with other workloads; verify remaining
+capacity and notification settings. [R2 pricing](https://developers.cloudflare.com/r2/pricing/).
+
+`.github/workflows/daily-backup.yml` schedules the job at 03:17 UTC and also supports
+manual dispatch. It retains read-only repository permissions, pinned checkout,
+a 15-minute timeout and no pull-request trigger. The job executes only when the
+repository variable `BACKUPS_ENABLED=true` is set. Before activation, configure
+these Actions secrets and validate the database network access:
+
+- `BACKUP_DATABASE_DIRECT_URL` (external Render URL with verified TLS).
+- `DOCUMENT_STORAGE_ENDPOINT`, `DOCUMENT_STORAGE_BUCKET`, `DOCUMENT_BACKUP_ACCESS_KEY`,
+  `DOCUMENT_BACKUP_SECRET_KEY` (separate R2 read-only original access).
+- `BACKUP_ENDPOINT`, `BACKUP_BUCKET`, `BACKUP_ACCESS_KEY`, `BACKUP_SECRET_KEY`.
+
+The public repository contains only code. The job does not upload SQL/originals
+as GitHub artifacts or log their contents; archives go directly to the private bucket.
+The runner builds the operations image without secrets, then passes credentials
+by environment names only. Enable normal GitHub workflow-failure notifications;
+verify a manual run and its private object before enabling the daily schedule.
+Public repositories' schedules can stop after prolonged inactivity and can be
+delayed: monitor successful completion independently and keep an operator reminder
+to check daily recovery points. Do not use the sleeping web service as a scheduler.
+[GitHub scheduling](https://docs.github.com/en/actions/using-workflows/events-that-trigger-workflows#schedule).
+
+Each archive contains a custom-format SQL dump, manifest, and confirmed originals.
+The worker locks the owner/definition/cleanup rows, exports one PostgreSQL snapshot,
+and captures original bytes before releasing locks; existing app mutations coordinate
+through those same rows. Cleanup cannot remove a required original during capture.
+The archive uses private temporary files, bounded streaming and a 512 MiB archive cap.
+It verifies every checksum locally, uploads with a transport checksum, downloads
+and verifies it again, then prunes recovery points seven days old or older.
+Failed exports/uploads/readback do not prune old backups. Job records include only
+completion/failure, bytes, count, elapsed time and an object key.
+
+## Restore into replacement resources
+
+Use trusted archives only: SQL backups are executable database input. Retrieve the
+chosen archive privately from the R2 dashboard or `BackupBucket.download` through
+the protected operations environment. Never publish a backup link or its contents.
+
+Create an empty replacement database and a separate empty originals destination.
+Use a distinct `CAREER_RESTORE_DATABASE_URL` variable. For hosted originals configure
+`CAREER_RESTORE_S3_ENDPOINT`, `_REGION`, `_BUCKET`, `_ACCESS_KEY`, and
+`_SECRET_KEY`; the `_S3_` prefix here expands as normal environment names,
+for example `CAREER_RESTORE_S3_SECRET_KEY`. These must reference the
+replacement database/bucket, not the live source.
+
+```bash
+# Mount a private backup directory as /recovery; the archive itself stays private.
+docker run --rm --env-file .env.recovery.local --mount type=bind,source=/ABS/PRIVATE/BACKUPS,target=/recovery,readonly career-assistant-operations:part11 python -m career_assistant.operations restore /recovery/backup.zip --allow-remote
+```
+
+Remote recovery requires explicit `--allow-remote` and verified TLS. Local rehearsals
+can use `--documents-directory /path/to/empty-originals`. Restoration validates all
+entries and checksums before writing, rejects an occupied database or matching
+originals, restores SQL transactionally and cleans newly copied originals if restore
+fails. Validate accepted preferences, source hashes/provenance, owner/session data,
+summary/pause, and conversation before changing the web app's connection settings.
+Keep old resources until recovery is confirmed. Perform this drill against disposable
+resources, not the owner's live data.
+
+## Rollback, smoke checks and quotas
+
+An image rollback uses the previous recorded compatible commit with unchanged
+external Render PostgreSQL/R2 resources and stable session secret. It does not reverse migrations.
+For an incompatible schema, stop writes and restore SQL/originals into replacement
+resources first. Never blindly downgrade or delete persistent resources during cleanup.
+
+Hosted acceptance is still required: health/assets; unauthenticated rejection;
+secure HttpOnly session; exact-origin writes; bilingual saved-draft → document/link
+→ reviewed background → clarification/summary → reviewed save → reload → structured
+refinement → floating chat → reviewed chat save; bounded live synthetic inference;
+restart/redeploy and rollback persistence; private original retrieval; backup/restore;
+and real sleep/wake behavior. Use synthetic data in disposable branches/environments.
+Do not replace existing user work with a smoke-test definition.
+
+Render Free supplies 512 MB / 0.1 CPU and 750 workspace instance-hours/month, sleeps
+after 15 idle minutes, and may take about a minute to wake. It has no durable local
+disk. Measure cold recovery without keepalive pings. Render's included bandwidth/build
+quotas and external-traffic policies also apply. Monitor actual workspace usage;
+no paid upgrade is authorized. Render PostgreSQL storage/compute/transfer, GitHub runner usage,
+and R2 storage/operations must remain within their ongoing allowances as well.
+[R2 Standard](https://developers.cloudflare.com/r2/pricing/) includes 10 GB-month;
+seven maximum 512 MiB archives require roughly 3.5 GiB before other account usage.
+Daily external database transfer still depends on actual SQL/original bytes and is not proven
+free solely by that storage calculation.

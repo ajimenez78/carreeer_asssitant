@@ -1,5 +1,6 @@
 """Connection and explicit migration helpers; importing this opens no connections."""
 
+import re
 from pathlib import Path
 
 import psycopg
@@ -30,7 +31,17 @@ def database_url(settings: Settings, *, direct: bool = False) -> URL:
     )
     if url.drivername not in {"postgres", "postgresql", "postgresql+psycopg"}:
         raise ValueError("A PostgreSQL URL is required")
+    if render_private_database(url):
+        # Render's internal certificates are self-signed. Require encryption.
+        if "sslmode" not in url.query:
+            url = url.update_query_dict({"sslmode": "require"})
+    elif url.host and url.host.endswith("-postgres.render.com"):
+        url = url.update_query_dict({"sslmode": "verify-full", "sslrootcert": "system"})
     return url.set(drivername="postgresql+psycopg")
+
+
+def render_private_database(url: URL) -> bool:
+    return bool(re.fullmatch(r"dpg-[a-z0-9-]+", url.host or ""))
 
 
 def database_engine(url: URL) -> Engine:

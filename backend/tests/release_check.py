@@ -36,9 +36,9 @@ def docker(*args, check=True):
 def main():
     suffix = uuid4().hex
     name, volume = f"career-release-{suffix}", f"career-release-docs-{suffix}"
-    image = os.environ.get("CAREER_RELEASE_IMAGE", "career-assistant:part10")
+    image = os.environ.get("CAREER_RELEASE_IMAGE", "career-assistant:part11")
     report_path = Path(
-        os.environ.get("CAREER_RELEASE_REPORT", "doc/PART10_RELEASE_CHECK.json")
+        os.environ.get("CAREER_RELEASE_REPORT", "doc/PART11_LOCAL_RELEASE_CHECK.json")
     )
     url = database_url(Settings()).set(database=f"career_release_{suffix}")
     ensure_local_database(url)
@@ -47,7 +47,8 @@ def main():
         port = listener.getsockname()[1]
     origin = f"http://127.0.0.1:{port}"
     engine = database_engine(url)
-    records = {}
+    cpus = os.environ.get("CAREER_RELEASE_CPUS", "1")
+    records = {"cpu_limit": cpus}
     try:
         # Docker Desktop shares the checkout, while host /tmp may not be shared.
         Path(".cache").mkdir(exist_ok=True)
@@ -129,7 +130,7 @@ def main():
                     "--memory",
                     "512m",
                     "--cpus",
-                    "1",
+                    cpus,
                     "-p",
                     f"127.0.0.1:{port}:8000",
                     *mounts,
@@ -145,11 +146,16 @@ def main():
                     page.on("pageerror", lambda error: errors.append(error.message))
 
                     def ready():
-                        for _ in range(100):
+                        started = time.monotonic()
+                        deadline = started + 120
+                        while time.monotonic() < deadline:
                             try:
                                 if page.request.get(
                                     origin + "/api/health", timeout=1000
                                 ).ok:
+                                    records.setdefault("startup_seconds", []).append(
+                                        round(time.monotonic() - started, 3)
+                                    )
                                     return
                             except Exception:
                                 pass
@@ -335,7 +341,7 @@ def main():
                         "natural-language summary and pause survive replacement",
                         "private files excluded",
                         "Python-only non-root runtime",
-                        "512 MiB and 1 CPU limits",
+                        f"512 MiB and {cpus} CPU limits",
                     ]
                 finally:
                     browser.close()

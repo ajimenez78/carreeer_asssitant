@@ -1,0 +1,24 @@
+{
+  "cpu_limit": "0.1",
+  "startup_seconds": [
+    19.927,
+    18.332
+  ],
+  "runtime_memory": "113.7MiB / 512MiB",
+  "runtime_check": "Python-only non-root runtime; no test mount or .env",
+  "image_id": "sha256:b7a99809b39cfbc4020ab6a9655cbd6057cfa0b48afe04386ab5e8ba0cb1bcbd",
+  "passed": true,
+  "checks": [
+    "packaged migrations repeat safely",
+    "complete browser workflow with test-only injected AI",
+    "same-origin HttpOnly sessions",
+    "real Markdown extraction",
+    "save/reload/refine",
+    "reviewed chat refinement and conversation survive replacement",
+    "production replacement preserves SQL, session and originals",
+    "natural-language summary and pause survive replacement",
+    "private files excluded",
+    "Python-only non-root runtime",
+    "512 MiB and 0.1 CPU limits"
+  ]
+}

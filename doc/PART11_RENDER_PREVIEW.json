@@ -1,0 +1,15 @@
+{
+  "id": "dpg-dbkbsfc9v7es73cafmag-a",
+  "name": "career-assistant-db",
+  "plan": "free",
+  "region": "frankfurt",
+  "postgres_version": "18",
+  "status_at_check": "creating",
+  "created_at_madrid": "2026-11-02 17:45:49 CET",
+  "expires_at_madrid": "2026-12-02 17:45:49 CET",
+  "external_access": "blocked (empty IP allowlist)",
+  "schema_initialized": false,
+  "web_service_deployed": false,
+  "backups_running": false,
+  "backup_blocker": "R2 endpoint/key fields are still placeholders; GitHub secret/variable setup and cloud backup verification pending"
+}
