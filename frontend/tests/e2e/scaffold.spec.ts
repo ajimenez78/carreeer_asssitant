@@ -6,8 +6,8 @@ test("entry page is readable and keyboard accessible", async ({ page }) => {
 
   await page.goto("/");
 
-  await expect(page).toHaveTitle("Your ideal job | Career assistant");
-  await expect(page.getByRole("heading", { level: 1, name: "Define your ideal job." })).toBeVisible();
+  await expect(page).toHaveTitle("The role you’re looking for | Career assistant");
+  await expect(page.getByRole("heading", { level: 1, name: "Clarify the role you’re looking for." })).toBeVisible();
   await expect(page.getByRole("navigation", { name: "Main navigation" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Start with what matters." })).toBeVisible();
   await expect(page.getByRole("complementary", { name: "Mock preview" })).toContainText("Requests are mocked");

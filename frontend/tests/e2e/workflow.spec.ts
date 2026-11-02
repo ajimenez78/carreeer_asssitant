@@ -14,7 +14,7 @@ async function step(page: Page, name: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
 }
 async function start(page: Page, text = description) {
-  await page.goto("/"); await page.getByLabel("Your ideal job description").fill(text);
+  await page.goto("/"); await page.getByRole("textbox", { name: "The role you’re looking for", exact: true }).fill(text);
   await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Draft saved");
 }
@@ -61,7 +61,7 @@ test("full mocked journey: upload, review, answer states, save, reload, and refi
   await page.getByRole("button", { name: "Apply reviewed suggestions & save" }).click();
   await expect(page.getByRole("status")).toContainText("Draft saved");
   expect((await saved(page)).preferences.some((p: { value: unknown }) => JSON.stringify(p.value).includes("SQL"))).toBe(false);
-  await page.reload(); await expect(page.getByLabel("Your ideal job description")).toHaveValue(description);
+  await page.reload(); await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toHaveValue(description);
   await step(page, "Clarify");
   await expect(questions.nth(0).getByText("Answer saved", { exact: true })).toBeVisible();
   await expect(questions.nth(1).getByText("Skipped", { exact: true })).toBeVisible();
@@ -88,9 +88,9 @@ test("full mocked journey: upload, review, answer states, save, reload, and refi
 
 test("save and AI errors preserve edits and allow recovery", async ({ page }) => {
   await start(page, "A role I enjoy");
-  await page.getByLabel("Your ideal job description").fill("Un puesto con equilibrio y aprendizaje"); await failNext(page, "save");
+  await page.getByRole("textbox", { name: "The role you’re looking for", exact: true }).fill("Un puesto con equilibrio y aprendizaje"); await failNext(page, "save");
   await page.getByRole("button", { name: "Save draft", exact: true }).click(); await expect(page.getByRole("main").getByRole("alert")).toContainText("Try again");
-  await expect(page.getByLabel("Your ideal job description")).toHaveValue("Un puesto con equilibrio y aprendizaje");
+  await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toHaveValue("Un puesto con equilibrio y aprendizaje");
   expect((await saved(page)).description).toBe("A role I enjoy");
   await page.getByRole("button", { name: "Save draft", exact: true }).click(); await expect(page.getByRole("status")).toContainText("Draft saved");
   await step(page, "Clarify"); await page.getByLabel("Assistance language").selectOption("Spanish"); await failNext(page, "ai"); await generate(page);
@@ -119,7 +119,7 @@ test("upload failures, unavailable links, and fact-review errors retain input", 
 
 test("manual criteria validate, preserve all value types, and survive refinement", async ({ page }) => {
   await page.goto("/"); await page.getByRole("button", { name: "Save draft", exact: true }).click(); await expect(page.getByRole("main").getByRole("alert")).toContainText("Enter a description");
-  await page.getByLabel("Your ideal job description").fill("An incomplete draft"); await page.getByRole("button", { name: "Save draft", exact: true }).click();
+  await page.getByRole("textbox", { name: "The role you’re looking for", exact: true }).fill("An incomplete draft"); await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await step(page, "Review & save"); await page.getByRole("button", { name: "+ Add criterion", exact: true }).click();
   const criterion = page.locator(".criterion").first(); await criterion.getByLabel("Criterion name").fill("salary"); await criterion.getByLabel("Category").selectOption("compensation"); await criterion.getByLabel("Value type").selectOption("compensation");
   await criterion.getByLabel("Minimum", { exact: true }).fill("120000"); await criterion.getByLabel("Maximum", { exact: true }).fill("100000");
@@ -142,25 +142,25 @@ test("source and whole-definition deletion explain effects and clear derived con
   const before = (await saved(page)).preferences;
   await step(page, "Background"); await page.getByRole("button", { name: "Remove cv.md", exact: true }).click(); await expect(page.getByText(/clears all clarification questions and answers/)).toBeVisible(); await page.getByRole("button", { name: "Confirm remove source" }).click(); await expect(page.getByRole("status")).toContainText("Source removed");
   expect((await saved(page)).preferences).toEqual(before); expect((await saved(page)).clarifications).toEqual([]);
-  await step(page, "Review & save"); await page.getByText("Delete this definition", { exact: true }).click(); await page.getByRole("button", { name: "Delete definition and sources", exact: true }).click(); await page.getByRole("button", { name: "Confirm delete definition", exact: true }).click(); await expect(page.getByLabel("Your ideal job description")).toHaveValue(""); expect(await saved(page)).toBeNull();
+  await step(page, "Review & save"); await page.getByText("Delete this definition", { exact: true }).click(); await page.getByRole("button", { name: "Delete definition and sources", exact: true }).click(); await page.getByRole("button", { name: "Confirm delete definition", exact: true }).click(); await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toHaveValue(""); expect(await saved(page)).toBeNull();
 });
 
 test("keyboard step navigation preserves unfinished source input and guards unsaved reloads", async ({ page }) => {
   await start(page); const background = page.getByRole("navigation", { name: "Definition steps" }).getByRole("button", { name: /Background/ }); await background.focus(); await page.keyboard.press("Enter");
   await page.getByLabel("Source type").selectOption("text"); await page.getByLabel("Source name").fill("Unfinished notes"); await page.getByLabel("Background text").fill("Keep this while I change steps.");
   await step(page, "Describe"); await step(page, "Background"); await expect(page.getByLabel("Background text")).toHaveValue("Keep this while I change steps.");
-  await step(page, "Describe"); await page.getByLabel("Your ideal job description").fill("Unsaved refinement"); await expect(page.getByText("Unsaved changes", { exact: true }).first()).toBeVisible();
-  page.once("dialog", dialog => dialog.dismiss()); await page.getByRole("button", { name: "Reopen saved definition" }).click(); await expect(page.getByLabel("Your ideal job description")).toHaveValue("Unsaved refinement");
-  page.once("dialog", dialog => dialog.accept()); await page.getByRole("button", { name: "Reopen saved definition" }).click(); await expect(page.getByLabel("Your ideal job description")).toHaveValue(description);
+  await step(page, "Describe"); await page.getByRole("textbox", { name: "The role you’re looking for", exact: true }).fill("Unsaved refinement"); await expect(page.getByText("Unsaved changes", { exact: true }).first()).toBeVisible();
+  page.once("dialog", dialog => dialog.dismiss()); await page.getByRole("button", { name: "Reopen saved definition" }).click(); await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toHaveValue("Unsaved refinement");
+  page.once("dialog", dialog => dialog.accept()); await page.getByRole("button", { name: "Reopen saved definition" }).click(); await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toHaveValue(description);
 });
 
 test("unavailable browser storage shows a retry state and keeps the editor disabled", async ({ page }) => {
   await page.addInitScript(key => localStorage.setItem(key, "invalid-json"), MOCK_STORAGE_KEY);
   await page.goto("/");
   await expect(page.getByRole("main").getByRole("alert")).toContainText("Browser storage is unavailable");
-  await expect(page.getByLabel("Your ideal job description")).toBeDisabled();
+  await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toBeDisabled();
   await page.evaluate(key => localStorage.removeItem(key), MOCK_STORAGE_KEY);
   await page.getByRole("button", { name: "Retry opening workspace" }).click();
-  await expect(page.getByLabel("Your ideal job description")).toBeEnabled();
+  await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toBeEnabled();
   await expect(page.getByRole("status")).toHaveText("Ready.");
 });

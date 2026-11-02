@@ -13,13 +13,13 @@ test("English and Spanish switch immediately, persist, and preserve the full edi
   await page.getByRole("button", { name: "Save draft", exact: true }).click();
   await switchTo(page, "es");
   await expect(page.locator("html")).toHaveAttribute("lang", "es");
-  await expect(page).toHaveTitle("Tu trabajo ideal | Asistente profesional");
+  await expect(page).toHaveTitle("El puesto que buscas | Asistente profesional");
   await expect(page.getByRole("main").getByRole("alert")).toContainText("Introduce una descripción");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Define tu trabajo ideal.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Aclara qué puesto estás buscando.");
   const description = "Busco un puesto Staff de arquitectura y trabajo remoto cerca de Madrid.";
-  await page.getByLabel("Descripción de tu trabajo ideal").fill(description);
+  await page.getByRole("textbox", { name: "El puesto que buscas", exact: true }).fill(description);
   await switchTo(page, "en");
-  await expect(page.getByLabel("Your ideal job description")).toHaveValue(description);
+  await expect(page.getByRole("textbox", { name: "The role you’re looking for", exact: true })).toHaveValue(description);
   await switchTo(page, "es");
   await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
   await expect(page.getByRole("status")).toContainText("Borrador guardado");
@@ -68,7 +68,7 @@ test("English and Spanish switch immediately, persist, and preserve the full edi
   expect(await page.evaluate(key => localStorage.getItem(key), MOCK_STORAGE_KEY)).toBe(before);
   await switchTo(page, "es");
   await page.reload();
-  await expect(page.getByLabel("Descripción de tu trabajo ideal")).toHaveValue(description);
+  await expect(page.getByRole("textbox", { name: "El puesto que buscas", exact: true })).toHaveValue(description);
   await expect(page.locator(".locale-switcher select")).toHaveValue("es");
   await nav(page, /Revisa y guarda/);
   await expect(salary.getByLabel("Mínimo", { exact: true })).toHaveValue("100000");
@@ -82,7 +82,7 @@ test("English and Spanish switch immediately, persist, and preserve the full edi
 
 test("Spanish source errors and pending source input survive a language switch", async ({ page }) => {
   await page.goto("/"); await switchTo(page, "es");
-  await page.getByLabel("Descripción de tu trabajo ideal").fill("Un puesto con conciliación");
+  await page.getByRole("textbox", { name: "El puesto que buscas", exact: true }).fill("Un puesto con conciliación");
   await page.getByRole("button", { name: "Guardar borrador", exact: true }).click();
   await nav(page, /Trayectoria/);
   await page.getByLabel("Tipo de fuente").selectOption("url");
@@ -107,8 +107,8 @@ test("invalid stored locales fall back to English and switching works without st
     const original = Storage.prototype.setItem;
     Storage.prototype.setItem = function (k, value) { if (k === key) throw new DOMException("Storage unavailable"); original.call(this, k, value); };
   }, LOCALE_STORAGE_KEY);
-  await page.goto("/"); await expect(page.getByRole("heading", { level: 1 })).toHaveText("Define your ideal job.");
+  await page.goto("/"); await expect(page.getByRole("heading", { level: 1 })).toHaveText("Clarify the role you’re looking for.");
   await page.locator(".locale-switcher select").focus(); await page.keyboard.press("ArrowDown"); await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Define tu trabajo ideal.");
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText("Aclara qué puesto estás buscando.");
   await expect(page.locator("html")).toHaveAttribute("lang", "es");
 });

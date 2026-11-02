@@ -4,8 +4,8 @@ import { AppShell } from "../components/app-shell";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Your ideal job | Career assistant",
-  description: "Define what matters in your next role, from responsibilities to work–life balance.",
+  title: "The role you’re looking for | Career assistant",
+  description: "Clarify what you’re looking for in a role, from responsibilities to work–life balance.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

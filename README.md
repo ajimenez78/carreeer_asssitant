@@ -1,6 +1,6 @@
 # Career assistant
 
-The MVP helps one private user define and refine an ideal job. The backend and
+The MVP helps one private user clarify the role they are looking for. The backend and
 Next.js shell and private job-definition backend are implemented, including owner
 login, document/link extraction, reviewed background, AI proposals, saving and
 deletion. Requirements and progress live in

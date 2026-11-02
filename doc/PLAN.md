@@ -6,6 +6,8 @@ Status: Parts 1–8 are implemented and verified locally; Part 8 was completed o
 
 The MVP helps a user define, save, revisit, and refine an ideal job using their preferences and optional background documents or profile links. It covers responsibilities, scope, compensation, location, work arrangement, and work–life balance.
 
+Frontend wording, updated at the user's request on 2026-11-02, frames this as clarifying the role the user is looking for. English and Spanish headings, navigation, description labels, and page metadata follow that framing; the existing workflow and API terminology remain unchanged.
+
 Job discovery, offer scoring, notifications, skill development plans, application tracking, interview preparation, and support after starting a job belong to later phases. Consider their relationships in the design without implementing their workflows or unused infrastructure.
 
 - Keep the required Next.js frontend, Python backend, Railway hosting, Neon PostgreSQL/document storage, direct OpenAI API, and relational persistence.

@@ -14,8 +14,8 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   }, []);
   useEffect(() => {
     document.documentElement.lang = locale;
-    document.title = translate(locale, "Your ideal job | Career assistant");
-    document.querySelector('meta[name="description"]')?.setAttribute("content", translate(locale, "Define what matters in your next role, from responsibilities to work–life balance."));
+    document.title = translate(locale, "The role you’re looking for | Career assistant");
+    document.querySelector('meta[name="description"]')?.setAttribute("content", translate(locale, "Clarify what you’re looking for in a role, from responsibilities to work–life balance."));
   }, [locale]);
   function setLocale(next: Locale) {
     updateLocale(next);
