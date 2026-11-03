@@ -1,12 +1,13 @@
 # Career assistant roadmap
 
 Updated: 2026-11-03. The current feature is **business requirement #2: job finding**.
-This planning request does not start implementation or authorize new services.
+Job-finding Part 1 requirements work is complete and approved on 2026-11-03; application implementation and
+Part 2 feasibility have not started. No new service is authorized by this roadmap.
 
 | Feature | Status | Execution plan |
 | --- | --- | --- |
 | 1. Job definition | Implemented; working cloud preview approved on 2026-11-03 with accepted operational limitations | [Completed MVP plan](features/job-definition/PLAN.md) |
-| 2. Job finding | Planned; product and source-access decisions remain open | [Job-finding implementation plan](features/job-finding/PLAN.md) |
+| 2. Job finding | Part 1 complete and approved; Part 2 source/runner/email feasibility next | [Job-finding implementation plan](features/job-finding/PLAN.md) |
 | 3. Closing the gap | Future feature | Plan when this feature starts |
 | 4. Application tracking and interview preparation | Future feature | Plan when this feature starts |
 | 5. Starting a job and further growth | Future feature | Plan when this feature starts |
@@ -17,6 +18,14 @@ notifications, feedback, assistant integration, local validation and release.
 Parts 1–2 settle the decisions needed before implementing external discovery.
 The manual-intake path can progress while provider access is being resolved;
 it does not by itself complete requirement #2.
+
+Part 1 deliverables are the [feature specification](features/job-finding/SPEC.md),
+[24 acceptance scenarios](features/job-finding/ACCEPTANCE_SCENARIOS.md) and
+[design-review record](features/job-finding/validation/PART1_VALIDATION.md).
+The user selected daily 09:00 Europe/Madrid search after opt-in, an in-app inbox
+plus daily email digest, and LinkedIn first with fallback decided after Part 2
+evidence. Initial specification limits are revisable defaults; source/email access
+and actual quotas/costs remain unverified.
 
 Build and maintain meaningful behavior and regression tests within each
 implementation part. Planning-only parts use acceptance walkthroughs and evidence.

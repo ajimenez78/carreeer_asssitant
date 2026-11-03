@@ -16,7 +16,10 @@ limitations accepted.
 
 The current feature is **job finding (business requirement #2)**, with a
 [14-part implementation plan](doc/features/job-finding/PLAN.md); implementation
-has not started. See the [project roadmap](doc/PLAN.md) and
+has not started. Part 1 requirements are complete in the
+[feature specification](doc/features/job-finding/SPEC.md), with 24 synthetic
+acceptance scenarios; Part 2 source/runner/email feasibility is next.
+See the [project roadmap](doc/PLAN.md) and
 [documentation index](doc/README.md) for the completed MVP requirements/evidence,
 shared architecture and operating instructions.
 

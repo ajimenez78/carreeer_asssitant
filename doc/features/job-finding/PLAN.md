@@ -1,10 +1,12 @@
 # Job finding implementation plan
 
 Business requirement: **#2, Job finding**. Created: **2026-11-03**.
-Status: **proposed plan; implementation has not started**. The request authorizes
-planning and documentation reorganization. Defaults below need agreement in
-Part 1; external capabilities need evidence in Part 2. No provider access,
-subscription, LinkedIn connection, schedule or deployment is authorized by this file.
+Status: **Part 1 complete and approved on 2026-11-03; Part 2 not started**. The user authorized
+Part 1 and selected the notification channel, cadence and source-fallback policy.
+Requirements, initial specification defaults and acceptance examples are recorded
+below and in [SPEC.md](SPEC.md). Application implementation has not started;
+external capabilities still need Part 2 evidence. No provider access, subscription,
+LinkedIn connection, schedule or deployment is authorized by this file.
 
 This feature extends the approved [job-definition MVP](../job-definition/PLAN.md).
 The [project roadmap](../../PLAN.md), [documentation index](../../README.md),
@@ -102,22 +104,26 @@ Manual import, a LinkedIn search link or a fake connector alone does not satisfy
 active discovery. If LinkedIn access cannot be obtained, report that limitation
 and obtain a concrete source/scope decision before claiming full completion.
 
-## Proposed defaults and decisions to settle
+## Part 1 decisions and later feasibility work
 
-| Topic | Proposal for Part 1 | Open decision or evidence |
+User selections and inherited requirements are distinguished from initial,
+revisable specification defaults in [SPEC.md](SPEC.md).
+
+| Topic | Part 1 baseline | Later decision or evidence |
 | --- | --- | --- |
-| Search context | Use only saved accepted criteria; show their summary before starting. Reviewed background may support matching, without becoming desired preferences. | Define the minimum usable search template; a provisional search from an incomplete definition must be explicitly chosen and labeled. Clarification pause is independent of search. |
-| Discovery sources | Prioritize a supported LinkedIn route; accept LinkedIn links/pasted offers immediately. Add a permitted employer/feed/API source only when agreed. | Actual read/search access, available fields, freshness, storage permissions, quotas and price. |
-| Cadence and budgets | Start with explicit on-demand runs; recurring search disabled until configured. | Choose daily/weekly cadence, timezone, maximum pages/results/calls/run and monetary limits before activation. Include wake-up and retry costs. |
-| Notifications | Persist an in-app inbox with unread state; suggest a daily digest of new eligible matches. | Confirm whether an external channel is required, then select provider, destination, delivery cadence and price. No email integration is assumed. |
-| Matching | Explain a 0–100 fit score alongside constraint eligibility, evidence coverage and missing details. | Agree criterion weights, partial-match rules, notification threshold and calibration examples in Part 7. A score is not a hiring probability. |
-| Feedback | Interested/not interested plus optional reasons; bounded transparent personalization of ordering. | Agree reasons, adjustment limits and reset behavior. Feedback never silently edits saved criteria. |
-| Retention and limits | Retain saved offers until deleted; retain backups for seven days under the existing policy. Reuse supported document formats and parser limits. | Agree offer attachment quota, discovered-result/run retention and list limits separately from the existing five background-document slots. |
-| Operating cost | Remain within agreed hosting/backup allowances; meter every search, extraction, match and notification operation. | Verify source/notification/AI prices and account allowances; paid additions require explicit choice. |
+| Search context | Saved accepted criteria with a usable positive role/domain term; explicit provisional search permits incomplete but usable context. Clarification pause is independent. | Parts 7–8 validate query quality and stale-context handling. |
+| Discovery sources | User selected LinkedIn first, with fallback decided only after Part 2 evidence. | Actual search/read access, connection scopes, source fields, freshness, retention, quotas and price. |
+| Cadence and budgets | User selected daily 09:00 Europe/Madrid after opt-in. Bounded run/retry/AI defaults are specified; recurring inference needs explicitly saved monetary limits. | Part 2 proves runner feasibility/cost; Part 9 observes actual schedule delivery. |
+| Notifications | User selected in-app inbox plus daily email digest. Email stays disabled until setup and opt-in. | Part 2 selects/proves email provider, destination setup, quota/price and delivery capability. |
+| Matching | 0–100 base fit, separate eligibility/coverage and unknowns; initial equal weights and 75/75% notification thresholds. | Part 7 calibrates partial-match rules/weights and thresholds on labeled cases; score is not hiring probability. |
+| Feedback | Interested/not interested with optional reasons; bounded visible ordering changes and correction/reset; saved preferences remain separate. | Part 11 calibrates adjustment magnitudes and proves before/after behavior. |
+| Retention and limits | Retain offers until deleted; initial 500-offer capacity, five offer files separate from background slots, 30-day diagnostics and seven-day backups. | Parts 2–4 resolve provider compatibility and measure storage; detailed limits are in the spec. |
+| Operating cost | Keep existing allowances, meter all usage and add no unselected paid subscriptions. Proposed AI caps are configuration defaults, not spending approval. | Part 2 verifies current prices/access/account allowances; paid additions require explicit choice. |
 
-Part 1 records agreed choices in `SPEC.md` beside this plan. Part 2 records source
-and execution evidence in `SOURCE_ACCESS.md`. Create those files when the work is
-done; neither document exists as an agreed contract yet.
+Part 1 deliverables are [SPEC.md](SPEC.md),
+[ACCEPTANCE_SCENARIOS.md](ACCEPTANCE_SCENARIOS.md) and
+[the design-review record](validation/PART1_VALIDATION.md). Part 2 will record
+actual source/execution evidence in `SOURCE_ACCESS.md`; that evidence does not yet exist.
 
 ## LinkedIn feasibility evidence
 
@@ -142,41 +148,45 @@ only with an explicit decision.
 Dependency: this plan is reviewed before implementation starts.
 Deliverable: an agreed feature specification and reference acceptance examples.
 
-- [ ] Walk through saved definition → search/manual add → inspect score → feedback
+- [x] Walk through saved definition → search/manual add → inspect score → feedback
   → notification, in English and Spanish; define navigation alongside job definition.
-- [ ] Resolve the table above, including provisional searches, recurring-run opt-in,
+- [x] Resolve the table above, including provisional searches, recurring-run opt-in,
   notification channel, limits, deletion and any paid-source decision.
-- [ ] Specify acceptance examples derived from the reference ideal job using
+- [x] Specify acceptance examples derived from the reference ideal job using
   synthetic offers: Staff architecture scope, Madrid hybrid constraints,
   AI-engineering preference, compensation and work–life balance.
-- [ ] Record scope, decisions and measurable targets in `SPEC.md`; distinguish
+- [x] Record scope, decisions and measurable targets in `SPEC.md`; distinguish
   accepted behavior from provider-dependent work and later features.
 
 ### Tests and test maintenance
 
-- [ ] Define named acceptance scenarios with inputs and expected user outcomes for
+- [x] Define named acceptance scenarios with inputs and expected user outcomes for
   the reference job, incomplete criteria and explicit review/save boundaries; reuse
   them as implementation fixtures in later parts.
-- [ ] Review these scenarios against business requirements and risks. Validate
+- [x] Review these scenarios against business requirements and risks. Validate
   planning decisions through walkthroughs rather than artificial document tests.
 
 ### Validation checklist
 
-- [ ] Trace every requirement #2 bullet to an observable acceptance outcome and
+- [x] Trace every requirement #2 bullet to an observable acceptance outcome and
   implementation part; record any unresolved source-access decision and next step.
-- [ ] Walk through complete and incomplete saved definitions in both languages;
+- [x] Walk through complete and incomplete saved definitions in both languages;
   optional unknowns/skips do not force clarification or block a usable template.
-- [ ] Review the synthetic reference scenarios, including Staff scope, conditional
+- [x] Review the synthetic reference scenarios, including Staff scope, conditional
   Madrid hybrid limits, compensation and work–life balance, against the specification.
-- [ ] Confirm the agreed scope includes functional shared chat from the first UI
+- [x] Confirm the agreed scope includes functional shared chat from the first UI
   delivery, explicit save/review, notification delivery and feedback-based ranking.
-- [ ] Record agreed defaults, measurable targets and remaining provider-dependent
+- [x] Record confirmed choices, initial defaults, targets and provider-dependent
   decisions in `SPEC.md` without presenting proposals as approved choices.
+
+Completed on 2026-11-03. [Part 1 validation](validation/PART1_VALIDATION.md) records
+the user's selections, initial specification defaults and reviewed design outcomes.
+No application/provider behavior has been executed or verified by these walkthroughs.
 
 ## Part 2: Prove source access and background execution
 
 Dependency: Part 1 defines the intended sources and limits.
-Deliverable: a small feasibility spike and a recorded connector/execution decision.
+Deliverable: a small feasibility spike and recorded source/runner/email decisions.
 
 - [ ] Verify LinkedIn discovery options using current primary documentation and
   actual permitted access. Record fields, pagination, location filters, freshness,
@@ -192,6 +202,9 @@ Deliverable: a small feasibility spike and a recorded connector/execution decisi
 - [ ] Confirm present hosting, database, scheduler, source and notification
   allowances. Record authentication, secrets, budget enforcement, recovery and
   scheduling approach in `SOURCE_ACCESS.md` before enabling external automation.
+- [ ] Establish a daily-email provider/destination setup path, sending capability,
+  quotas/costs and failure handling for the selected channel. Record unresolved
+  access explicitly; no subscription or live message is implied by this plan.
 
 ### Tests and test maintenance
 
@@ -215,6 +228,8 @@ Deliverable: a small feasibility spike and a recorded connector/execution decisi
   handling, revocation/disconnection and truthful failure after access is revoked.
 - [ ] Record source/runner quotas, measured costs, operating constraints and the
   execution decision in `SOURCE_ACCESS.md` before external automation is enabled.
+- [ ] Record evidence for selected-channel email capability and destination
+  verification, or the precise access/cost decision still needed before integration.
 
 ## Part 3: Add the minimal offer schema and API contract
 
@@ -505,10 +520,11 @@ Deliverable: useful, deduplicated notifications with visible delivery state.
   and no dismissal. Explain when an offer needs review instead of qualifying.
 - [ ] Persist a notification inbox with read/dismiss actions and stable offer/event
   identity. Avoid alerts for duplicate imports, repeated runs, unchanged refreshes
-  or already dismissed offers; agree what material improvement permits re-alerting.
-- [ ] Implement the agreed digest/instant policy. If an external channel is chosen,
-  configure only that channel, keep credentials backend-only, and make its content
-  useful without exposing private definition details. Support disable/pause.
+  or already dismissed/read offers; the initial scope has no automatic re-alerting.
+- [ ] Implement the selected in-app inbox plus daily email digest, with verified
+  destination setup and provider credentials backend-only. Keep omitted eligible
+  offers pending for later digests. Support independent search/email disable/pause
+  and useful digest content without private definition details.
 - [ ] Persist pending/sent/failed delivery and bounded retry. Enforce provider limits
   and handle ambiguous delivery responses without claiming exactly-once transport.
 
@@ -524,14 +540,14 @@ Deliverable: useful, deduplicated notifications with visible delivery state.
 - [ ] Test score/coverage threshold boundaries, missing salary, unknown constraints,
   stale scores and closed/ineligible offers; only qualifying matches generate alerts.
 - [ ] Repeat imports/runs/refreshes and dismiss offers; event identity prevents
-  duplicate alerts and re-alerting follows the agreed material-improvement policy.
-- [ ] Verify inbox persistence and read/dismiss state, digest/instant timing,
+  duplicate alerts, with no automatic re-alerting of dismissed/read offers.
+- [ ] Verify inbox persistence and read/dismiss state, daily email digest timing,
   disable/pause and channel opt-out through API and bilingual browser tests.
 - [ ] Inject delivery failure, rate limiting and ambiguous responses using a fake
   notifier; pending/sent/failed state and bounded retries remain accurate.
-- [ ] During feature validation, verify the agreed channel with a bounded
+- [ ] During feature validation, verify the selected email channel with a bounded
   owner-directed delivery test; configuration alone does not establish delivery.
-  External-channel checks apply only when that channel is selected and authorized.
+  Email remains disabled until destination/provider setup and opt-in are complete.
 - [ ] Check notification content exposes no private definition details and chat
   remains functional on inbox/detail views, using saved offer evidence.
 

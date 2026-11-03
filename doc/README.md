@@ -6,9 +6,14 @@ the job-definition MVP is the implemented baseline.
 ## Current feature: job finding
 
 - [Implementation plan](features/job-finding/PLAN.md): 14 small parts, dependencies,
-  proposed defaults, outstanding decisions and acceptance criteria for requirement #2.
-- Implementation has not started. This plan proposes future behavior; it does not
-  claim that search, scoring, notifications or learning are already available.
+  Part 1 complete; Part 2 source/runner/email feasibility is next.
+- [Part 1 specification](features/job-finding/SPEC.md): confirmed user selections,
+  inherited requirements, initial defaults and remaining provider-dependent work.
+- [Acceptance scenarios](features/job-finding/ACCEPTANCE_SCENARIOS.md): 24 named
+  synthetic examples to turn into useful tests during their implementation parts.
+- [Part 1 review record](features/job-finding/validation/PART1_VALIDATION.md): design
+  walkthroughs and requirement traceability. Application implementation has not
+  started; search, scoring, notifications and learning are not yet available.
 
 ## Implemented feature: job definition
 
