@@ -1,5 +1,22 @@
 # Render PostgreSQL deployment and recovery
 
+For a short description of the running system and current acceptance status, see
+[deployment overview](OVERVIEW.md). The user approved Part 11 as a working preview
+on 3 November 2026, explicitly accepting the remaining account usage/notification
+and automatic-schedule verification limitations as operational follow-ups.
+The [3 November audit](evidence/PART11_FINAL_AUDIT.json)
+confirms Render failure emails and live service health. The subsequent
+[R2 completion check](evidence/PART11_R2_COMPLETION.json) verifies lifecycle expiry,
+three scoped credentials and their deployment. [R2 account usage](evidence/PART11_R2_USAGE_CHECK.json)
+fits the reported free allowances. Other provider usage/notification checks and
+an observed scheduled backup remain outstanding. The schedule is configured,
+but only manual runs have been observed. The instructions below remain the
+operating procedure.
+
+Track remaining checks and the preview-expiration deadline in
+[operational follow-ups](FOLLOW_UPS.md). The [job-finding plan](../features/job-finding/PLAN.md)
+does not change the deployed feature set or enable new schedules.
+
 Part 11 was authorized on 2026-11-02. Render replaces Railway at the user's request.
 The user re-enabled Cloudflare backups on 2026-11-02, superseding the temporary
 deferral. Provision separate private original-document and backup buckets. The
@@ -13,8 +30,8 @@ accepting its expiration. Keep the declared Free plan; no paid upgrade is author
 The free database was created on 2 November 2026 at 17:45 Madrid time and expires
 on 2 December 2026 at 17:45 Madrid time. The app is live at
 https://career-assistant-jgpm.onrender.com and daily GitHub backups are enabled. Export
-any workspace to retain before expiration. See [PART11_VALIDATION.md](PART11_VALIDATION.md)
-and [resource details](PART11_RENDER_PREVIEW.json).
+any workspace to retain before expiration. See [PART11_VALIDATION.md](validation/PART11_VALIDATION.md)
+and [resource details](evidence/PART11_RENDER_PREVIEW.json).
 
 ## Accounts and release prerequisites
 
@@ -142,12 +159,13 @@ or owner prerequisites are not ready yet.
 
 ## Daily independent backups
 
-Current state: `BACKUPS_ENABLED=true`; the first GitHub-hosted run and real
-restoration passed. The supplied S3 key is shared between originals/backups.
-Create separate bucket-scoped keys, and a read-only originals key for CI, to
-complete credential isolation. R2 denied lifecycle management for this key;
-configure the seven-day prefix expiry below through the R2 dashboard. Worker
-pruning already runs after each verified backup.
+Current state: `BACKUPS_ENABLED=true`; GitHub-hosted backups and real restoration
+passed. On 3 November, three distinct bucket-scoped keys were installed and
+verified: web document read/write, CI document read-only, and backup archive
+read/write. The backup prefix has a verified seven-day lifecycle rule in addition
+to worker pruning. The operator `CARREER_CLOUDFARE_TOKEN` manages bucket settings;
+the application/CI object keys intentionally lack management access. The setup
+instructions below describe how to reproduce or replace this configuration.
 
 In Cloudflare, open **R2 → backup bucket → Settings → Object Lifecycle Rules →
 Add rule**. Enable object deletion after seven days for prefix `career-backups/`
@@ -174,8 +192,9 @@ Create a dedicated private R2 Standard bucket. Configure a seven-day object life
 expiry on the dedicated `career-backups/` prefix as a backstop if the scheduler stops.
 Use bucket-scoped write/list/delete credentials on the backup runner, separate from
 the web service credentials. Supply originals-only credentials to the web app;
-keep backup bucket credentials on the operations runner. The current shared-key
-limitation described above still needs replacement credentials.
+keep backup bucket credentials on the operations runner. The former shared-key
+limitation was resolved on 3 November; preserve the same separation when rotating
+credentials.
 
 External operations settings:
 
@@ -265,7 +284,7 @@ refinement → floating chat → reviewed chat save; bounded live synthetic infe
 restart/redeploy and rollback persistence; private original retrieval; backup/restore;
 and real sleep/wake behavior. Use synthetic data in disposable branches/environments.
 Do not replace existing user work with a smoke-test definition. Completed checks
-for this preview are in [PART11_VALIDATION.md](PART11_VALIDATION.md).
+for this preview are in [PART11_VALIDATION.md](validation/PART11_VALIDATION.md).
 
 Render Free supplies 512 MB / 0.1 CPU and 750 workspace instance-hours/month, sleeps
 after 15 idle minutes, and may take about a minute to wake. It has no durable local

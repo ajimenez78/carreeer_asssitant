@@ -135,9 +135,9 @@ try:
             "memory_max_bytes": 536870912,
             "cpus": 1,
         }
-        Path("doc/PART7_CONTAINER_CHECK.json").write_text(
-            json.dumps(report, indent=2) + "\n"
-        )
+        Path(
+            "doc/features/job-definition/evidence/PART7_CONTAINER_CHECK.json"
+        ).write_text(json.dumps(report, indent=2) + "\n")
         print(json.dumps(report))
 finally:
     subprocess.run(

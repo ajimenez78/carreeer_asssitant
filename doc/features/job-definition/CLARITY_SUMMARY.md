@@ -26,7 +26,7 @@ structured workflow. Part 10 chat and later job discovery remain outside scope.
 - Add a fifth Summary view with prose, clarity explanation/gaps, and clear
   feedback when saved context is unassessed or differs from local edits.
 
-Payloads and limits are documented in [BACKEND_API.md](BACKEND_API.md). The
+Payloads and limits are documented in [BACKEND_API.md](../../architecture/BACKEND_API.md). The
 requirements are in [MVP_SPEC.md](MVP_SPEC.md) and execution in [PLAN.md](PLAN.md).
 
 Migration `0004` adds assessment/pause persistence and a monotonic control version
@@ -82,7 +82,7 @@ was assessed sufficiently clear while retaining an optional unknown. Both
 produced prose, kept historical background separate from requirements, and
 passed the focused-question/clear-stop gates. Calls took approximately 8.0 and
 4.5 seconds. Full results are in
-[CLARITY_AI_EVALUATION.json](CLARITY_AI_EVALUATION.json). This is bounded quality
+[CLARITY_AI_EVALUATION.json](evidence/CLARITY_AI_EVALUATION.json). This is bounded quality
 evidence for those two cases, not a general guarantee or deployed check.
 
 The combined production image passes packaged repeatable migrations, the full
@@ -92,7 +92,7 @@ session, originals, summary, and pause. The runtime contains Python only, runs
 without root, excludes private files, and was checked under 512 MiB/one CPU.
 Its memory snapshot was 113.5 MiB; this is not a peak or monthly free-tier fit
 measurement. The image ID and checks are in
-[CLARITY_RELEASE_CHECK.json](CLARITY_RELEASE_CHECK.json).
+[CLARITY_RELEASE_CHECK.json](evidence/CLARITY_RELEASE_CHECK.json).
 
 Local migration `0003` → `0004` also passed against the existing owner database.
 Before changing it, a mode-600 backup was written to the ignored private path

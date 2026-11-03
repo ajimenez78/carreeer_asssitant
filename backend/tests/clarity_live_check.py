@@ -166,7 +166,7 @@ def main():
     finally:
         client.close()
     report = dict(synthetic_only=True, results=records)
-    Path("doc/CLARITY_AI_EVALUATION.json").write_text(
+    Path("doc/features/job-definition/evidence/CLARITY_AI_EVALUATION.json").write_text(
         json.dumps(report, ensure_ascii=False, indent=2) + "\n"
     )
     passed = len(records) == 2 and all(
@@ -177,7 +177,7 @@ def main():
             dict(
                 passed=passed,
                 cases=len(records),
-                report="doc/CLARITY_AI_EVALUATION.json",
+                report="doc/features/job-definition/evidence/CLARITY_AI_EVALUATION.json",
             )
         )
     )

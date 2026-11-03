@@ -20,16 +20,15 @@
   "web_service_id": "srv-dbkc9l4s728c73cohshg",
   "web_service_url": "https://career-assistant-jgpm.onrender.com",
   "web_service_plan": "free",
-  "deploy_id": "dep-dbkcr8d9fdbs73c20he0",
+  "deploy_id": "dep-dbkrhkff3r2c73fnuli0",
   "deployed_commit": "9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244",
   "github_first_successful_run": "https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41488898644",
   "last_verified_backup": {
-    "event": "backup_completed",
-    "key": "career-backups/20261102T171252Z-9cea4e74715d4308a335627a040cdccf.zip",
-    "bytes": 216255,
+    "key": "career-backups/20261103T103531Z-f900d28b56b94a4bba70abc9fe1e4d4c.zip",
+    "bytes": 219504,
     "originals": 2,
-    "expired_removed": 0,
-    "elapsed_seconds": 21.525
+    "all_checksums_valid": true,
+    "revision": "0005"
   },
   "database_bytes": 8599231,
   "r2_application_usage": {
@@ -38,16 +37,31 @@
       "bytes": 184269
     },
     "backups": {
-      "objects": 2,
-      "bytes": 432510
+      "objects": 4,
+      "bytes": 868234,
+      "latest_modified_utc": "2026-11-03T10:35:47.355000+00:00"
     }
   },
-  "r2_lifecycle_backstop": "pending dashboard setup: scoped S3 credentials return AccessDenied",
-  "separate_document_and_backup_credentials": false,
+  "r2_lifecycle_backstop": "enabled: seven-day expiry for career-backups/; configured and read back on 2026-11-03",
+  "separate_document_and_backup_credentials": true,
   "initial_deploy_id": "dep-dbkc9lks728c73cohtng",
   "manual_redeploy_and_rollback_verified": true,
   "render_image_digest": "not exposed by available public deployment API; local digest recorded separately",
   "idle_recovery_verified": true,
   "idle_first_request_seconds": 32.92,
-  "hosted_backup_restore_verified": true
+  "hosted_backup_restore_verified": true,
+  "previous_deploy_id": "dep-dbkcr8d9fdbs73c20he0",
+  "backup_originals_credential_read_only": true,
+  "latest_verified_scoped_backup_run": "https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41620465217",
+  "preview_acceptance": {
+    "part11_status": "complete_with_accepted_limitations",
+    "approved_on": "2026-11-03",
+    "approved_by": "user",
+    "scope": "working preview",
+    "accepted_limitations": [
+      "Remaining account-wide usage/allowance and notification confirmation, including Cloudflare and OpenAI budget/alert settings.",
+      "Automatic scheduled backup delivery has not been observed; manual backups and recovery are verified."
+    ],
+    "paid_upgrades_authorized": false
+  }
 }

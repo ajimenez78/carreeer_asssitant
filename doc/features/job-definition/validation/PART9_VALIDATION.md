@@ -35,7 +35,7 @@ request for Part 9. Chat and hosted deployment remain Parts 10 and 11.
   512 MiB/one-CPU application limits. No migration or inference runs at startup.
 - README gives clean-checkout setup, owner/secret configuration, one-origin and
   hot-reload workflows, image operation, test commands and safe stop/replacement.
-  [DEPLOYMENT.md](DEPLOYMENT.md) records the future Railway/Neon procedure with
+  [DEPLOYMENT.md](../../../operations/DEPLOYMENT.md) records the future Railway/Neon procedure with
   separate migrations, access controls, smoke checks and distinct rollback/recovery.
 
 No new application dependency was required. Current lockfiles are retained.
@@ -53,8 +53,8 @@ Node.js 26 LTS is used only by the new build stage. The backend's existing Pytho
 | Pydantic contract check | 15 synthetic mock request/response payloads validate against existing backend schemas. |
 | Mock-mode Chromium regressions | 22 pass across desktop/Pixel 7 sizes in an isolated Next.js output directory. |
 | Real-backend Chromium | 7 pass; the explicit paid live test is skipped in ordinary runs. |
-| Explicit live synthetic workflow | Passes with two `gpt-6-luna` generations. See [PART9_AI_WORKFLOW.json](PART9_AI_WORKFLOW.json). |
-| Combined image and replacement | Passes. See [PART9_RELEASE_CHECK.json](PART9_RELEASE_CHECK.json). |
+| Explicit live synthetic workflow | Passes with two `gpt-6-luna` generations. See [PART9_AI_WORKFLOW.json](../evidence/PART9_AI_WORKFLOW.json). |
+| Combined image and replacement | Passes. See [PART9_RELEASE_CHECK.json](../evidence/PART9_RELEASE_CHECK.json). |
 | Docker context audit | 53 allowed source/lock/config files, approximately 444 KB; no .env, personal documents, credentials, dependencies, tests or caches. |
 
 The real browser suite uses a newly migrated disposable PostgreSQL database,

@@ -167,7 +167,7 @@ def main():
             assert client.get("/api/job-definition").status_code == 401
             report["secure_httponly_strict_cookies_and_revocation"] = True
         report["passed"] = True
-        Path("doc/PART11_DEPLOYED_CHECK.json").write_text(
+        Path("doc/operations/evidence/PART11_DEPLOYED_CHECK.json").write_text(
             json.dumps(report, indent=2) + "\n"
         )
         print(json.dumps(report))

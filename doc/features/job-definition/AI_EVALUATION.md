@@ -69,10 +69,10 @@ regression test rejects the originally observed softening of those limits.
 
 Evidence:
 
-- [Arithmetic smoke](AI_SMOKE.json)
-- [Initial quality run](AI_EVALUATION_INITIAL.json)
-- [Synthetic diagnostic proposal](AI_REFERENCE_DIAGNOSTIC.json)
-- [Final quality run](AI_EVALUATION.json)
+- [Arithmetic smoke](evidence/AI_SMOKE.json)
+- [Initial quality run](evidence/AI_EVALUATION_INITIAL.json)
+- [Synthetic diagnostic proposal](evidence/AI_REFERENCE_DIAGNOSTIC.json)
+- [Final quality run](evidence/AI_EVALUATION.json)
 
 These are small synthetic examples, with no real CV/profile input. They show
 inference access and representative behavior, not a production SLA, exhaustive
@@ -113,4 +113,4 @@ the synthetic quality gates, and existing persistence behavior.
 The backend image builds with the locked SDK/native dependencies. Hosted
 inference remains a Part 11 check. Part 7 subsequently implemented the API and
 application schemas; its two synthetic schema/quality calls and broader backend
-tests are recorded separately in [PART7_VALIDATION.md](PART7_VALIDATION.md).
+tests are recorded separately in [PART7_VALIDATION.md](validation/PART7_VALIDATION.md).

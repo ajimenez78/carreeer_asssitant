@@ -8,13 +8,17 @@ The system assesses clarity and provides a natural-language summary; clarificati
 can be stopped at any time and resumed explicitly. Chat refines the same definition
 through proposals that you review and save.
 
-The Free Render preview is live at [career-assistant-jgpm.onrender.com](https://career-assistant-jgpm.onrender.com),
-with Render PostgreSQL, R2 originals and verified daily backups. Final Part 11
-acceptance items are recorded in the deployment status. See [the plan](doc/PLAN.md),
-[requirements](doc/MVP_SPEC.md), and [Part 9 validation](doc/PART9_VALIDATION.md).
-The subsequent clarity/summary extension is tracked in
-[CLARITY_SUMMARY.md](doc/CLARITY_SUMMARY.md). Chat evidence is in
-[Part 10 validation](doc/PART10_VALIDATION.md).
+The job-definition MVP is implemented. The Free Render preview is live at
+[career-assistant-jgpm.onrender.com](https://career-assistant-jgpm.onrender.com),
+with Render PostgreSQL, R2 originals and verified private backups. Its deployment
+was approved as a working preview on 3 November 2026 with documented operational
+limitations accepted.
+
+The current feature is **job finding (business requirement #2)**, with a
+[14-part implementation plan](doc/features/job-finding/PLAN.md); implementation
+has not started. See the [project roadmap](doc/PLAN.md) and
+[documentation index](doc/README.md) for the completed MVP requirements/evidence,
+shared architecture and operating instructions.
 
 ## Prerequisites
 
@@ -183,7 +187,7 @@ make storage-cleanup
 
 The hosted workspace has daily independent backups with seven-day pruning;
 the local application does not schedule backups. Detailed payloads and limits are in
-[the backend API](doc/BACKEND_API.md) and [persistence notes](doc/PERSISTENCE.md).
+[the backend API](doc/architecture/BACKEND_API.md) and [persistence notes](doc/architecture/PERSISTENCE.md).
 
 ## Mock preview
 
@@ -235,7 +239,7 @@ CAREER_RELEASE_CPUS=0.1 make release-check
 ```
 
 This builds `career-assistant:part11`, uses a disposable database and Docker volume,
-and records [the release check](doc/PART11_LOCAL_RELEASE_CHECK.json). Its first container
+and records [the release check](doc/operations/evidence/PART11_LOCAL_RELEASE_CHECK.json). Its first container
 mounts a read-only test launcher with fake AI; the replacement runs the unchanged
 production command without that mount. All test resources are removed afterward.
 
@@ -246,13 +250,13 @@ content only, against its own temporary database:
 make workflow-live
 ```
 
-Results are in [the live workflow report](doc/PART9_AI_WORKFLOW.json). Additional
+Results are in [the live workflow report](doc/features/job-definition/evidence/PART9_AI_WORKFLOW.json). Additional
 provider-only diagnostics remain available as `make ai-smoke` and `make ai-evaluate`.
 They require the backend key and incur inference charges; ordinary tests do not.
 
 Run the separate paid synthetic chat quality check with `make chat-live`. It uses
 four bounded calls through the existing model client and writes
-[PART10_AI_EVALUATION.json](doc/PART10_AI_EVALUATION.json). It does not load personal
+[PART10_AI_EVALUATION.json](doc/features/job-definition/evidence/PART10_AI_EVALUATION.json). It does not load personal
 sources or change saved data. Chat keeps the existing 20,000 input/2,000 output
 token caps and 60-second timeout. Oversized context is rejected without truncation;
 manual editing remains available.
@@ -289,11 +293,11 @@ For a schema upgrade, create a verified backup first and pass its key to
 `release --backup-key`. Render startup validates security, migration head and
 owner configuration. It does not migrate the database.
 
-The [deployment runbook](doc/DEPLOYMENT.md) explains private storage, network access,
-release/recovery commands and quotas. [Part 11 status](doc/PART11_VALIDATION.md)
+The [deployment runbook](doc/operations/DEPLOYMENT.md) explains private storage, network access,
+release/recovery commands and quotas. [Part 11 status](doc/operations/validation/PART11_VALIDATION.md)
 records local and deployed checks. The preview is live; use your existing local
 login. The free database expires on **2 December 2026 at 17:45 Madrid time**; see
-[resource details](doc/PART11_RENDER_PREVIEW.json).
+[resource details](doc/operations/evidence/PART11_RENDER_PREVIEW.json).
 The Free web service sleeps when idle. Its first authenticated request after
 17 idle minutes took 32.9 seconds and preserved the workspace/session.
 
@@ -302,6 +306,15 @@ seven-day pruning. The [first GitHub-hosted run](https://github.com/ajimenez78/c
 and a real restoration drill passed. Public SQL access stays blocked between
 maintenance runs; the workflow temporarily admits only its own runner.
 
-R2 dashboard setup remains: add seven-day expiry for the `career-backups/` prefix
-and separate bucket-scoped credentials. The supplied key works for both buckets
-but cannot configure lifecycle rules.
+R2 setup is verified: seven-day expiry for `career-backups/`, separate web and
+backup-bucket keys, and a read-only originals key for CI. The same tested release
+was redeployed with these keys; the browser flow, original downloads and
+[backup run](https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41620465217)
+passed. See the [R2 completion report](doc/operations/evidence/PART11_R2_COMPLETION.json).
+
+The [deployment summary](doc/operations/OVERVIEW.md) describes the running system.
+**Part 11 was approved as a working preview on 3 November 2026**, with remaining
+account quota/notification checks, Cloudflare alert confirmation and proof of an
+automatic scheduled backup explicitly accepted as limitations. These remain
+operational follow-ups; manual backups and recovery are verified. R2 account
+usage is measured and its reported charges are $0 within the ongoing allowances.

@@ -4,7 +4,7 @@ Historical record, superseded on 2026-11-02: the user selected Render PostgreSQL
 instead of Neon. Neon is no longer an application dependency; `neon.ts` and the
 root Neon packages were removed, and the local link was archived privately.
 No Neon cloud resources were provisioned or deleted. The sign-in request below
-is obsolete. Current setup is in [DEPLOYMENT.md](DEPLOYMENT.md).
+is obsolete. Current setup is in [DEPLOYMENT.md](../operations/DEPLOYMENT.md).
 
 ## Initialization
 

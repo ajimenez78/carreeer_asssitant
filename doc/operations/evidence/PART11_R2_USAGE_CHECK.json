@@ -1,0 +1,206 @@
+{
+  "checked_at_utc": "2026-11-03T10:34:59.705068+00:00",
+  "account_storage": {
+    "http_status": 200,
+    "metrics": {
+      "infrequentAccess": {
+        "uploaded": {
+          "objects": 0,
+          "payloadSize": 0,
+          "metadataSize": 0
+        },
+        "published": {
+          "objects": 0,
+          "payloadSize": 0,
+          "metadataSize": 0
+        }
+      },
+      "standard": {
+        "uploaded": {
+          "objects": 0,
+          "payloadSize": 0,
+          "metadataSize": 0
+        },
+        "published": {
+          "objects": 4,
+          "payloadSize": 616779,
+          "metadataSize": 432
+        }
+      }
+    },
+    "metrics_reporting_delay": true
+  },
+  "notifications": {
+    "http_status": 200,
+    "policies": []
+  },
+  "billing_usage": {
+    "http_status": 200,
+    "r2_rows": [
+      {
+        "ServiceName": "R2 Storage Class A Operations (First 1M included)",
+        "ChargeDescription": "R2 Storage Class A Operations (First 1M included) usage measured in Count",
+        "BillingCurrency": "USD",
+        "ConsumedQuantity": 36,
+        "ConsumedUnit": "",
+        "BilledCost": 0,
+        "ContractedCost": 0,
+        "ChargePeriodStart": "2026-11-02T00:00:00Z",
+        "ChargePeriodEnd": "2026-11-03T00:00:00Z"
+      },
+      {
+        "ServiceName": "R2 Data Storage (First 10GB-Month included)",
+        "ChargeDescription": "R2 Data Storage (First 10GB-Month included) usage measured in GB-months",
+        "BillingCurrency": "USD",
+        "ConsumedQuantity": 2.0577866666666668e-05,
+        "ConsumedUnit": "GB-months",
+        "BilledCost": 0,
+        "ContractedCost": 0,
+        "ChargePeriodStart": "2026-11-02T00:00:00Z",
+        "ChargePeriodEnd": "2026-11-03T00:00:00Z"
+      },
+      {
+        "ServiceName": "R2 Storage Class B Operations (First 10M included)",
+        "ChargeDescription": "R2 Storage Class B Operations (First 10M included) usage measured in Count",
+        "BillingCurrency": "USD",
+        "ConsumedQuantity": 56,
+        "ConsumedUnit": "",
+        "BilledCost": 0,
+        "ContractedCost": 0,
+        "ChargePeriodStart": "2026-11-02T00:00:00Z",
+        "ChargePeriodEnd": "2026-11-03T00:00:00Z"
+      }
+    ],
+    "all_metered_services_billed_cost_sum": 0
+  },
+  "month_to_date_operations": {
+    "http_status": 200,
+    "start_utc": "2026-11-01T00:00:00Z",
+    "end_utc": "2026-11-03T10:35:01Z",
+    "operations": [
+      {
+        "dimensions": {
+          "actionType": "HeadObject"
+        },
+        "sum": {
+          "requests": 3
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "PutObject"
+        },
+        "sum": {
+          "requests": 14
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "ListMultipartUploads"
+        },
+        "sum": {
+          "requests": 2
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "GetBucketSippyConfiguration"
+        },
+        "sum": {
+          "requests": 1
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "PutBucket"
+        },
+        "sum": {
+          "requests": 2
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "GetBucketNotificationConfiguration"
+        },
+        "sum": {
+          "requests": 2
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "DeleteObject"
+        },
+        "sum": {
+          "requests": 8
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "ListBuckets"
+        },
+        "sum": {
+          "requests": 17
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "GetObject"
+        },
+        "sum": {
+          "requests": 54
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "ListObjects"
+        },
+        "sum": {
+          "requests": 13
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "HeadBucket"
+        },
+        "sum": {
+          "requests": 10
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "PutBucketLifecycleConfiguration"
+        },
+        "sum": {
+          "requests": 1
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "GetBucketCors"
+        },
+        "sum": {
+          "requests": 1
+        }
+      },
+      {
+        "dimensions": {
+          "actionType": "GetBucketLifecycleConfiguration"
+        },
+        "sum": {
+          "requests": 4
+        }
+      }
+    ],
+    "total_requests": 132
+  },
+  "ongoing_standard_allowances": {
+    "storage_gb_month": 10,
+    "class_a_requests_per_month": 1000000,
+    "class_b_requests_per_month": 10000000,
+    "source": "https://developers.cloudflare.com/r2/pricing/"
+  },
+  "r2_reported_usage_within_ongoing_allowances": true,
+  "usage_may_lag_recent_operations": true,
+  "notification_configuration_complete": false,
+  "notification_note": "No policies returned; current token has Notifications Read only. Budget alert settings still require dashboard confirmation/configuration."
+}

@@ -112,7 +112,7 @@ def test_live_synthetic_workflow(page, workflow, request):
         assert all(checks.values()), checks
     finally:
         client.close()
-        Path("doc/PART9_AI_WORKFLOW.json").write_text(
+        Path("doc/features/job-definition/evidence/PART9_AI_WORKFLOW.json").write_text(
             json.dumps(
                 {
                     "checked_at": datetime.now(UTC).isoformat(),

@@ -1,0 +1,227 @@
+{
+  "checked_at_utc": "2026-11-03T10:36:53.157205+00:00",
+  "cloudflare": {
+    "account_token_verification_http_status": 200,
+    "token_status": "active",
+    "token_permissions_http_status": 200,
+    "permission_groups": [
+      "Notifications Read",
+      "Account API Tokens Write",
+      "Workers R2 Storage Write",
+      "Account Analytics Read",
+      "Billing Read",
+      "Workers R2 Storage Bucket Item Write"
+    ],
+    "backup_lifecycle_http_status": 200,
+    "backup_lifecycle_rules": {
+      "rules": [
+        {
+          "id": "Default Multipart Abort Rule",
+          "enabled": true,
+          "conditions": {},
+          "abortMultipartUploadsTransition": {
+            "condition": {
+              "type": "Age",
+              "maxAge": 604800
+            }
+          }
+        },
+        {
+          "id": "career-backups-seven-day-expiry",
+          "enabled": true,
+          "conditions": {
+            "prefix": "career-backups/"
+          },
+          "deleteObjectsTransition": {
+            "condition": {
+              "type": "Age",
+              "maxAge": 604800
+            }
+          }
+        }
+      ]
+    },
+    "bucket_listing_http_status": 200,
+    "notification_policies_http_status": 200,
+    "original_and_backup_keys_identical": false,
+    "account_usage_report": "PART11_R2_USAGE_CHECK.json",
+    "scoped_credential_rollout_report": "PART11_R2_COMPLETION.json"
+  },
+  "render": {
+    "service_http_status": 200,
+    "service_id": "srv-dbkc9l4s728c73cohshg",
+    "suspended": "not_suspended",
+    "automatic_deploys": "off",
+    "plan": "free",
+    "region": "frankfurt",
+    "notify_on_fail": "default",
+    "workspace_notifications_http_status": 200,
+    "workspace_notifications": {
+      "emailEnabled": true,
+      "notificationsToSend": "failure"
+    },
+    "service_notifications_http_status": 200,
+    "service_notifications": {
+      "notificationsToSend": "default"
+    },
+    "deploys_http_status": 200,
+    "recent_deploys": [
+      {
+        "id": "dep-dbkrhkff3r2c73fnuli0",
+        "status": "live",
+        "commit": {
+          "id": "9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244",
+          "message": "Verify cloud recovery and scope backup runner database access",
+          "createdAt": "2026-11-02T17:11:30Z"
+        },
+        "finishedAt": "2026-11-03T10:35:48.224244Z"
+      },
+      {
+        "id": "dep-dbkcr8d9fdbs73c20he0",
+        "status": "deactivated",
+        "commit": {
+          "id": "9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244",
+          "message": "Verify cloud recovery and scope backup runner database access",
+          "createdAt": "2026-11-02T17:11:30Z"
+        },
+        "finishedAt": "2026-11-02T17:52:03.20494Z"
+      },
+      {
+        "id": "dep-dbkcqo3l550s73bnbav0",
+        "status": "deactivated",
+        "commit": {
+          "id": "a72b01de1f2e26ccc327a947ad8812a678dc0788",
+          "message": "Record live Render acceptance and enabled backup verification",
+          "createdAt": "2026-11-02T17:49:38Z"
+        },
+        "finishedAt": "2026-11-02T17:51:19.228483Z"
+      },
+      {
+        "id": "dep-dbkc9lks728c73cohtng",
+        "status": "deactivated",
+        "commit": {
+          "id": "9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244",
+          "message": "Verify cloud recovery and scope backup runner database access",
+          "createdAt": "2026-11-02T17:11:30Z"
+        },
+        "finishedAt": "2026-11-02T17:16:15.851461Z"
+      }
+    ],
+    "database_http_status": 200,
+    "database": {
+      "id": "dpg-dbkbsfc9v7es73cafmag-a",
+      "plan": "free",
+      "region": "frankfurt",
+      "status": "available",
+      "expiresAt": "2026-12-02T16:45:49.767472Z",
+      "public_access_closed": true
+    }
+  },
+  "github": {
+    "workflow": {
+      "id": 404756388,
+      "path": ".github/workflows/daily-backup.yml",
+      "state": "active"
+    },
+    "scheduled_run_count": 0,
+    "backup_variables": [
+      {
+        "name": "BACKUPS_ENABLED",
+        "value": "true",
+        "created_at": "2026-11-02T16:48:16Z",
+        "updated_at": "2026-11-02T17:12:12Z"
+      },
+      {
+        "name": "RENDER_POSTGRES_ID",
+        "value": "dpg-dbkbsfc9v7es73cafmag-a",
+        "created_at": "2026-11-02T17:10:04Z",
+        "updated_at": "2026-11-02T17:10:04Z"
+      }
+    ],
+    "recent_backups": [
+      {
+        "id": 41620465217,
+        "event": "workflow_dispatch",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-03T10:34:58Z",
+        "updated_at": "2026-11-03T10:35:51Z",
+        "html_url": "https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41620465217",
+        "head_sha": "7bff3823462678a370e5661168eb5fac528e2c7a"
+      },
+      {
+        "id": 41615710497,
+        "event": "workflow_dispatch",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-03T10:01:03Z",
+        "updated_at": "2026-11-03T10:02:03Z",
+        "html_url": "https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41615710497",
+        "head_sha": "7bff3823462678a370e5661168eb5fac528e2c7a"
+      },
+      {
+        "id": 41488898644,
+        "event": "workflow_dispatch",
+        "status": "completed",
+        "conclusion": "success",
+        "created_at": "2026-11-02T17:12:14Z",
+        "updated_at": "2026-11-02T17:13:19Z",
+        "html_url": "https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41488898644",
+        "head_sha": "9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244"
+      }
+    ],
+    "billing_usage": {
+      "available": false,
+      "http_404": true,
+      "missing_user_scope": true
+    },
+    "fresh_manual_backup_network_cleanup_passed": true
+  },
+  "storage": {
+    "originals": {
+      "objects": 2,
+      "bytes": 184269
+    },
+    "backups": {
+      "objects": 4,
+      "bytes": 868234,
+      "latest_modified_utc": "2026-11-03T10:35:47.355000+00:00"
+    },
+    "latest_archive_verification": {
+      "key": "career-backups/20261103T103531Z-f900d28b56b94a4bba70abc9fe1e4d4c.zip",
+      "bytes": 219504,
+      "revision": "0005",
+      "all_archive_checksums_valid": true,
+      "originals_matching_live_storage": 2,
+      "downloaded_archive_removed_after_verification": true
+    },
+    "s3_lifecycle_http_status": 403,
+    "s3_lifecycle_error": "AccessDenied",
+    "s3_lifecycle_denial_expected_for_object_scoped_credential": true
+  },
+  "public_service": {
+    "/api/health": {
+      "http_status": 200,
+      "response": {
+        "status": "ok"
+      }
+    },
+    "/": {
+      "http_status": 200
+    },
+    "/api/job-definition": {
+      "http_status": 401
+    }
+  },
+  "local_verification": {
+    "backup_and_render_access_unit_tests_passed": 28
+  },
+  "deployed_read_check": {
+    "report": "PART11_DEPLOYED_CHECK.json",
+    "passed": true,
+    "rechecked_on": "2026-11-03",
+    "operator_session_and_network_rule_removed": true,
+    "saved_content_changed": false,
+    "ai_calls": 0
+  }
+}

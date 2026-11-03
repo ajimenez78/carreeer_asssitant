@@ -2,7 +2,7 @@
 
 Verified locally on 2026-11-01. The private backend workflow is implemented;
 frontend editing, integrated browser journeys, chat, hosting and backups remain
-the subsequent planned parts. The contract is in [BACKEND_API.md](BACKEND_API.md).
+the subsequent planned parts. The contract is in [BACKEND_API.md](../../../architecture/BACKEND_API.md).
 
 ## Automated checks
 
@@ -43,7 +43,7 @@ database/container: login, save/reload, a full 10 MiB binary DOC upload, origina
 download, fact review, complete deletion, original cleanup, and logout. It used
 512 MiB/one CPU, peaked at 176.11 MiB, and processed the upload in 0.2814 s. Three
 warm GET-plus-save pairs each completed within 0.0403 s. This check made no AI
-calls. See [result](PART7_CONTAINER_CHECK.json). Reproduce after `make db-up` and
+calls. See [result](../evidence/PART7_CONTAINER_CHECK.json). Reproduce after `make db-up` and
 `docker compose build backend` with
 `uv run --project backend --locked python backend/scripts/check_container_api.py`.
 The script refuses remote database creation and removes only its generated test
@@ -60,7 +60,7 @@ README; the image already includes it.
 Eight fresh containers used `--memory=512m --cpus=1 --network=none`. Each loaded
 the actual application and executed the production extraction worker. The full
 runtime libraries were present; no development server or parser suite was loaded.
-See [raw measurements](PART7_RESOURCES.json).
+See [raw measurements](../evidence/PART7_RESOURCES.json).
 
 | Format | Small input / container peak | Near-10 MiB input / container peak | Large-input extraction CPU |
 | --- | --- | --- | --- |
@@ -107,7 +107,7 @@ It asks about compensation and the office period and adds no SQL requirement
 from historical background. Spanish facts retain exact evidence and omit the
 invented doctorate. Proposals remain unaccepted until an explicit save/review.
 
-See [sanitized result](PART7_AI_CHECK.json): 908 + 329 input tokens, 763 + 81 output
+See [sanitized result](../evidence/PART7_AI_CHECK.json): 908 + 329 input tokens, 763 + 81 output
 tokens, 8.587 s and 3.300 s including preflight. Estimated total inference cost:
 $0.0005457 using the Part 6 verified rates. This is a small schema/quality check,
 not a production SLA or a substitute for the Part 9 integrated live workflow.
@@ -116,7 +116,7 @@ To rerun explicitly (paid, synthetic only):
 
 ```bash
 uv run --project backend --locked python backend/scripts/check_workflow_ai.py \
-  --report doc/PART7_AI_CHECK.json
+  --report doc/features/job-definition/evidence/PART7_AI_CHECK.json
 ```
 
 ## Issues diagnosed and resolved

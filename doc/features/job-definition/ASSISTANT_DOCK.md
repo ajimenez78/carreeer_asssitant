@@ -48,7 +48,7 @@ Validation on 2026-11-02:
   chat and verifies conversation across navigation and reload.
 - The combined production-image workflow and replacement check pass with the
   floating panel. Conversation, definition, sources, session, summary, and pause
-  survive replacement. See [ASSISTANT_DOCK_RELEASE_CHECK.json](ASSISTANT_DOCK_RELEASE_CHECK.json)
+  survive replacement. See [ASSISTANT_DOCK_RELEASE_CHECK.json](evidence/ASSISTANT_DOCK_RELEASE_CHECK.json)
   for the final image identifier and measured runtime snapshot.
 - Ruff and `git diff --check` pass. Desktop/mobile screenshots were reviewed.
 

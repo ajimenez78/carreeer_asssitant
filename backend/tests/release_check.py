@@ -38,7 +38,10 @@ def main():
     name, volume = f"career-release-{suffix}", f"career-release-docs-{suffix}"
     image = os.environ.get("CAREER_RELEASE_IMAGE", "career-assistant:part11")
     report_path = Path(
-        os.environ.get("CAREER_RELEASE_REPORT", "doc/PART11_LOCAL_RELEASE_CHECK.json")
+        os.environ.get(
+            "CAREER_RELEASE_REPORT",
+            "doc/operations/evidence/PART11_LOCAL_RELEASE_CHECK.json",
+        )
     )
     url = database_url(Settings()).set(database=f"career_release_{suffix}")
     ensure_local_database(url)

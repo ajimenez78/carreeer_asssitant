@@ -1,0 +1,78 @@
+{
+  "checked_at_utc": "2026-11-03T10:34:56.617736+00:00",
+  "lifecycle": {
+    "configured_and_read_back": true,
+    "bucket": "career-assistant-backups",
+    "prefix": "career-backups/",
+    "expiry_seconds": 604800,
+    "existing_rules_preserved": true,
+    "originals_lifecycle_changed": false
+  },
+  "scoped_credentials": {
+    "web_documents": {
+      "bucket": "career-assistant-documents",
+      "permission": "Workers R2 Storage Bucket Item Write",
+      "allowed_operations_verified": true,
+      "other_bucket_access_denied": true,
+      "writes_denied": false,
+      "probe_objects_removed": true
+    },
+    "backup_document_reader": {
+      "bucket": "career-assistant-documents",
+      "permission": "Workers R2 Storage Bucket Item Read",
+      "allowed_operations_verified": true,
+      "other_bucket_access_denied": true,
+      "writes_denied": true,
+      "probe_objects_removed": true
+    },
+    "backup_archives": {
+      "bucket": "career-assistant-backups",
+      "permission": "Workers R2 Storage Bucket Item Write",
+      "allowed_operations_verified": true,
+      "other_bucket_access_denied": true,
+      "writes_denied": false,
+      "probe_objects_removed": true
+    }
+  },
+  "three_distinct_scoped_credentials_verified": true,
+  "scoped_credentials_installed": {
+    "render_environment_updated_and_read_back": true,
+    "github_document_reader_and_backup_secrets_updated": true,
+    "private_operations_environment_updated": true,
+    "old_shared_token_retained_for_operator_management_only": true,
+    "runtime_rollout_pending": false,
+    "runtime_rollout_and_original_downloads_verified": true
+  },
+  "credential_rollout": {
+    "id": "dep-dbkrhkff3r2c73fnuli0",
+    "status": "live",
+    "commit": {
+      "id": "9ee1e9306ad3a5ce1e4a97e46be5fcb71582b244",
+      "message": "Verify cloud recovery and scope backup runner database access",
+      "createdAt": "2026-11-02T17:11:30Z"
+    },
+    "createdAt": "2026-11-03T10:34:57.200918Z",
+    "finishedAt": "2026-11-03T10:35:48.224244Z"
+  },
+  "backup_with_scoped_credentials": {
+    "run_id": 41620465217,
+    "url": "https://github.com/ajimenez78/carreeer_asssitant/actions/runs/41620465217",
+    "conclusion": "success",
+    "temporary_sql_access_cleanup_passed": true
+  },
+  "deployed_browser_check": {
+    "passed": true,
+    "saved_workspace_unchanged": true,
+    "no_automatic_ai_calls": true,
+    "operator_session_and_network_rule_removed": true,
+    "report": "PART11_DEPLOYED_CHECK.json"
+  },
+  "latest_archive_verification": {
+    "key": "career-backups/20261103T103531Z-f900d28b56b94a4bba70abc9fe1e4d4c.zip",
+    "bytes": 219504,
+    "revision": "0005",
+    "all_archive_checksums_valid": true,
+    "originals_matching_live_storage": 2,
+    "downloaded_archive_removed_after_verification": true
+  }
+}

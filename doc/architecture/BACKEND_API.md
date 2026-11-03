@@ -1,11 +1,15 @@
 # Job-definition backend
 
+Implemented API baseline. The [job-finding plan](../features/job-finding/PLAN.md)
+proposes additional contracts; discovery APIs are not implemented yet. Extend
+this document as those endpoints are delivered.
+
 Part 7 implements the private API for one owner and one current definition.
 The generated request/response schemas are at `/openapi.json` and `/docs`.
 Part 9 connects the bilingual frontend to this API and serves its static export from the same Python service. Mocks are an explicit development/test option; Part 10 adds persistent refinement chat.
 The subsequent clarity/summary extension adds system readiness, a persisted
 assessment, and independent clarification stop/resume control. Its validation
-record is [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md).
+record is [CLARITY_SUMMARY.md](../features/job-definition/CLARITY_SUMMARY.md).
 
 ## Access and initialization
 

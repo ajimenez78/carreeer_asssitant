@@ -6,7 +6,7 @@ measurement remain Part 11.
 
 The user subsequently requested a floating chatbot throughout the flow, replacing
 the initial numbered Chat step. Current UI behavior and follow-up validation are in
-[ASSISTANT_DOCK.md](ASSISTANT_DOCK.md); the evidence below records the original
+[ASSISTANT_DOCK.md](../ASSISTANT_DOCK.md); the evidence below records the original
 Part 10 delivery.
 
 ## Delivered behavior
@@ -65,7 +65,7 @@ pytest-playwright fixture deprecation warning. One intermediate browser process
 ended with SIGTERM without a test failure; the unchanged rerun completed.
 
 The final release image is `career-assistant:part10`; its identifier, runtime
-memory snapshot, and checks are in [PART10_RELEASE_CHECK.json](PART10_RELEASE_CHECK.json).
+memory snapshot, and checks are in [PART10_RELEASE_CHECK.json](../evidence/PART10_RELEASE_CHECK.json).
 It runs a Python-only non-root process under 512 MiB/one CPU, with migrations run
 explicitly and repeatably before startup. Its first validation container injects
 fake AI from a test mount; the replacement uses the unchanged production command
@@ -82,7 +82,7 @@ Part 11 daily independent backup policy.
 
 ## Live-model evidence and diagnosed issues
 
-[PART10_AI_EVALUATION.json](PART10_AI_EVALUATION.json) records four real bounded
+[PART10_AI_EVALUATION.json](../evidence/PART10_AI_EVALUATION.json) records four real bounded
 synthetic responses: targeted English office-day change; ambiguous Spanish input;
 job-search/interview scope redirection; and distinguishing an unaccepted previous
 proposal from the currently accepted two-day limit. The synthetic background also
@@ -93,7 +93,7 @@ seconds. No personal sources were transmitted or saved user data changed.
 The initial evaluator incorrectly required unchanged note wording on a changed
 criterion, a question in the separate array even when reply prose already asked
 one, and the spelling “two” instead of the digit “2”. The retained
-[initial report](PART10_AI_EVALUATION_INITIAL.json) shows those failures. The final
+[initial report](../evidence/PART10_AI_EVALUATION_INITIAL.json) shows those failures. The final
 report re-evaluates the same provider responses against semantic gates: all
 untouched criteria match exactly, the requested changed value/priority/category
 and hybrid condition are preserved, ambiguous input asks without guessing,
@@ -118,7 +118,7 @@ credentials, or source-data changes were used to work around these tooling limit
 
 ## Reproduction and limits
 
-Use the commands in [README.md](../README.md). `make chat-live` is the separate
+Use the commands in [README.md](../../../../README.md). `make chat-live` is the separate
 paid synthetic check; `make release-check` now defaults to the Part 10 image/report
 so historical Part 9 evidence is preserved. For an existing checkout, explicitly
 apply `make db-migrate` before starting the updated backend.

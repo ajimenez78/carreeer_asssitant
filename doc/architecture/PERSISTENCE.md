@@ -1,4 +1,8 @@
-# MVP persistence
+# Implemented persistence baseline
+
+This document covers the implemented job-definition MVP and shared storage/
+recovery behavior. The [job-finding plan](../features/job-finding/PLAN.md) describes
+proposed extensions; update this contract as those changes are implemented.
 
 Part 5 design review, 2026-11-01. This implements the approved single-owner,
 single-current-definition lifecycle. Parts 6–7 subsequently implemented AI,
@@ -91,7 +95,7 @@ The 2026-11-02 clarity/summary extension uses migration `0004` to add assessment
 and pause/control-version columns. Legacy manually selected ready state becomes
 unassessed draft; accepted preferences, sources, answers, and credentials remain.
 The next explicit assessment determines readiness. Validation for this extension
-is recorded separately in [CLARITY_SUMMARY.md](CLARITY_SUMMARY.md).
+is recorded separately in [CLARITY_SUMMARY.md](../features/job-definition/CLARITY_SUMMARY.md).
 
 The Part 11 backup implementation pairs a custom-format `pg_dump` with a UTF-8 JSON
 manifest and originals under `documents/<UUID>`. The manifest records format
@@ -107,12 +111,16 @@ manifest paths, copy originals, restore the dump transactionally, check foreign
 keys and reviewed context, then drain pending deletions. Validate before swapping
 runtime configuration. Retain successful daily copies for seven days; prune older copies
 only after a successful backup. Source deletions are immediate in live context;
-backup copies expire under this policy. Local tests, daily GitHub scheduling and
-real Render/R2 backup/restoration drills pass. The hosted drill used a disposable
-database and temporary originals in the private backup bucket, then removed both.
-The additional R2 lifecycle expiry backstop remains pending. Evidence
-and setup are in [PART11_VALIDATION.md](PART11_VALIDATION.md) and
-[DEPLOYMENT.md](DEPLOYMENT.md).
+backup copies expire under this policy. Local tests and real Render/R2 manual
+backup/restoration drills pass; daily GitHub scheduling is configured, with no
+successful schedule-triggered run observed at the recorded audit. The hosted drill
+used a disposable database and temporary originals in the private backup bucket,
+then removed both.
+The additional seven-day R2 lifecycle backstop and three separate bucket-scoped
+credentials were verified on 2026-11-03. Evidence and setup are in
+[PART11_VALIDATION.md](../operations/validation/PART11_VALIDATION.md) and
+[DEPLOYMENT.md](../operations/DEPLOYMENT.md); accepted remaining checks are in
+[operational follow-ups](../operations/FOLLOW_UPS.md).
 
 ## Later phases
 
@@ -152,4 +160,4 @@ clone, migrated and compared before applying `0005` locally. Every original tabl
 rows were compared canonically in memory and remained unchanged; the new chat table
 was empty. The private dump is retained under ignored `.data/backups/`; it is not
 a replacement for Part 11's scheduled independent backups. See
-[Part 10 validation](PART10_VALIDATION.md).
+[Part 10 validation](../features/job-definition/validation/PART10_VALIDATION.md).

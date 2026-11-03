@@ -160,7 +160,7 @@ def main():
     report["passed"] = len(report["cases"]) == len(cases) and all(
         row["passed"] for row in report["cases"]
     )
-    path = Path("doc/PART10_AI_EVALUATION.json")
+    path = Path("doc/features/job-definition/evidence/PART10_AI_EVALUATION.json")
     path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n")
     print(f"Synthetic chat evaluation passed={report['passed']}; report: {path}")
     if not report["passed"]:
